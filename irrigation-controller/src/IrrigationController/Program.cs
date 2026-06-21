@@ -11,6 +11,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 builder.Services.AddSingleton<IrrigationConfigStore>();
+builder.Services.AddSingleton<IrrigationConfigValidator>();
 builder.Services.AddSingleton<IrrigationStateStore>();
 builder.Services.AddHttpClient<HomeAssistantClient>();
 builder.Services.AddSingleton<WeatherAdjustmentService>();
@@ -112,6 +113,16 @@ app.MapGet("/ui", async (IrrigationConfigStore store, CycleRunner runner, Irriga
 
 app.MapGet("/api/config", async (IrrigationConfigStore store, CancellationToken cancellationToken) =>
     Results.Ok(await store.GetAsync(cancellationToken)));
+
+app.MapGet("/api/config/validate", async (
+    IrrigationConfigStore store,
+    IrrigationConfigValidator validator,
+    CancellationToken cancellationToken) =>
+{
+    var config = await store.GetAsync(cancellationToken);
+    var result = validator.Validate(config);
+    return result.IsValid ? Results.Ok(result) : Results.BadRequest(result);
+});
 
 app.MapPost("/api/config/reload", async (IrrigationConfigStore store, CancellationToken cancellationToken) =>
 {

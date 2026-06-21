@@ -54,6 +54,7 @@ Alla prima esecuzione viene creato `/data/irrigation.json` con un esempio. Le va
 
 - `GET /api/status`
 - `GET /api/config`
+- `GET /api/config/validate`
 - `POST /api/config/reload`
 - `POST /api/cycles/{cycleId}/start`
 - `POST /api/cycles/{cycleId}/stop`

@@ -7,6 +7,7 @@ public sealed class CycleRunner
     private readonly SemaphoreSlim _runLock = new(1, 1);
     private readonly IrrigationConfigStore _configStore;
     private readonly IrrigationStateStore _stateStore;
+    private readonly IrrigationConfigValidator _validator;
     private readonly HomeAssistantClient _homeAssistant;
     private readonly WeatherAdjustmentService _weather;
     private readonly ILogger<CycleRunner> _logger;
@@ -17,12 +18,14 @@ public sealed class CycleRunner
     public CycleRunner(
         IrrigationConfigStore configStore,
         IrrigationStateStore stateStore,
+        IrrigationConfigValidator validator,
         HomeAssistantClient homeAssistant,
         WeatherAdjustmentService weather,
         ILogger<CycleRunner> logger)
     {
         _configStore = configStore;
         _stateStore = stateStore;
+        _validator = validator;
         _homeAssistant = homeAssistant;
         _weather = weather;
         _logger = logger;
@@ -43,6 +46,12 @@ public sealed class CycleRunner
     public async Task<CommandResult> StartZoneAsync(string zoneId, TimeSpan duration, CancellationToken cancellationToken)
     {
         var config = await _configStore.GetAsync(cancellationToken);
+        var validation = _validator.Validate(config);
+        if (!validation.IsValid)
+        {
+            return new CommandResult(false, $"Invalid configuration: {validation.Errors[0].Path} - {validation.Errors[0].Message}");
+        }
+
         if (!config.Zones.TryGetValue(zoneId, out var zone))
         {
             return new CommandResult(false, $"Unknown zone {zoneId}.");
@@ -120,6 +129,13 @@ public sealed class CycleRunner
     private async Task RunCycleAsync(string cycleId, TriggerSource source, CancellationToken cancellationToken, CycleConfig? overrideCycle)
     {
         var config = await _configStore.GetAsync(cancellationToken);
+        var validation = _validator.Validate(config);
+        if (!validation.IsValid)
+        {
+            _logger.LogError("Invalid irrigation configuration: {Path} - {Message}", validation.Errors[0].Path, validation.Errors[0].Message);
+            return;
+        }
+
         var cycle = overrideCycle ?? (config.Cycles.TryGetValue(cycleId, out var configuredCycle) ? configuredCycle : null);
         if (cycle is null)
         {

@@ -26,3 +26,12 @@ public sealed record WeatherAdjustment(
     double EffectiveRainMm,
     int MaxRainProbability,
     bool ShouldSkip);
+
+public sealed class ConfigValidationResult
+{
+    public List<ConfigValidationIssue> Errors { get; set; } = [];
+    public List<ConfigValidationIssue> Warnings { get; set; } = [];
+    public bool IsValid => Errors.Count == 0;
+}
+
+public sealed record ConfigValidationIssue(string Path, string Message);
