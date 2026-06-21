@@ -29,6 +29,12 @@ var app = builder.Build();
 
 app.MapGet("/", () => Results.Redirect("/ui"));
 
+app.MapGet("/api/health", () => Results.Ok(new
+{
+    status = "ok",
+    timestamp = DateTimeOffset.UtcNow
+}));
+
 app.MapGet("/ui", async (IrrigationOverviewService overviewService, CancellationToken cancellationToken) =>
 {
     var overview = await overviewService.GetOverviewAsync(cancellationToken);

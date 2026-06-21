@@ -10,6 +10,7 @@ boot: auto
 init: false
 ingress: true
 ingress_port: 8080
+watchdog: "http://[HOST]:[PORT:8080]/api/health"
 panel_icon: mdi:sprinkler
 panel_title: Irrigazione
 homeassistant_api: true

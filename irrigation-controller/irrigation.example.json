@@ -1,0 +1,88 @@
+{
+  "weather": {
+    "entity": "weather.home",
+    "forecast_type": "hourly",
+    "rain_lookahead_hours": 24,
+    "rain_efficiency": 0.75,
+    "skip_if_expected_rain_mm_above": 4,
+    "skip_if_rain_probability_above": 70,
+    "external_et0_sensor_entity": null
+  },
+  "mqtt_discovery": {
+    "enabled": true,
+    "discovery_prefix": "homeassistant",
+    "base_topic": "irrigation_controller",
+    "publish_interval_seconds": 30
+  },
+  "safety": {
+    "one_cycle_at_a_time": true,
+    "stop_all_known_zones_on_error": true,
+    "turn_off_all_zones_on_startup": true,
+    "verify_zone_state_after_switch": true,
+    "switch_retry_count": 2,
+    "switch_retry_delay_ms": 750,
+    "manual_runs_ignore_weather": true,
+    "max_zone_minutes": 60
+  },
+  "zones": {
+    "prato": {
+      "name": "Prato",
+      "entity": "switch.valvola_prato",
+      "precipitation_rate_mm_h": 12,
+      "crop_coefficient": 0.8,
+      "min_minutes": 4,
+      "max_minutes": 25,
+      "target_deficit_mm": 0,
+      "soil_moisture_entity": null,
+      "skip_if_soil_moisture_above": null
+    },
+    "orto": {
+      "name": "Orto",
+      "entity": "switch.valvola_orto",
+      "precipitation_rate_mm_h": 8,
+      "crop_coefficient": 1.05,
+      "min_minutes": 5,
+      "max_minutes": 35,
+      "target_deficit_mm": 0,
+      "soil_moisture_entity": null,
+      "skip_if_soil_moisture_above": null
+    }
+  },
+  "cycles": {
+    "manuale_giardino": {
+      "name": "Manuale giardino",
+      "enabled": true,
+      "mode": "Manual",
+      "schedule": null,
+      "steps": [
+        {
+          "zones": ["prato"],
+          "duration_minutes": 15
+        },
+        {
+          "zones": ["orto"],
+          "duration_minutes": 10
+        }
+      ]
+    },
+    "automatico_mattina": {
+      "name": "Automatico mattina",
+      "enabled": true,
+      "mode": "Automatic",
+      "schedule": {
+        "days": ["Monday", "Wednesday", "Friday"],
+        "times": ["06:30"]
+      },
+      "steps": [
+        {
+          "zones": ["prato"],
+          "duration_minutes": null
+        },
+        {
+          "zones": ["orto"],
+          "duration_minutes": null
+        }
+      ]
+    }
+  }
+}

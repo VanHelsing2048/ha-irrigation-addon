@@ -11,4 +11,8 @@ L'interfaccia Ingress espone:
 - avvio/stop rapido delle singole zone;
 - stop globale.
 
+Endpoint salute:
+
+- `GET /api/health`
+
 Vedi `DOCS.md` per configurazione e API.

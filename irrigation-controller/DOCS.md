@@ -6,6 +6,8 @@ Questo add-on orchestra valvole gia esposte in Home Assistant come entita `switc
 
 Alla prima esecuzione viene creato `/data/irrigation.json` con un esempio. Le valvole devono essere sostituite con le entita reali create da `MQTT_NET_COMELIT`.
 
+Il file `irrigation.example.json` contiene un esempio completo da usare come riferimento.
+
 ```json
 {
   "weather": {
@@ -67,6 +69,7 @@ Alla prima esecuzione viene creato `/data/irrigation.json` con un esempio. Le va
 
 ## API
 
+- `GET /api/health`
 - `GET /api/status`
 - `GET /api/overview`
 - `GET /api/config`

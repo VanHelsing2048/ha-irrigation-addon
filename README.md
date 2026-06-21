@@ -22,3 +22,18 @@ dotnet run --project irrigation-controller\src\IrrigationController\IrrigationCo
 ```
 
 In Home Assistant, aggiungi questo repository come add-on repository e installa `Irrigation Controller`.
+
+## Installazione Home Assistant
+
+Quando il repository sara pubblicato:
+
+1. Apri Home Assistant.
+2. Vai in Settings -> Add-ons -> Add-on Store.
+3. Aggiungi questo repository tra i repository add-on.
+4. Installa `Irrigation Controller`.
+5. Avvia l'add-on e apri la UI Ingress.
+6. Modifica `/data/irrigation.json` usando `irrigation-controller/irrigation.example.json` come riferimento.
+
+## Stato repository
+
+La branch principale locale e `main`. Ogni blocco funzionale viene salvato con un commit separato per rendere semplice una futura pubblicazione su GitHub.
