@@ -6,6 +6,7 @@ public sealed class IrrigationOverview
     public string ExpectedEndText { get; set; } = "-";
     public ConfigValidationResult Validation { get; set; } = new();
     public string LastWaterBalanceUpdateDate { get; set; } = "-";
+    public DiagnosticsState Diagnostics { get; set; } = new();
     public List<IrrigationEvent> RecentEvents { get; set; } = [];
     public List<CycleOverview> Cycles { get; set; } = [];
     public List<ZoneOverview> Zones { get; set; } = [];

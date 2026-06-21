@@ -6,7 +6,41 @@ public sealed class IrrigationRuntimeState
     public Dictionary<string, string> LastScheduledRuns { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, CalibrationResult> Calibrations { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public string? LastWaterBalanceUpdateDate { get; set; }
+    public DiagnosticsState Diagnostics { get; set; } = new();
     public List<IrrigationEvent> Events { get; set; } = [];
+}
+
+public sealed class DiagnosticsState
+{
+    public WeatherDiagnostic? LastWeather { get; set; }
+    public DecisionDiagnostic? LastDecision { get; set; }
+    public ErrorDiagnostic? LastError { get; set; }
+}
+
+public sealed class WeatherDiagnostic
+{
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
+    public double Et0Mm { get; set; }
+    public double ExpectedRainMm { get; set; }
+    public double EffectiveRainMm { get; set; }
+    public int MaxRainProbability { get; set; }
+    public bool ShouldSkip { get; set; }
+}
+
+public sealed class DecisionDiagnostic
+{
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
+    public string Type { get; set; } = "";
+    public string Message { get; set; } = "";
+    public string? CycleId { get; set; }
+    public string? ZoneId { get; set; }
+}
+
+public sealed class ErrorDiagnostic
+{
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
+    public string Source { get; set; } = "";
+    public string Message { get; set; } = "";
 }
 
 public sealed class IrrigationEvent

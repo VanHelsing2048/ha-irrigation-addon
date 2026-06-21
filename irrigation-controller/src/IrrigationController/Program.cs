@@ -20,6 +20,7 @@ builder.Services.AddSingleton<WeatherAdjustmentService>();
 builder.Services.AddSingleton<WaterBalanceService>();
 builder.Services.AddSingleton<IrrigationSafetyService>();
 builder.Services.AddSingleton<CalibrationService>();
+builder.Services.AddSingleton<DiagnosticsService>();
 builder.Services.AddSingleton<CycleRunner>();
 builder.Services.AddSingleton<IrrigationOverviewService>();
 builder.Services.AddHostedService<StartupSafetyService>();
@@ -68,6 +69,15 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
     var validationBlock = string.IsNullOrWhiteSpace(validationRows)
         ? """<div class="status ok">Configurazione valida</div>"""
         : $$"""<div class="status warn"><strong>Configurazione da verificare</strong><ul>{{validationRows}}</ul></div>""";
+    var weatherDiagnostic = overview.Diagnostics.LastWeather is null
+        ? "-"
+        : $"ET0 {overview.Diagnostics.LastWeather.Et0Mm:0.0}mm, rain {overview.Diagnostics.LastWeather.ExpectedRainMm:0.0}mm, useful {overview.Diagnostics.LastWeather.EffectiveRainMm:0.0}mm, prob {overview.Diagnostics.LastWeather.MaxRainProbability}%";
+    var decisionDiagnostic = overview.Diagnostics.LastDecision is null
+        ? "-"
+        : $"{overview.Diagnostics.LastDecision.Type}: {overview.Diagnostics.LastDecision.Message}";
+    var errorDiagnostic = overview.Diagnostics.LastError is null
+        ? "-"
+        : $"{overview.Diagnostics.LastError.Source}: {overview.Diagnostics.LastError.Message}";
     var eventRows = string.Join("", overview.RecentEvents.Select(item => $"""
         <tr>
           <td>{HtmlEncoder.Default.Encode(item.Timestamp.ToLocalTime().ToString("dd/MM HH:mm"))}</td>
@@ -141,6 +151,12 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
               <div class="metric"><span>Bilancio</span><strong>{{HtmlEncoder.Default.Encode(overview.LastWaterBalanceUpdateDate)}}</strong></div>
             </div>
             {{validationBlock}}
+            <h2>Diagnostica</h2>
+            <div class="status">
+              <strong>Meteo</strong><span>{{HtmlEncoder.Default.Encode(weatherDiagnostic)}}</span>
+              <strong>Decisione</strong><span>{{HtmlEncoder.Default.Encode(decisionDiagnostic)}}</span>
+              <strong>Errore</strong><span>{{HtmlEncoder.Default.Encode(errorDiagnostic)}}</span>
+            </div>
             <h2>Cicli</h2>
             <table>
               <thead><tr><th>Ciclo</th><th>Modalita</th><th>Prossima</th><th>Comando</th></tr></thead>
@@ -309,6 +325,12 @@ app.MapGet("/api/status", async (CycleRunner runner, IrrigationStateStore stateS
 
 app.MapGet("/api/overview", async (IrrigationOverviewService overviewService, CancellationToken cancellationToken) =>
     Results.Ok(await overviewService.GetOverviewAsync(cancellationToken)));
+
+app.MapGet("/api/diagnostics", async (IrrigationStateStore stateStore, CancellationToken cancellationToken) =>
+{
+    var state = await stateStore.GetAsync(cancellationToken);
+    return Results.Ok(state.Diagnostics);
+});
 
 app.MapPost("/api/cycles/{cycleId}/start", async (
     string cycleId,

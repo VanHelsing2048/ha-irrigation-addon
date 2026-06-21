@@ -6,6 +6,7 @@ public sealed class WaterBalanceUpdater : BackgroundService
     private readonly IrrigationConfigValidator _validator;
     private readonly WeatherAdjustmentService _weather;
     private readonly WaterBalanceService _waterBalance;
+    private readonly DiagnosticsService _diagnostics;
     private readonly ILogger<WaterBalanceUpdater> _logger;
 
     public WaterBalanceUpdater(
@@ -13,12 +14,14 @@ public sealed class WaterBalanceUpdater : BackgroundService
         IrrigationConfigValidator validator,
         WeatherAdjustmentService weather,
         WaterBalanceService waterBalance,
+        DiagnosticsService diagnostics,
         ILogger<WaterBalanceUpdater> logger)
     {
         _configStore = configStore;
         _validator = validator;
         _weather = weather;
         _waterBalance = waterBalance;
+        _diagnostics = diagnostics;
         _logger = logger;
     }
 
@@ -33,6 +36,7 @@ public sealed class WaterBalanceUpdater : BackgroundService
                 if (validation.IsValid)
                 {
                     var weather = await _weather.CalculateAsync(config, stoppingToken);
+                    await _diagnostics.RecordWeatherAsync(weather, stoppingToken);
                     await _waterBalance.EnsureDailyBalanceAsync(config, weather, stoppingToken);
                 }
             }
@@ -43,6 +47,7 @@ public sealed class WaterBalanceUpdater : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Unable to update daily water balance.");
+                await _diagnostics.RecordErrorAsync("water_balance_updater", ex.Message, CancellationToken.None);
             }
 
             await Task.Delay(TimeSpan.FromHours(1), stoppingToken);

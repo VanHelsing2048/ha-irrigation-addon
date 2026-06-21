@@ -12,6 +12,7 @@ public sealed class CycleRunner
     private readonly WeatherAdjustmentService _weather;
     private readonly WaterBalanceService _waterBalance;
     private readonly IrrigationSafetyService _safety;
+    private readonly DiagnosticsService _diagnostics;
     private readonly ILogger<CycleRunner> _logger;
     private CancellationTokenSource? _activeRun;
 
@@ -25,6 +26,7 @@ public sealed class CycleRunner
         WeatherAdjustmentService weather,
         WaterBalanceService waterBalance,
         IrrigationSafetyService safety,
+        DiagnosticsService diagnostics,
         ILogger<CycleRunner> logger)
     {
         _configStore = configStore;
@@ -34,6 +36,7 @@ public sealed class CycleRunner
         _weather = weather;
         _waterBalance = waterBalance;
         _safety = safety;
+        _diagnostics = diagnostics;
         _logger = logger;
     }
 
@@ -111,6 +114,7 @@ public sealed class CycleRunner
         catch (Exception ex)
         {
             _logger.LogError(ex, "Cycle {CycleId} failed.", cycleId);
+            await _diagnostics.RecordErrorAsync("cycle_runner", ex.Message, CancellationToken.None);
         }
         finally
         {
@@ -154,13 +158,24 @@ public sealed class CycleRunner
             return;
         }
 
-        var adjustment = cycle.Mode == CycleMode.Automatic || !config.Safety.ManualRunsIgnoreWeather
+        var usesWeather = cycle.Mode == CycleMode.Automatic || !config.Safety.ManualRunsIgnoreWeather;
+        var adjustment = usesWeather
             ? await _weather.CalculateAsync(config, cancellationToken)
             : new WeatherAdjustment(0, 0, 0, 0, false);
+        if (usesWeather)
+        {
+            await _diagnostics.RecordWeatherAsync(adjustment, cancellationToken);
+        }
 
         if (source == TriggerSource.Schedule && adjustment.ShouldSkip)
         {
             _logger.LogInformation("Cycle {CycleId} skipped due to weather forecast.", cycleId);
+            await _diagnostics.RecordDecisionAsync(
+                "cycle_skipped",
+                $"Skipped due to forecast: rain={adjustment.ExpectedRainMm:0.0}mm, probability={adjustment.MaxRainProbability}%.",
+                cycleId,
+                null,
+                cancellationToken);
             return;
         }
 
@@ -209,6 +224,12 @@ public sealed class CycleRunner
             if (duration <= TimeSpan.Zero)
             {
                 _logger.LogInformation("Skipping zone {ZoneId}; calculated duration is zero.", zoneId);
+                await _diagnostics.RecordDecisionAsync(
+                    "zone_skipped",
+                    "Calculated duration is zero.",
+                    Current.CycleId,
+                    zoneId,
+                    cancellationToken);
                 continue;
             }
 

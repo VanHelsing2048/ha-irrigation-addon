@@ -36,6 +36,7 @@ public sealed class IrrigationOverviewService
             ExpectedEndText = FormatDateTime(_runner.Current.ExpectedEndAt),
             Validation = validation,
             LastWaterBalanceUpdateDate = state.LastWaterBalanceUpdateDate ?? "-",
+            Diagnostics = state.Diagnostics,
             RecentEvents = state.Events.Take(10).ToList(),
             Cycles = BuildCycleOverview(config),
             Zones = await BuildZoneOverviewAsync(config, state, cancellationToken)

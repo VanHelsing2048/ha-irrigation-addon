@@ -72,6 +72,7 @@ Il file `irrigation.example.json` contiene un esempio completo da usare come rif
 - `GET /api/health`
 - `GET /api/status`
 - `GET /api/overview`
+- `GET /api/diagnostics`
 - `GET /api/config`
 - `PUT /api/config`
 - `GET /api/config/validate`
@@ -147,6 +148,7 @@ Lo stato persistente in `/data/state.json` contiene:
 - data ultimo aggiornamento del bilancio;
 - ultime esecuzioni schedulate;
 - ultimi eventi di bilancio e irrigazione.
+- diagnostica di ultimo meteo letto, ultima decisione e ultimo errore.
 
 ## Sicurezze
 
