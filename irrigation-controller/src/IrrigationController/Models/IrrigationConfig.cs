@@ -3,9 +3,18 @@ namespace IrrigationController.Models;
 public sealed class IrrigationConfig
 {
     public WeatherConfig Weather { get; set; } = new();
+    public MqttDiscoveryConfig MqttDiscovery { get; set; } = new();
     public SafetyConfig Safety { get; set; } = new();
     public Dictionary<string, ZoneConfig> Zones { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, CycleConfig> Cycles { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+}
+
+public sealed class MqttDiscoveryConfig
+{
+    public bool Enabled { get; set; } = true;
+    public string DiscoveryPrefix { get; set; } = "homeassistant";
+    public string BaseTopic { get; set; } = "irrigation_controller";
+    public int PublishIntervalSeconds { get; set; } = 30;
 }
 
 public sealed class WeatherConfig

@@ -18,6 +18,7 @@ builder.Services.AddHttpClient<HomeAssistantClient>();
 builder.Services.AddSingleton<WeatherAdjustmentService>();
 builder.Services.AddSingleton<CycleRunner>();
 builder.Services.AddSingleton<IrrigationOverviewService>();
+builder.Services.AddHostedService<MqttDiscoveryPublisher>();
 builder.Services.AddHostedService<CycleScheduler>();
 
 var app = builder.Build();

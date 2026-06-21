@@ -16,6 +16,12 @@ Alla prima esecuzione viene creato `/data/irrigation.json` con un esempio. Le va
     "skip_if_expected_rain_mm_above": 4,
     "skip_if_rain_probability_above": 70
   },
+  "mqtt_discovery": {
+    "enabled": true,
+    "discovery_prefix": "homeassistant",
+    "base_topic": "irrigation_controller",
+    "publish_interval_seconds": 30
+  },
   "zones": {
     "prato": {
       "name": "Prato",
@@ -77,3 +83,19 @@ durata = deficit / precipitation_rate_mm_h * 60
 ```
 
 Per una stima migliore puoi configurare `external_et0_sensor_entity` e far leggere all'add-on un sensore ET0 dedicato.
+
+## MQTT Discovery
+
+Se Home Assistant ha l'integrazione MQTT, l'add-on pubblica discovery tramite il servizio `mqtt.publish`.
+
+Le entita create descrivono solo il controller:
+
+- ciclo attivo;
+- zona attiva;
+- tempo residuo;
+- prossimo ciclo;
+- prossima esecuzione;
+- stato running;
+- conteggio errori/avvisi configurazione.
+
+Le valvole restano le entita `switch.*` gia create da `MQTT_NET_COMELIT`.

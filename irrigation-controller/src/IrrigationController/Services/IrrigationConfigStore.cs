@@ -58,6 +58,13 @@ public sealed class IrrigationConfigStore
             RainLookaheadHours = 24,
             RainEfficiency = 0.75
         },
+        MqttDiscovery = new MqttDiscoveryConfig
+        {
+            Enabled = true,
+            DiscoveryPrefix = "homeassistant",
+            BaseTopic = "irrigation_controller",
+            PublishIntervalSeconds = 30
+        },
         Zones =
         {
             ["prato"] = new ZoneConfig

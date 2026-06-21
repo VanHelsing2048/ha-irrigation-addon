@@ -9,11 +9,35 @@ public sealed class IrrigationConfigValidator
         var result = new ConfigValidationResult();
 
         ValidateWeather(config, result);
+        ValidateMqttDiscovery(config, result);
         ValidateSafety(config, result);
         ValidateZones(config, result);
         ValidateCycles(config, result);
 
         return result;
+    }
+
+    private static void ValidateMqttDiscovery(IrrigationConfig config, ConfigValidationResult result)
+    {
+        if (!config.MqttDiscovery.Enabled)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(config.MqttDiscovery.DiscoveryPrefix))
+        {
+            Error(result, "mqtt_discovery.discovery_prefix", "MQTT discovery prefix is required when discovery is enabled.");
+        }
+
+        if (string.IsNullOrWhiteSpace(config.MqttDiscovery.BaseTopic))
+        {
+            Error(result, "mqtt_discovery.base_topic", "MQTT base topic is required when discovery is enabled.");
+        }
+
+        if (config.MqttDiscovery.PublishIntervalSeconds is < 5 or > 3600)
+        {
+            Error(result, "mqtt_discovery.publish_interval_seconds", "Publish interval must be between 5 and 3600 seconds.");
+        }
     }
 
     private static void ValidateWeather(IrrigationConfig config, ConfigValidationResult result)

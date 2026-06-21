@@ -89,6 +89,14 @@ public sealed class HomeAssistantClient
         return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
     }
 
+    public Task PublishMqttAsync(string topic, string payload, bool retain, CancellationToken cancellationToken) =>
+        CallServiceAsync("mqtt", "publish", new
+        {
+            topic,
+            payload,
+            retain
+        }, cancellationToken);
+
     private async Task CallServiceAsync(string domain, string service, object payload, CancellationToken cancellationToken)
     {
         var content = new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json");

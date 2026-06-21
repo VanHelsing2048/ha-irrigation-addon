@@ -27,6 +27,19 @@ public sealed record WeatherAdjustment(
     int MaxRainProbability,
     bool ShouldSkip);
 
+public sealed class ControllerMqttState
+{
+    public string Status { get; set; } = "idle";
+    public bool Running { get; set; }
+    public string ActiveCycle { get; set; } = "";
+    public string ActiveZone { get; set; } = "";
+    public int RemainingSeconds { get; set; }
+    public string NextCycle { get; set; } = "";
+    public string NextRun { get; set; } = "";
+    public int ConfigErrors { get; set; }
+    public int ConfigWarnings { get; set; }
+}
+
 public sealed class ConfigValidationResult
 {
     public List<ConfigValidationIssue> Errors { get; set; } = [];
