@@ -10,6 +10,7 @@ public sealed class CycleRunner
     private readonly IrrigationConfigValidator _validator;
     private readonly HomeAssistantClient _homeAssistant;
     private readonly WeatherAdjustmentService _weather;
+    private readonly WaterBalanceService _waterBalance;
     private readonly ILogger<CycleRunner> _logger;
     private CancellationTokenSource? _activeRun;
 
@@ -21,6 +22,7 @@ public sealed class CycleRunner
         IrrigationConfigValidator validator,
         HomeAssistantClient homeAssistant,
         WeatherAdjustmentService weather,
+        WaterBalanceService waterBalance,
         ILogger<CycleRunner> logger)
     {
         _configStore = configStore;
@@ -28,6 +30,7 @@ public sealed class CycleRunner
         _validator = validator;
         _homeAssistant = homeAssistant;
         _weather = weather;
+        _waterBalance = waterBalance;
         _logger = logger;
     }
 
@@ -158,6 +161,11 @@ public sealed class CycleRunner
             return;
         }
 
+        if (cycle.Mode == CycleMode.Automatic)
+        {
+            await _waterBalance.EnsureDailyBalanceAsync(config, adjustment, cancellationToken);
+        }
+
         Current = new RunnerSnapshot
         {
             IsRunning = true,
@@ -194,7 +202,7 @@ public sealed class CycleRunner
                 continue;
             }
 
-            var duration = await ResolveDurationAsync(config, cycle, step, zoneId, zone, adjustment, cancellationToken);
+            var duration = await ResolveDurationAsync(config, cycle, step, zoneId, zone, cancellationToken);
             if (duration <= TimeSpan.Zero)
             {
                 _logger.LogInformation("Skipping zone {ZoneId}; calculated duration is zero.", zoneId);
@@ -213,7 +221,7 @@ public sealed class CycleRunner
             finally
             {
                 await _homeAssistant.TurnOffAsync(zone.Entity, CancellationToken.None);
-                await ApplyIrrigationToBalanceAsync(zoneId, zone, duration, CancellationToken.None);
+                await _waterBalance.ApplyIrrigationAsync(zoneId, zone, duration, CancellationToken.None);
             }
         }
     }
@@ -224,7 +232,6 @@ public sealed class CycleRunner
         CycleStepConfig step,
         string zoneId,
         ZoneConfig zone,
-        WeatherAdjustment adjustment,
         CancellationToken cancellationToken)
     {
         if (cycle.Mode == CycleMode.Manual)
@@ -245,12 +252,8 @@ public sealed class CycleRunner
         var state = await _stateStore.GetAsync(cancellationToken);
         state.WaterBalance.TryGetValue(zoneId, out var previousDeficit);
 
-        var cropEt = adjustment.Et0Mm * zone.CropCoefficient;
-        var newDeficit = Math.Max(0, previousDeficit + cropEt - adjustment.EffectiveRainMm - zone.TargetDeficitMm);
-        state.WaterBalance[zoneId] = newDeficit;
-        await _stateStore.SaveAsync(state, cancellationToken);
-
-        var minutes = newDeficit / Math.Max(0.1, zone.PrecipitationRateMmH) * 60;
+        var irrigationDeficit = Math.Max(0, previousDeficit - zone.TargetDeficitMm);
+        var minutes = irrigationDeficit / Math.Max(0.1, zone.PrecipitationRateMmH) * 60;
         if (minutes <= 0)
         {
             return TimeSpan.Zero;
@@ -258,15 +261,6 @@ public sealed class CycleRunner
 
         minutes = Math.Clamp(minutes, zone.MinMinutes, Math.Min(zone.MaxMinutes, config.Safety.MaxZoneMinutes));
         return TimeSpan.FromMinutes(minutes);
-    }
-
-    private async Task ApplyIrrigationToBalanceAsync(string zoneId, ZoneConfig zone, TimeSpan duration, CancellationToken cancellationToken)
-    {
-        var state = await _stateStore.GetAsync(cancellationToken);
-        state.WaterBalance.TryGetValue(zoneId, out var deficit);
-        var appliedMm = zone.PrecipitationRateMmH * duration.TotalHours;
-        state.WaterBalance[zoneId] = Math.Max(0, deficit - appliedMm);
-        await _stateStore.SaveAsync(state, cancellationToken);
     }
 
     private async Task MarkScheduledRunAsync(string cycleId, CancellationToken cancellationToken)

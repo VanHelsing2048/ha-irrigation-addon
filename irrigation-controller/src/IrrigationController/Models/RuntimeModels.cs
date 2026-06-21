@@ -4,6 +4,17 @@ public sealed class IrrigationRuntimeState
 {
     public Dictionary<string, double> WaterBalance { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, string> LastScheduledRuns { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public string? LastWaterBalanceUpdateDate { get; set; }
+    public List<IrrigationEvent> Events { get; set; } = [];
+}
+
+public sealed class IrrigationEvent
+{
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
+    public string Type { get; set; } = "";
+    public string Message { get; set; } = "";
+    public string? ZoneId { get; set; }
+    public double? AmountMm { get; set; }
 }
 
 public sealed class RunnerSnapshot

@@ -16,9 +16,11 @@ builder.Services.AddSingleton<IrrigationConfigValidator>();
 builder.Services.AddSingleton<IrrigationStateStore>();
 builder.Services.AddHttpClient<HomeAssistantClient>();
 builder.Services.AddSingleton<WeatherAdjustmentService>();
+builder.Services.AddSingleton<WaterBalanceService>();
 builder.Services.AddSingleton<CycleRunner>();
 builder.Services.AddSingleton<IrrigationOverviewService>();
 builder.Services.AddHostedService<MqttDiscoveryPublisher>();
+builder.Services.AddHostedService<WaterBalanceUpdater>();
 builder.Services.AddHostedService<CycleScheduler>();
 
 var app = builder.Build();
@@ -53,6 +55,14 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
     var validationBlock = string.IsNullOrWhiteSpace(validationRows)
         ? """<div class="status ok">Configurazione valida</div>"""
         : $$"""<div class="status warn"><strong>Configurazione da verificare</strong><ul>{{validationRows}}</ul></div>""";
+    var eventRows = string.Join("", overview.RecentEvents.Select(item => $"""
+        <tr>
+          <td>{HtmlEncoder.Default.Encode(item.Timestamp.ToLocalTime().ToString("dd/MM HH:mm"))}</td>
+          <td>{HtmlEncoder.Default.Encode(item.Type)}</td>
+          <td>{HtmlEncoder.Default.Encode(item.ZoneId ?? "-")}</td>
+          <td>{HtmlEncoder.Default.Encode(item.Message)}</td>
+        </tr>
+        """));
 
     var html = $$"""
         <!doctype html>
@@ -112,7 +122,7 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
               <div class="metric"><span>Runner</span><strong id="status">{{HtmlEncoder.Default.Encode(overview.Runner.Status ?? "idle")}}</strong></div>
               <div class="metric"><span>Ciclo</span><strong>{{HtmlEncoder.Default.Encode(overview.Runner.CycleName ?? "-")}}</strong></div>
               <div class="metric"><span>Zona</span><strong>{{HtmlEncoder.Default.Encode(overview.Runner.ZoneName ?? "-")}}</strong></div>
-              <div class="metric"><span>Fine prevista</span><strong>{{HtmlEncoder.Default.Encode(overview.ExpectedEndText)}}</strong></div>
+              <div class="metric"><span>Bilancio</span><strong>{{HtmlEncoder.Default.Encode(overview.LastWaterBalanceUpdateDate)}}</strong></div>
             </div>
             {{validationBlock}}
             <h2>Cicli</h2>
@@ -124,6 +134,11 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
             <table>
               <thead><tr><th>Zona</th><th>Stato HA</th><th>Deficit</th><th>Comando</th></tr></thead>
               <tbody>{{zones}}</tbody>
+            </table>
+            <h2>Eventi</h2>
+            <table>
+              <thead><tr><th>Quando</th><th>Tipo</th><th>Zona</th><th>Dettaglio</th></tr></thead>
+              <tbody>{{eventRows}}</tbody>
             </table>
           </main>
           <script>

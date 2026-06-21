@@ -5,6 +5,8 @@ public sealed class IrrigationOverview
     public RunnerSnapshot Runner { get; set; } = new();
     public string ExpectedEndText { get; set; } = "-";
     public ConfigValidationResult Validation { get; set; } = new();
+    public string LastWaterBalanceUpdateDate { get; set; } = "-";
+    public List<IrrigationEvent> RecentEvents { get; set; } = [];
     public List<CycleOverview> Cycles { get; set; } = [];
     public List<ZoneOverview> Zones { get; set; } = [];
 }

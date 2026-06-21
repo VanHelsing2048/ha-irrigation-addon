@@ -75,14 +75,32 @@ I cicli manuali usano i minuti configurati negli step. Di default ignorano il me
 
 ## Modalita automatica
 
-I cicli automatici usano il meteo Home Assistant, leggono `weather.get_forecasts` e calcolano una durata per zona usando:
+Il bilancio idrico viene aggiornato una volta al giorno usando il meteo Home Assistant e `weather.get_forecasts`.
+
+Per ogni zona:
 
 ```text
-deficit = ET0 * crop_coefficient - pioggia_effettiva
-durata = deficit / precipitation_rate_mm_h * 60
+deficit = deficit_precedente + ET0 * crop_coefficient - pioggia_effettiva
 ```
 
+Quando parte un ciclo automatico, la durata viene calcolata dal deficit gia persistito:
+
+```text
+durata = (deficit - target_deficit_mm) / precipitation_rate_mm_h * 60
+```
+
+Ogni irrigazione riduce il deficit in base ai mm stimati applicati dalla zona.
+
 Per una stima migliore puoi configurare `external_et0_sensor_entity` e far leggere all'add-on un sensore ET0 dedicato.
+
+## Storico
+
+Lo stato persistente in `/data/state.json` contiene:
+
+- deficit idrico per zona;
+- data ultimo aggiornamento del bilancio;
+- ultime esecuzioni schedulate;
+- ultimi eventi di bilancio e irrigazione.
 
 ## MQTT Discovery
 
