@@ -6,7 +6,8 @@ var tests = new (string Name, Action Test)[]
     ("calibration computes precipitation rate", CalibrationComputesPrecipitationRate),
     ("calibration rejects invalid input", CalibrationRejectsInvalidInput),
     ("config validator catches unknown cycle zone", ConfigValidatorCatchesUnknownCycleZone),
-    ("config validator accepts basic sample", ConfigValidatorAcceptsBasicSample)
+    ("config validator accepts basic sample", ConfigValidatorAcceptsBasicSample),
+    ("config validator catches invalid hydraulic policy", ConfigValidatorCatchesInvalidHydraulicPolicy)
 };
 
 var failures = 0;
@@ -79,6 +80,18 @@ static void ConfigValidatorAcceptsBasicSample()
     if (!result.IsValid)
     {
         throw new InvalidOperationException(result.Errors[0].Message);
+    }
+}
+
+static void ConfigValidatorCatchesInvalidHydraulicPolicy()
+{
+    var config = BasicConfig();
+    config.Hydraulic.MaxParallelZones = 0;
+
+    var result = new IrrigationConfigValidator().Validate(config);
+    if (result.IsValid)
+    {
+        throw new InvalidOperationException("Expected hydraulic validation error.");
     }
 }
 

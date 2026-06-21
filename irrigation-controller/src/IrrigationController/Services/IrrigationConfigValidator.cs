@@ -11,10 +11,29 @@ public sealed class IrrigationConfigValidator
         ValidateWeather(config, result);
         ValidateMqttDiscovery(config, result);
         ValidateSafety(config, result);
+        ValidateHydraulic(config, result);
         ValidateZones(config, result);
         ValidateCycles(config, result);
 
         return result;
+    }
+
+    private static void ValidateHydraulic(IrrigationConfig config, ConfigValidationResult result)
+    {
+        if (config.Hydraulic.MaxParallelZones is < 1 or > 16)
+        {
+            Error(result, "hydraulic.max_parallel_zones", "Max parallel zones must be between 1 and 16.");
+        }
+
+        if (!config.Hydraulic.AllowParallelZones && config.Hydraulic.MaxParallelZones > 1)
+        {
+            Warning(result, "hydraulic.max_parallel_zones", "Max parallel zones is ignored while parallel zones are disabled.");
+        }
+
+        if (config.Hydraulic.PauseBetweenZonesSeconds is < 0 or > 3600)
+        {
+            Error(result, "hydraulic.pause_between_zones_seconds", "Pause between zones must be between 0 and 3600 seconds.");
+        }
     }
 
     private static void ValidateMqttDiscovery(IrrigationConfig config, ConfigValidationResult result)

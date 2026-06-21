@@ -33,6 +33,11 @@ Il file `irrigation.example.json` contiene un esempio completo da usare come rif
     "manual_runs_ignore_weather": true,
     "max_zone_minutes": 60
   },
+  "hydraulic": {
+    "allow_parallel_zones": false,
+    "max_parallel_zones": 1,
+    "pause_between_zones_seconds": 0
+  },
   "zones": {
     "prato": {
       "name": "Prato",
@@ -159,6 +164,34 @@ Il controller puo:
 - verificare lo stato reale dopo `turn_on` e `turn_off`;
 - spegnere tutte le zone note quando un ciclo termina o va in errore;
 - applicare un limite massimo di minuti per zona.
+
+## Policy idraulica
+
+Per impostazione predefinita le zone vengono eseguite una alla volta.
+
+```json
+{
+  "hydraulic": {
+    "allow_parallel_zones": false,
+    "max_parallel_zones": 1,
+    "pause_between_zones_seconds": 0
+  }
+}
+```
+
+Se l'impianto supporta abbastanza portata e pressione, puoi abilitare zone parallele:
+
+```json
+{
+  "hydraulic": {
+    "allow_parallel_zones": true,
+    "max_parallel_zones": 2,
+    "pause_between_zones_seconds": 5
+  }
+}
+```
+
+Gli step con piu zone vengono eseguiti in batch rispettando `max_parallel_zones`.
 
 ## MQTT Discovery
 

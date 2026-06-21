@@ -24,6 +24,11 @@
     "manual_runs_ignore_weather": true,
     "max_zone_minutes": 60
   },
+  "hydraulic": {
+    "allow_parallel_zones": false,
+    "max_parallel_zones": 1,
+    "pause_between_zones_seconds": 0
+  },
   "zones": {
     "prato": {
       "name": "Prato",

@@ -118,6 +118,12 @@ public sealed class IrrigationConfigStore
             ManualRunsIgnoreWeather = true,
             MaxZoneMinutes = 60
         },
+        Hydraulic = new HydraulicConfig
+        {
+            AllowParallelZones = false,
+            MaxParallelZones = 1,
+            PauseBetweenZonesSeconds = 0
+        },
         Zones =
         {
             ["prato"] = new ZoneConfig

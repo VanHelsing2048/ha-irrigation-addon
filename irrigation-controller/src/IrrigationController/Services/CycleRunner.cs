@@ -212,6 +212,7 @@ public sealed class CycleRunner
         WeatherAdjustment adjustment,
         CancellationToken cancellationToken)
     {
+        var runs = new List<ZoneRun>();
         foreach (var zoneId in step.Zones)
         {
             if (!config.Zones.TryGetValue(zoneId, out var zone))
@@ -233,20 +234,61 @@ public sealed class CycleRunner
                 continue;
             }
 
-            Current.ZoneId = zoneId;
-            Current.ZoneName = zone.Name;
-            Current.ExpectedEndAt = DateTimeOffset.UtcNow.Add(duration);
+            runs.Add(new ZoneRun(zoneId, zone, duration));
+        }
 
-            await _safety.TurnOnZoneAsync(zone, config.Safety, cancellationToken);
-            try
+        if (runs.Count == 0)
+        {
+            return;
+        }
+
+        if (!config.Hydraulic.AllowParallelZones || config.Hydraulic.MaxParallelZones <= 1)
+        {
+            foreach (var run in runs)
             {
-                await Task.Delay(duration, cancellationToken);
+                await RunSingleZoneAsync(config, run, cancellationToken);
+                await PauseBetweenZonesAsync(config, cancellationToken);
             }
-            finally
-            {
-                await _safety.TurnOffZoneAsync(zone, config.Safety, CancellationToken.None);
-                await _waterBalance.ApplyIrrigationAsync(zoneId, zone, duration, CancellationToken.None);
-            }
+
+            return;
+        }
+
+        foreach (var batch in runs.Chunk(config.Hydraulic.MaxParallelZones))
+        {
+            Current.ZoneId = string.Join(",", batch.Select(item => item.ZoneId));
+            Current.ZoneName = string.Join(", ", batch.Select(item => item.Zone.Name));
+            Current.ExpectedEndAt = DateTimeOffset.UtcNow.Add(batch.Max(item => item.Duration));
+            await Task.WhenAll(batch.Select(run => RunSingleZoneAsync(config, run, cancellationToken)));
+            await PauseBetweenZonesAsync(config, cancellationToken);
+        }
+    }
+
+    private async Task RunSingleZoneAsync(IrrigationConfig config, ZoneRun run, CancellationToken cancellationToken)
+    {
+        if (!config.Hydraulic.AllowParallelZones)
+        {
+            Current.ZoneId = run.ZoneId;
+            Current.ZoneName = run.Zone.Name;
+            Current.ExpectedEndAt = DateTimeOffset.UtcNow.Add(run.Duration);
+        }
+
+        await _safety.TurnOnZoneAsync(run.Zone, config.Safety, cancellationToken);
+        try
+        {
+            await Task.Delay(run.Duration, cancellationToken);
+        }
+        finally
+        {
+            await _safety.TurnOffZoneAsync(run.Zone, config.Safety, CancellationToken.None);
+            await _waterBalance.ApplyIrrigationAsync(run.ZoneId, run.Zone, run.Duration, CancellationToken.None);
+        }
+    }
+
+    private static async Task PauseBetweenZonesAsync(IrrigationConfig config, CancellationToken cancellationToken)
+    {
+        if (config.Hydraulic.PauseBetweenZonesSeconds > 0)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(config.Hydraulic.PauseBetweenZonesSeconds), cancellationToken);
         }
     }
 
@@ -294,4 +336,5 @@ public sealed class CycleRunner
         await _stateStore.SaveAsync(state, cancellationToken);
     }
 
+    private sealed record ZoneRun(string ZoneId, ZoneConfig Zone, TimeSpan Duration);
 }

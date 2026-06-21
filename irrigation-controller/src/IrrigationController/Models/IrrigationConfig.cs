@@ -5,6 +5,7 @@ public sealed class IrrigationConfig
     public WeatherConfig Weather { get; set; } = new();
     public MqttDiscoveryConfig MqttDiscovery { get; set; } = new();
     public SafetyConfig Safety { get; set; } = new();
+    public HydraulicConfig Hydraulic { get; set; } = new();
     public Dictionary<string, ZoneConfig> Zones { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, CycleConfig> Cycles { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
@@ -38,6 +39,13 @@ public sealed class SafetyConfig
     public int SwitchRetryDelayMs { get; set; } = 750;
     public bool ManualRunsIgnoreWeather { get; set; } = true;
     public int MaxZoneMinutes { get; set; } = 60;
+}
+
+public sealed class HydraulicConfig
+{
+    public bool AllowParallelZones { get; set; }
+    public int MaxParallelZones { get; set; } = 1;
+    public int PauseBetweenZonesSeconds { get; set; }
 }
 
 public sealed class ZoneConfig
