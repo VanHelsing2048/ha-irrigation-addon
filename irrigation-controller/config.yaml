@@ -10,9 +10,12 @@ boot: auto
 init: false
 ingress: true
 ingress_port: 8080
+ingress_entry: "/ui"
+webui: "http://[HOST]:[PORT:8080]/ui"
 watchdog: "http://[HOST]:[PORT:8080]/api/health"
 panel_icon: mdi:sprinkler
 panel_title: Irrigazione
+panel_admin: true
 homeassistant_api: true
 hassio_api: false
 ports:
@@ -21,8 +24,58 @@ ports_description:
   8080/tcp: "API e UI locale del controller irrigazione"
 options:
   irrigation_config_path: "/data/irrigation.json"
+  weather:
+    entity: "weather.home"
+    forecast_type: "hourly"
+    rain_lookahead_hours: 24
+    rain_efficiency: 0.75
+    skip_if_expected_rain_mm_above: 4
+    skip_if_rain_probability_above: 70
+    external_et0_sensor_entity: ""
+  mqtt_discovery:
+    enabled: true
+    discovery_prefix: "homeassistant"
+    base_topic: "irrigation_controller"
+    publish_interval_seconds: 30
+  safety:
+    turn_off_all_zones_on_startup: true
+    stop_all_known_zones_on_error: true
+    verify_zone_state_after_switch: true
+    switch_retry_count: 2
+    switch_retry_delay_ms: 750
+    manual_runs_ignore_weather: true
+    max_zone_minutes: 60
+  hydraulic:
+    allow_parallel_zones: false
+    max_parallel_zones: 1
+    pause_between_zones_seconds: 0
 schema:
   irrigation_config_path: str
+  weather:
+    entity: str
+    forecast_type: "list(hourly|daily)"
+    rain_lookahead_hours: "int(1,168)"
+    rain_efficiency: "float(0,1)"
+    skip_if_expected_rain_mm_above: "float(0,)"
+    skip_if_rain_probability_above: "int(0,100)"
+    external_et0_sensor_entity: "str?"
+  mqtt_discovery:
+    enabled: bool
+    discovery_prefix: str
+    base_topic: str
+    publish_interval_seconds: "int(5,3600)"
+  safety:
+    turn_off_all_zones_on_startup: bool
+    stop_all_known_zones_on_error: bool
+    verify_zone_state_after_switch: bool
+    switch_retry_count: "int(0,10)"
+    switch_retry_delay_ms: "int(100,30000)"
+    manual_runs_ignore_weather: bool
+    max_zone_minutes: "int(1,240)"
+  hydraulic:
+    allow_parallel_zones: bool
+    max_parallel_zones: "int(1,16)"
+    pause_between_zones_seconds: "int(0,3600)"
 map:
   - type: addon_config
     read_only: false

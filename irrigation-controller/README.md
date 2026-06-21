@@ -15,6 +15,8 @@ L'interfaccia Ingress espone:
 - editor JSON avanzato con backup automatico;
 - avvio/stop manuale e calibrazione zone.
 
+La scheda Config dell'add-on in Home Assistant gestisce le impostazioni generali. La UI Ingress resta la pagina operativa e guidata per usare il controller.
+
 Endpoint salute:
 
 - `GET /api/health`

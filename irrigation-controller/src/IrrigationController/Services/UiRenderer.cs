@@ -341,7 +341,9 @@ function cycleForm(id, c) {
 }
 function renderWeather() {
   const w = config.weather || {};
-  return `<section class="section"><div class="card"><div class="row">
+  return `<section class="section">
+  <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">In uso reale queste opzioni generali sono pensate per la scheda Config dell'add-on. Questa vista resta utile per sviluppo e modifiche avanzate.</p></div>
+  <div class="card"><div class="row">
     ${field('weather-entity', 'Entità meteo', w.entity, 'span-4')}
     ${field('weather-type', 'Tipo forecast', w.forecast_type || 'hourly', 'span-2')}
     ${numberField('weather-lookahead', 'Ore previsione', w.rain_lookahead_hours, 'span-2')}
@@ -356,6 +358,7 @@ function renderPlant() {
   const s = config.safety || {};
   const m = config.mqtt_discovery || {};
   return `<section class="section">
+    <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">Idraulica, sicurezze e MQTT Discovery possono essere gestite dalla scheda Config dell'add-on. Il collegamento laterale usa Ingress con panel_title/panel_icon.</p></div>
     <div class="card"><h3>Idraulica</h3><div class="row">
       <label class="span-3"><span>Zone parallele</span><select id="hyd-parallel"><option value="false" ${!h.allow_parallel_zones ? 'selected' : ''}>No</option><option value="true" ${h.allow_parallel_zones ? 'selected' : ''}>Sì</option></select></label>
       ${numberField('hyd-max', 'Max zone insieme', h.max_parallel_zones, 'span-3')}

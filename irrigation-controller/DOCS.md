@@ -10,6 +10,18 @@ Il file `irrigation.example.json` contiene un esempio completo da usare come rif
 
 La UI Ingress espone viste guidate per modificare zone, cicli, meteo, impianto, sicurezze e MQTT Discovery. La vista JSON rimane disponibile per modifiche avanzate.
 
+In Home Assistant, la scheda Config dell'add-on scrive `/data/options.json`. L'add-on legge quel file e applica le opzioni generali a runtime:
+
+- meteo;
+- MQTT Discovery;
+- sicurezze;
+- policy idraulica;
+- percorso del file `irrigation.json`.
+
+Zone e cicli restano configurabili dalla UI guidata dell'add-on.
+
+Il pulsante "Vai alla pagina Web" viene fornito da Ingress. Il collegamento rapido nella barra laterale di Home Assistant usa `panel_title` e `panel_icon`; Home Assistant permette poi di mostrare/nascondere il pannello laterale dalla pagina dell'add-on.
+
 ```json
 {
   "weather": {

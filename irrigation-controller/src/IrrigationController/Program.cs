@@ -14,6 +14,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 builder.Services.AddSingleton<IrrigationConfigStore>();
+builder.Services.AddSingleton<AddonOptionsStore>();
 builder.Services.AddSingleton<IrrigationConfigValidator>();
 builder.Services.AddSingleton<IrrigationStateStore>();
 builder.Services.AddHttpClient<HomeAssistantClient>();
