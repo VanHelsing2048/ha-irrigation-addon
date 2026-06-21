@@ -6,12 +6,14 @@ La prima versione usa le valvole gia disponibili in Home Assistant come `switch.
 
 L'interfaccia Ingress espone:
 
-- stato runner;
-- avvio manuale dei cicli;
-- avvio/stop rapido delle singole zone;
-- calibrazione guidata resa zona;
-- editor JSON configurazione con backup automatico;
-- stop globale.
+- dashboard stato runner, zone e cicli;
+- gestione guidata zone;
+- gestione guidata cicli;
+- configurazione meteo;
+- configurazione impianto, sicurezze e MQTT Discovery;
+- diagnostica;
+- editor JSON avanzato con backup automatico;
+- avvio/stop manuale e calibrazione zone.
 
 Endpoint salute:
 

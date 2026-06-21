@@ -21,15 +21,22 @@ public sealed class StartupSafetyService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var config = await _configStore.GetAsync(cancellationToken);
-        var validation = _validator.Validate(config);
-        if (!validation.IsValid || !config.Safety.TurnOffAllZonesOnStartup)
+        try
         {
-            return;
-        }
+            var config = await _configStore.GetAsync(cancellationToken);
+            var validation = _validator.Validate(config);
+            if (!validation.IsValid || !config.Safety.TurnOffAllZonesOnStartup)
+            {
+                return;
+            }
 
-        _logger.LogInformation("Turning off all known irrigation zones on startup.");
-        await _safety.StopAllKnownZonesAsync(config, cancellationToken);
+            _logger.LogInformation("Turning off all known irrigation zones on startup.");
+            await _safety.StopAllKnownZonesAsync(config, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Startup safety check failed; the add-on will continue running.");
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

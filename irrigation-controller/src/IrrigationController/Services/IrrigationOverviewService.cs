@@ -73,7 +73,7 @@ public sealed class IrrigationOverviewService
 
         foreach (var (zoneId, zone) in config.Zones.OrderBy(item => item.Value.Name))
         {
-            var homeAssistantState = await _homeAssistant.GetStateAsync(zone.Entity, cancellationToken);
+            var homeAssistantState = await ReadStateSafeAsync(zone.Entity, cancellationToken);
             state.WaterBalance.TryGetValue(zoneId, out var balance);
             state.Calibrations.TryGetValue(zoneId, out var calibration);
 
@@ -93,6 +93,18 @@ public sealed class IrrigationOverviewService
         }
 
         return zones;
+    }
+
+    private async Task<string?> ReadStateSafeAsync(string entityId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _homeAssistant.GetStateAsync(entityId, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static DateTimeOffset? CalculateNextRun(CycleConfig cycle)

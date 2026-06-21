@@ -8,6 +8,8 @@ Alla prima esecuzione viene creato `/data/irrigation.json` con un esempio. Le va
 
 Il file `irrigation.example.json` contiene un esempio completo da usare come riferimento.
 
+La UI Ingress espone viste guidate per modificare zone, cicli, meteo, impianto, sicurezze e MQTT Discovery. La vista JSON rimane disponibile per modifiche avanzate.
+
 ```json
 {
   "weather": {

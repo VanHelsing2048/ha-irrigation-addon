@@ -15,6 +15,7 @@ Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 - L'add-on puo pubblicare entita MQTT Discovery proprie del controller tramite `mqtt.publish`.
 - La configurazione puo essere modificata dalla UI Ingress con salvataggio e backup automatico.
 - La policy idraulica controlla zone sequenziali, parallelismo e pausa tra zone.
+- La UI Ingress include viste guidate per dashboard, zone, cicli, meteo, impianto, diagnostica e JSON avanzato.
 
 ## Sviluppo locale
 
