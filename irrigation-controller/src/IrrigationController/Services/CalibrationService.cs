@@ -87,6 +87,40 @@ public sealed class CalibrationService
         return result;
     }
 
+    public async Task<CommandResult> ApplyAsync(string zoneId, CancellationToken cancellationToken)
+    {
+        var config = await _configStore.GetAsync(cancellationToken);
+        if (!config.Zones.TryGetValue(zoneId, out var zone))
+        {
+            return new CommandResult(false, $"Unknown zone {zoneId}.");
+        }
+
+        var state = await _stateStore.GetAsync(cancellationToken);
+        if (!state.Calibrations.TryGetValue(zoneId, out var calibration))
+        {
+            return new CommandResult(false, $"No calibration is available for zone {zoneId}.");
+        }
+
+        zone.PrecipitationRateMmH = calibration.PrecipitationRateMmH;
+        await _configStore.SaveAsync(config, cancellationToken);
+
+        state.Events.Insert(0, new IrrigationEvent
+        {
+            Type = "calibration_applied",
+            ZoneId = zoneId,
+            AmountMm = calibration.PrecipitationRateMmH,
+            Message = $"Applied calibrated precipitation rate {calibration.PrecipitationRateMmH:0.##}mm/h to configuration."
+        });
+
+        if (state.Events.Count > 200)
+        {
+            state.Events.RemoveRange(200, state.Events.Count - 200);
+        }
+
+        await _stateStore.SaveAsync(state, cancellationToken);
+        return new CommandResult(true, $"Applied {calibration.PrecipitationRateMmH:0.##}mm/h to {zone.Name}.");
+    }
+
     private static string BuildRecommendation(double precipitationRate, double uniformity)
     {
         var uniformityText = uniformity switch

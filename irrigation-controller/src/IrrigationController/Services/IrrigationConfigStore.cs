@@ -14,6 +14,7 @@ public sealed class IrrigationConfigStore
     };
 
     private readonly string _path;
+    private readonly SemaphoreSlim _lock = new(1, 1);
     private IrrigationConfig? _cached;
 
     public IrrigationConfigStore(IConfiguration configuration)
@@ -25,29 +26,71 @@ public sealed class IrrigationConfigStore
 
     public async Task<IrrigationConfig> GetAsync(CancellationToken cancellationToken)
     {
+        await _lock.WaitAsync(cancellationToken);
+        try
+        {
         if (_cached is not null)
         {
             return _cached;
         }
 
-        return await ReloadAsync(cancellationToken);
+        _cached = await LoadAsync(cancellationToken);
+        return _cached;
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 
     public async Task<IrrigationConfig> ReloadAsync(CancellationToken cancellationToken)
+    {
+        await _lock.WaitAsync(cancellationToken);
+        try
+        {
+        _cached = await LoadAsync(cancellationToken);
+        return _cached;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    public async Task SaveAsync(IrrigationConfig config, CancellationToken cancellationToken)
+    {
+        await _lock.WaitAsync(cancellationToken);
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
+            if (File.Exists(_path))
+            {
+                var backupPath = $"{_path}.{DateTimeOffset.Now:yyyyMMddHHmmssfff}.bak";
+                File.Copy(_path, backupPath, overwrite: false);
+            }
+
+            await File.WriteAllTextAsync(_path, JsonSerializer.Serialize(config, JsonOptions), cancellationToken);
+            _cached = config;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    private async Task<IrrigationConfig> LoadAsync(CancellationToken cancellationToken)
     {
         if (!File.Exists(_path))
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
             var sample = CreateSample();
             await File.WriteAllTextAsync(_path, JsonSerializer.Serialize(sample, JsonOptions), cancellationToken);
-            _cached = sample;
             return sample;
         }
 
         await using var stream = File.OpenRead(_path);
-        _cached = await JsonSerializer.DeserializeAsync<IrrigationConfig>(stream, JsonOptions, cancellationToken)
+        return await JsonSerializer.DeserializeAsync<IrrigationConfig>(stream, JsonOptions, cancellationToken)
             ?? new IrrigationConfig();
-        return _cached;
     }
 
     private static IrrigationConfig CreateSample() => new()

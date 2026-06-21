@@ -57,6 +57,7 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
             <button onclick="startZone('{HtmlEncoder.Default.Encode(zone.Id)}')">Start</button>
             <button class="secondary" onclick="stopZone('{HtmlEncoder.Default.Encode(zone.Id)}')">Stop</button>
             <button class="secondary" onclick="calibrateZone('{HtmlEncoder.Default.Encode(zone.Id)}')">Calibra</button>
+            <button class="secondary" onclick="applyCalibration('{HtmlEncoder.Default.Encode(zone.Id)}')">Applica</button>
           </td>
         </tr>
         """));
@@ -162,6 +163,7 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
             function startZone(id) { post('/api/zones/' + id + '/start?minutes=5'); }
             function stopZone(id) { post('/api/zones/' + id + '/stop'); }
             function globalStop() { post('/api/stop'); }
+            function applyCalibration(id) { post('/api/calibration/zones/' + id + '/apply'); }
             async function calibrateZone(id) {
               const minutes = prompt('Minuti test calibrazione', '10');
               if (!minutes) return;
@@ -276,6 +278,15 @@ app.MapPost("/api/calibration/zones/{zoneId}/complete", async (
 {
     var result = await calibration.CompleteAsync(zoneId, request, cancellationToken);
     return result is null ? Results.BadRequest(new { message = "Invalid calibration data." }) : Results.Ok(result);
+});
+
+app.MapPost("/api/calibration/zones/{zoneId}/apply", async (
+    string zoneId,
+    CalibrationService calibration,
+    CancellationToken cancellationToken) =>
+{
+    var result = await calibration.ApplyAsync(zoneId, cancellationToken);
+    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
 });
 
 await app.RunAsync();

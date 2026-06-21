@@ -82,6 +82,7 @@ Il file `irrigation.example.json` contiene un esempio completo da usare come rif
 - `POST /api/stop`
 - `POST /api/calibration/zones/{zoneId}/start?minutes=10`
 - `POST /api/calibration/zones/{zoneId}/complete`
+- `POST /api/calibration/zones/{zoneId}/apply`
 
 ## Calibrazione zone
 
@@ -104,6 +105,14 @@ POST /api/calibration/zones/prato/start?minutes=10
 ```
 
 Il controller restituisce media, resa `mm/h`, minimo, massimo e uniformita. Usa `precipitation_rate_mm_h` proposto nella configurazione della zona.
+
+Per applicare l'ultima calibrazione alla configurazione della zona:
+
+```http
+POST /api/calibration/zones/prato/apply
+```
+
+Prima di salvare, il controller crea un backup timestamped di `/data/irrigation.json`.
 
 ## Modalita manuale
 
