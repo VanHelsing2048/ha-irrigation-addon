@@ -22,6 +22,15 @@ Alla prima esecuzione viene creato `/data/irrigation.json` con un esempio. Le va
     "base_topic": "irrigation_controller",
     "publish_interval_seconds": 30
   },
+  "safety": {
+    "turn_off_all_zones_on_startup": true,
+    "stop_all_known_zones_on_error": true,
+    "verify_zone_state_after_switch": true,
+    "switch_retry_count": 2,
+    "switch_retry_delay_ms": 750,
+    "manual_runs_ignore_weather": true,
+    "max_zone_minutes": 60
+  },
   "zones": {
     "prato": {
       "name": "Prato",
@@ -101,6 +110,16 @@ Lo stato persistente in `/data/state.json` contiene:
 - data ultimo aggiornamento del bilancio;
 - ultime esecuzioni schedulate;
 - ultimi eventi di bilancio e irrigazione.
+
+## Sicurezze
+
+Il controller puo:
+
+- spegnere tutte le zone note all'avvio;
+- riprovare i comandi alle valvole;
+- verificare lo stato reale dopo `turn_on` e `turn_off`;
+- spegnere tutte le zone note quando un ciclo termina o va in errore;
+- applicare un limite massimo di minuti per zona.
 
 ## MQTT Discovery
 

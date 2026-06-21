@@ -65,6 +65,16 @@ public sealed class IrrigationConfigStore
             BaseTopic = "irrigation_controller",
             PublishIntervalSeconds = 30
         },
+        Safety = new SafetyConfig
+        {
+            TurnOffAllZonesOnStartup = true,
+            StopAllKnownZonesOnError = true,
+            VerifyZoneStateAfterSwitch = true,
+            SwitchRetryCount = 2,
+            SwitchRetryDelayMs = 750,
+            ManualRunsIgnoreWeather = true,
+            MaxZoneMinutes = 60
+        },
         Zones =
         {
             ["prato"] = new ZoneConfig

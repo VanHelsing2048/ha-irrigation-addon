@@ -69,6 +69,16 @@ public sealed class IrrigationConfigValidator
         {
             Error(result, "safety.max_zone_minutes", "Max zone minutes must be between 1 and 240.");
         }
+
+        if (config.Safety.SwitchRetryCount is < 0 or > 10)
+        {
+            Error(result, "safety.switch_retry_count", "Switch retry count must be between 0 and 10.");
+        }
+
+        if (config.Safety.SwitchRetryDelayMs is < 100 or > 30000)
+        {
+            Error(result, "safety.switch_retry_delay_ms", "Switch retry delay must be between 100 and 30000 ms.");
+        }
     }
 
     private static void ValidateZones(IrrigationConfig config, ConfigValidationResult result)

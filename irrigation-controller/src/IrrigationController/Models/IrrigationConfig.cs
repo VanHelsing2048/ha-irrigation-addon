@@ -32,6 +32,10 @@ public sealed class SafetyConfig
 {
     public bool OneCycleAtATime { get; set; } = true;
     public bool StopAllKnownZonesOnError { get; set; } = true;
+    public bool TurnOffAllZonesOnStartup { get; set; } = true;
+    public bool VerifyZoneStateAfterSwitch { get; set; } = true;
+    public int SwitchRetryCount { get; set; } = 2;
+    public int SwitchRetryDelayMs { get; set; } = 750;
     public bool ManualRunsIgnoreWeather { get; set; } = true;
     public int MaxZoneMinutes { get; set; } = 60;
 }

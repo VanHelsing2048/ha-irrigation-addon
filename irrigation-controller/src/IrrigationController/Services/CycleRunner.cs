@@ -11,6 +11,7 @@ public sealed class CycleRunner
     private readonly HomeAssistantClient _homeAssistant;
     private readonly WeatherAdjustmentService _weather;
     private readonly WaterBalanceService _waterBalance;
+    private readonly IrrigationSafetyService _safety;
     private readonly ILogger<CycleRunner> _logger;
     private CancellationTokenSource? _activeRun;
 
@@ -23,6 +24,7 @@ public sealed class CycleRunner
         HomeAssistantClient homeAssistant,
         WeatherAdjustmentService weather,
         WaterBalanceService waterBalance,
+        IrrigationSafetyService safety,
         ILogger<CycleRunner> logger)
     {
         _configStore = configStore;
@@ -31,6 +33,7 @@ public sealed class CycleRunner
         _homeAssistant = homeAssistant;
         _weather = weather;
         _waterBalance = waterBalance;
+        _safety = safety;
         _logger = logger;
     }
 
@@ -91,7 +94,7 @@ public sealed class CycleRunner
         var config = await _configStore.GetAsync(cancellationToken);
         if (config.Zones.TryGetValue(zoneId, out var zone))
         {
-            await _homeAssistant.TurnOffAsync(zone.Entity, cancellationToken);
+            await _safety.TurnOffZoneAsync(zone, config.Safety, cancellationToken);
         }
     }
 
@@ -116,7 +119,7 @@ public sealed class CycleRunner
                 var config = await _configStore.GetAsync(CancellationToken.None);
                 if (config.Safety.StopAllKnownZonesOnError)
                 {
-                    await StopAllKnownZonesAsync(config, CancellationToken.None);
+                    await _safety.StopAllKnownZonesAsync(config, CancellationToken.None);
                 }
             }
             finally
@@ -213,14 +216,14 @@ public sealed class CycleRunner
             Current.ZoneName = zone.Name;
             Current.ExpectedEndAt = DateTimeOffset.UtcNow.Add(duration);
 
-            await _homeAssistant.TurnOnAsync(zone.Entity, cancellationToken);
+            await _safety.TurnOnZoneAsync(zone, config.Safety, cancellationToken);
             try
             {
                 await Task.Delay(duration, cancellationToken);
             }
             finally
             {
-                await _homeAssistant.TurnOffAsync(zone.Entity, CancellationToken.None);
+                await _safety.TurnOffZoneAsync(zone, config.Safety, CancellationToken.None);
                 await _waterBalance.ApplyIrrigationAsync(zoneId, zone, duration, CancellationToken.None);
             }
         }
@@ -270,18 +273,4 @@ public sealed class CycleRunner
         await _stateStore.SaveAsync(state, cancellationToken);
     }
 
-    private async Task StopAllKnownZonesAsync(IrrigationConfig config, CancellationToken cancellationToken)
-    {
-        foreach (var zone in config.Zones.Values)
-        {
-            try
-            {
-                await _homeAssistant.TurnOffAsync(zone.Entity, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Unable to turn off {EntityId}.", zone.Entity);
-            }
-        }
-    }
 }
