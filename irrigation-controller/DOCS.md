@@ -73,6 +73,7 @@ Il file `irrigation.example.json` contiene un esempio completo da usare come rif
 - `GET /api/status`
 - `GET /api/overview`
 - `GET /api/config`
+- `PUT /api/config`
 - `GET /api/config/validate`
 - `POST /api/config/reload`
 - `POST /api/cycles/{cycleId}/start`

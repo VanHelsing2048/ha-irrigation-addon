@@ -13,6 +13,7 @@ Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 - I cicli automatici calcolano i tempi usando deficit idrico, ET stimata e pioggia prevista.
 - L'add-on usa le API Home Assistant per chiamare `switch.turn_on`, `switch.turn_off` e `weather.get_forecasts`.
 - L'add-on puo pubblicare entita MQTT Discovery proprie del controller tramite `mqtt.publish`.
+- La configurazione puo essere modificata dalla UI Ingress con salvataggio e backup automatico.
 
 ## Sviluppo locale
 

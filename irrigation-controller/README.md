@@ -10,6 +10,7 @@ L'interfaccia Ingress espone:
 - avvio manuale dei cicli;
 - avvio/stop rapido delle singole zone;
 - calibrazione guidata resa zona;
+- editor JSON configurazione con backup automatico;
 - stop globale.
 
 Endpoint salute:

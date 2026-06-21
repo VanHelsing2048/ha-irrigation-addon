@@ -1,6 +1,7 @@
 using IrrigationController.Models;
 using IrrigationController.Services;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -128,7 +129,10 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
           <main>
             <header>
               <h1>Irrigazione</h1>
-              <button class="danger" onclick="globalStop()">Stop</button>
+              <div>
+                <button class="secondary" onclick="location.href='/config'">Config</button>
+                <button class="danger" onclick="globalStop()">Stop</button>
+              </div>
             </header>
             <div class="grid">
               <div class="metric"><span>Runner</span><strong id="status">{{HtmlEncoder.Default.Encode(overview.Runner.Status ?? "idle")}}</strong></div>
@@ -187,8 +191,94 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
     return Results.Content(html, "text/html");
 });
 
+app.MapGet("/config", async (IrrigationConfigStore store, CancellationToken cancellationToken) =>
+{
+    var config = await store.GetAsync(cancellationToken);
+    var json = JsonSerializer.Serialize(config, new JsonSerializerOptions(JsonSerializerDefaults.Web)
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    });
+
+    var html = $$"""
+        <!doctype html>
+        <html lang="it">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Config Irrigazione</title>
+          <style>
+            :root { color-scheme: light dark; font-family: Segoe UI, sans-serif; }
+            body { margin: 0; padding: 24px; background: #f7f7f2; color: #20231f; }
+            main { max-width: 1100px; margin: 0 auto; }
+            header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+            textarea { box-sizing: border-box; width: 100%; min-height: 70vh; padding: 14px; border: 1px solid #cbd4c2; border-radius: 8px; font: 14px Consolas, monospace; }
+            button { min-width: 86px; border: 0; border-radius: 6px; padding: 8px 10px; background: #1f7a4d; color: white; cursor: pointer; }
+            button.secondary { background: #5f6959; }
+            .status { margin: 12px 0; padding: 12px 14px; border: 1px solid #ccd8c2; border-radius: 8px; background: #ffffff; }
+            @media (prefers-color-scheme: dark) {
+              body { background: #171a16; color: #eef2e9; }
+              textarea, .status { background: #20241e; color: #eef2e9; border-color: #384030; }
+            }
+          </style>
+        </head>
+        <body>
+          <main>
+            <header>
+              <h1>Configurazione</h1>
+              <div>
+                <button class="secondary" onclick="location.href='/ui'">Indietro</button>
+                <button onclick="saveConfig()">Salva</button>
+              </div>
+            </header>
+            <div class="status" id="status">Modifica JSON, poi salva. Viene creato un backup automatico.</div>
+            <textarea id="config">{{HtmlEncoder.Default.Encode(json)}}</textarea>
+          </main>
+          <script>
+            async function saveConfig() {
+              const status = document.getElementById('status');
+              let parsed;
+              try {
+                parsed = JSON.parse(document.getElementById('config').value);
+              } catch (error) {
+                status.textContent = 'JSON non valido: ' + error.message;
+                return;
+              }
+              const res = await fetch('/api/config', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(parsed)
+              });
+              const body = await res.json().catch(() => ({}));
+              status.textContent = body.message || (res.ok ? 'Configurazione salvata' : JSON.stringify(body));
+            }
+          </script>
+        </body>
+        </html>
+        """;
+
+    return Results.Content(html, "text/html");
+});
+
 app.MapGet("/api/config", async (IrrigationConfigStore store, CancellationToken cancellationToken) =>
     Results.Ok(await store.GetAsync(cancellationToken)));
+
+app.MapPut("/api/config", async (
+    IrrigationConfig config,
+    IrrigationConfigStore store,
+    IrrigationConfigValidator validator,
+    CancellationToken cancellationToken) =>
+{
+    var validation = validator.Validate(config);
+    if (!validation.IsValid)
+    {
+        return Results.BadRequest(validation);
+    }
+
+    await store.SaveAsync(config, cancellationToken);
+    return Results.Ok(new { message = "Configuration saved.", validation.Warnings });
+});
 
 app.MapGet("/api/config/validate", async (
     IrrigationConfigStore store,
