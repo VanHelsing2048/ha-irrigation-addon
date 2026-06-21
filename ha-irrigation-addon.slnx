@@ -3,4 +3,7 @@
   <Folder Name="/irrigation-controller/src/">
     <Project Path="irrigation-controller/src/IrrigationController/IrrigationController.csproj" />
   </Folder>
+  <Folder Name="/irrigation-controller/tests/">
+    <Project Path="irrigation-controller/tests/IrrigationController.Tests/IrrigationController.Tests.csproj" />
+  </Folder>
 </Solution>

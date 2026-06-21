@@ -20,6 +20,7 @@ Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 ```powershell
 dotnet build irrigation-controller\src\IrrigationController\IrrigationController.csproj
 dotnet run --project irrigation-controller\src\IrrigationController\IrrigationController.csproj
+dotnet run --project irrigation-controller\tests\IrrigationController.Tests\IrrigationController.Tests.csproj
 ```
 
 In Home Assistant, aggiungi questo repository come add-on repository e installa `Irrigation Controller`.
