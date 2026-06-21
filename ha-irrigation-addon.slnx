@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/irrigation-controller/" />
+  <Folder Name="/irrigation-controller/src/">
+    <Project Path="irrigation-controller/src/IrrigationController/IrrigationController.csproj" />
+  </Folder>
+</Solution>

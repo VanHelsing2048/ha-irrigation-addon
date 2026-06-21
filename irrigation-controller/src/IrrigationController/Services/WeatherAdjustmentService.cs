@@ -1,0 +1,125 @@
+using System.Text.Json;
+using IrrigationController.Models;
+
+namespace IrrigationController.Services;
+
+public sealed class WeatherAdjustmentService
+{
+    private readonly HomeAssistantClient _homeAssistant;
+    private readonly ILogger<WeatherAdjustmentService> _logger;
+
+    public WeatherAdjustmentService(HomeAssistantClient homeAssistant, ILogger<WeatherAdjustmentService> logger)
+    {
+        _homeAssistant = homeAssistant;
+        _logger = logger;
+    }
+
+    public async Task<WeatherAdjustment> CalculateAsync(IrrigationConfig config, CancellationToken cancellationToken)
+    {
+        var weather = config.Weather;
+        var et0 = await ReadExternalEt0Async(weather, cancellationToken);
+        var expectedRain = 0d;
+        var maxProbability = 0;
+
+        using var forecasts = await _homeAssistant.GetForecastsAsync(weather.Entity, weather.ForecastType, cancellationToken);
+        if (forecasts is not null)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var until = now.AddHours(weather.RainLookaheadHours);
+            foreach (var item in EnumerateForecastItems(forecasts.RootElement, weather.Entity))
+            {
+                if (!TryGetDateTime(item, out var forecastTime) || forecastTime < now || forecastTime > until)
+                {
+                    continue;
+                }
+
+                expectedRain += ReadDouble(item, "precipitation", "native_precipitation") ?? 0;
+                maxProbability = Math.Max(maxProbability, (int)(ReadDouble(item, "precipitation_probability") ?? 0));
+
+                if (et0 is null)
+                {
+                    et0 = EstimateEt0(item);
+                }
+            }
+        }
+
+        var et0Value = Math.Max(0, et0 ?? 3);
+        var effectiveRain = Math.Max(0, expectedRain * weather.RainEfficiency);
+        var shouldSkip = expectedRain >= weather.SkipIfExpectedRainMmAbove
+            || maxProbability >= weather.SkipIfRainProbabilityAbove;
+
+        return new WeatherAdjustment(et0Value, expectedRain, effectiveRain, maxProbability, shouldSkip);
+    }
+
+    private async Task<double?> ReadExternalEt0Async(WeatherConfig weather, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(weather.ExternalEt0SensorEntity))
+        {
+            return null;
+        }
+
+        return await _homeAssistant.GetNumericStateAsync(weather.ExternalEt0SensorEntity, cancellationToken);
+    }
+
+    private static IEnumerable<JsonElement> EnumerateForecastItems(JsonElement root, string entityId)
+    {
+        if (!root.TryGetProperty(entityId, out var entity) || !entity.TryGetProperty("forecast", out var forecast))
+        {
+            yield break;
+        }
+
+        foreach (var item in forecast.EnumerateArray())
+        {
+            yield return item;
+        }
+    }
+
+    private static bool TryGetDateTime(JsonElement item, out DateTimeOffset value)
+    {
+        value = default;
+        if (!item.TryGetProperty("datetime", out var property))
+        {
+            return false;
+        }
+
+        return DateTimeOffset.TryParse(property.GetString(), out value);
+    }
+
+    private static double EstimateEt0(JsonElement forecast)
+    {
+        var temperature = ReadDouble(forecast, "temperature", "native_temperature") ?? 20;
+        var humidity = ReadDouble(forecast, "humidity") ?? 60;
+        var windSpeed = ReadDouble(forecast, "wind_speed", "native_wind_speed") ?? 5;
+        var cloudCoverage = ReadDouble(forecast, "cloud_coverage") ?? 50;
+
+        var tempFactor = Math.Clamp((temperature - 5) / 25, 0.1, 1.4);
+        var humidityFactor = Math.Clamp((100 - humidity) / 70, 0.2, 1.2);
+        var windFactor = Math.Clamp(1 + windSpeed / 40, 1, 1.6);
+        var sunFactor = Math.Clamp((100 - cloudCoverage) / 100, 0.25, 1);
+
+        return Math.Round(5 * tempFactor * humidityFactor * windFactor * sunFactor, 2);
+    }
+
+    private static double? ReadDouble(JsonElement item, params string[] propertyNames)
+    {
+        foreach (var propertyName in propertyNames)
+        {
+            if (!item.TryGetProperty(propertyName, out var property))
+            {
+                continue;
+            }
+
+            if (property.ValueKind == JsonValueKind.Number && property.TryGetDouble(out var number))
+            {
+                return number;
+            }
+
+            if (property.ValueKind == JsonValueKind.String && double.TryParse(property.GetString(), out number))
+            {
+                return number;
+            }
+        }
+
+        return null;
+    }
+}

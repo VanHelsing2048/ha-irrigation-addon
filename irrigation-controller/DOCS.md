@@ -1,0 +1,77 @@
+# Irrigation Controller
+
+Questo add-on orchestra valvole gia esposte in Home Assistant come entita `switch.*`.
+
+## Configurazione
+
+Alla prima esecuzione viene creato `/data/irrigation.json` con un esempio. Le valvole devono essere sostituite con le entita reali create da `MQTT_NET_COMELIT`.
+
+```json
+{
+  "weather": {
+    "entity": "weather.home",
+    "forecast_type": "hourly",
+    "rain_lookahead_hours": 24,
+    "rain_efficiency": 0.75,
+    "skip_if_expected_rain_mm_above": 4,
+    "skip_if_rain_probability_above": 70
+  },
+  "zones": {
+    "prato": {
+      "name": "Prato",
+      "entity": "switch.valvola_prato",
+      "precipitation_rate_mm_h": 12,
+      "crop_coefficient": 0.8,
+      "min_minutes": 4,
+      "max_minutes": 25
+    }
+  },
+  "cycles": {
+    "manuale_giardino": {
+      "name": "Manuale giardino",
+      "mode": "Manual",
+      "steps": [
+        { "zones": ["prato"], "duration_minutes": 15 }
+      ]
+    },
+    "automatico_mattina": {
+      "name": "Automatico mattina",
+      "enabled": true,
+      "mode": "Automatic",
+      "schedule": {
+        "days": ["Monday", "Wednesday", "Friday"],
+        "times": ["06:30"]
+      },
+      "steps": [
+        { "zones": ["prato"] }
+      ]
+    }
+  }
+}
+```
+
+## API
+
+- `GET /api/status`
+- `GET /api/config`
+- `POST /api/config/reload`
+- `POST /api/cycles/{cycleId}/start`
+- `POST /api/cycles/{cycleId}/stop`
+- `POST /api/zones/{zoneId}/start?minutes=5`
+- `POST /api/zones/{zoneId}/stop`
+- `POST /api/stop`
+
+## Modalita manuale
+
+I cicli manuali usano i minuti configurati negli step. Di default ignorano il meteo.
+
+## Modalita automatica
+
+I cicli automatici usano il meteo Home Assistant, leggono `weather.get_forecasts` e calcolano una durata per zona usando:
+
+```text
+deficit = ET0 * crop_coefficient - pioggia_effettiva
+durata = deficit / precipitation_rate_mm_h * 60
+```
+
+Per una stima migliore puoi configurare `external_et0_sensor_entity` e far leggere all'add-on un sensore ET0 dedicato.

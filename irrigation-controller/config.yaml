@@ -1,0 +1,27 @@
+name: "Irrigation Controller"
+version: "0.1.0"
+slug: irrigation_controller
+description: "Controller irrigazione con cicli manuali e automatici basati su ET"
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+init: false
+ingress: true
+ingress_port: 8080
+panel_icon: mdi:sprinkler
+panel_title: Irrigazione
+homeassistant_api: true
+hassio_api: false
+ports:
+  8080/tcp: null
+ports_description:
+  8080/tcp: "API e UI locale del controller irrigazione"
+options:
+  irrigation_config_path: "/data/irrigation.json"
+schema:
+  irrigation_config_path: str
+map:
+  - type: addon_config
+    read_only: false

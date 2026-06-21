@@ -1,0 +1,28 @@
+namespace IrrigationController.Models;
+
+public sealed class IrrigationRuntimeState
+{
+    public Dictionary<string, double> WaterBalance { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> LastScheduledRuns { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+}
+
+public sealed class RunnerSnapshot
+{
+    public bool IsRunning { get; set; }
+    public string? CycleId { get; set; }
+    public string? CycleName { get; set; }
+    public string? ZoneId { get; set; }
+    public string? ZoneName { get; set; }
+    public DateTimeOffset? StartedAt { get; set; }
+    public DateTimeOffset? ExpectedEndAt { get; set; }
+    public string? Status { get; set; }
+}
+
+public sealed record CommandResult(bool Success, string Message);
+
+public sealed record WeatherAdjustment(
+    double Et0Mm,
+    double ExpectedRainMm,
+    double EffectiveRainMm,
+    int MaxRainProbability,
+    bool ShouldSkip);
