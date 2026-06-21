@@ -74,6 +74,7 @@ public sealed class IrrigationOverviewService
         {
             var homeAssistantState = await _homeAssistant.GetStateAsync(zone.Entity, cancellationToken);
             state.WaterBalance.TryGetValue(zoneId, out var balance);
+            state.Calibrations.TryGetValue(zoneId, out var calibration);
 
             zones.Add(new ZoneOverview
             {
@@ -82,7 +83,11 @@ public sealed class IrrigationOverviewService
                 Entity = zone.Entity,
                 State = homeAssistantState ?? "unknown",
                 StateClass = ToStateClass(homeAssistantState),
-                WaterBalanceMm = balance
+                WaterBalanceMm = balance,
+                CalibratedPrecipitationRateMmH = calibration?.PrecipitationRateMmH,
+                CalibrationText = calibration is null
+                    ? "-"
+                    : $"{calibration.PrecipitationRateMmH:0.##} mm/h ({calibration.DistributionUniformityPercent:0.#}%)"
             });
         }
 

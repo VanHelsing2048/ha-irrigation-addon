@@ -80,6 +80,30 @@ Il file `irrigation.example.json` contiene un esempio completo da usare come rif
 - `POST /api/zones/{zoneId}/start?minutes=5`
 - `POST /api/zones/{zoneId}/stop`
 - `POST /api/stop`
+- `POST /api/calibration/zones/{zoneId}/start?minutes=10`
+- `POST /api/calibration/zones/{zoneId}/complete`
+
+## Calibrazione zone
+
+Per misurare `precipitation_rate_mm_h`:
+
+1. Disponi alcuni contenitori nella zona.
+2. Avvia il test:
+
+```http
+POST /api/calibration/zones/prato/start?minutes=10
+```
+
+3. Misura i mm raccolti e completa:
+
+```json
+{
+  "minutes": 10,
+  "measurements_mm": [1.8, 2.1, 1.6, 2.0]
+}
+```
+
+Il controller restituisce media, resa `mm/h`, minimo, massimo e uniformita. Usa `precipitation_rate_mm_h` proposto nella configurazione della zona.
 
 ## Modalita manuale
 

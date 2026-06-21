@@ -18,6 +18,7 @@ builder.Services.AddHttpClient<HomeAssistantClient>();
 builder.Services.AddSingleton<WeatherAdjustmentService>();
 builder.Services.AddSingleton<WaterBalanceService>();
 builder.Services.AddSingleton<IrrigationSafetyService>();
+builder.Services.AddSingleton<CalibrationService>();
 builder.Services.AddSingleton<CycleRunner>();
 builder.Services.AddSingleton<IrrigationOverviewService>();
 builder.Services.AddHostedService<StartupSafetyService>();
@@ -51,9 +52,11 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
           <td><strong>{HtmlEncoder.Default.Encode(zone.Name)}</strong><span>{HtmlEncoder.Default.Encode(zone.Entity)}</span></td>
           <td><span class="pill {HtmlEncoder.Default.Encode(zone.StateClass)}">{HtmlEncoder.Default.Encode(zone.State)}</span></td>
           <td>{zone.WaterBalanceMm:0.0} mm</td>
+          <td>{HtmlEncoder.Default.Encode(zone.CalibrationText)}</td>
           <td>
             <button onclick="startZone('{HtmlEncoder.Default.Encode(zone.Id)}')">Start</button>
             <button class="secondary" onclick="stopZone('{HtmlEncoder.Default.Encode(zone.Id)}')">Stop</button>
+            <button class="secondary" onclick="calibrateZone('{HtmlEncoder.Default.Encode(zone.Id)}')">Calibra</button>
           </td>
         </tr>
         """));
@@ -140,7 +143,7 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
             </table>
             <h2>Zone</h2>
             <table>
-              <thead><tr><th>Zona</th><th>Stato HA</th><th>Deficit</th><th>Comando</th></tr></thead>
+              <thead><tr><th>Zona</th><th>Stato HA</th><th>Deficit</th><th>Calibrazione</th><th>Comando</th></tr></thead>
               <tbody>{{zones}}</tbody>
             </table>
             <h2>Eventi</h2>
@@ -159,6 +162,21 @@ app.MapGet("/ui", async (IrrigationOverviewService overviewService, Cancellation
             function startZone(id) { post('/api/zones/' + id + '/start?minutes=5'); }
             function stopZone(id) { post('/api/zones/' + id + '/stop'); }
             function globalStop() { post('/api/stop'); }
+            async function calibrateZone(id) {
+              const minutes = prompt('Minuti test calibrazione', '10');
+              if (!minutes) return;
+              await post('/api/calibration/zones/' + id + '/start?minutes=' + encodeURIComponent(minutes));
+              const values = prompt('Misure mm separate da virgola, es. 1.8,2.1,1.6');
+              if (!values) return;
+              const measurements = values.split(',').map(x => Number(x.trim())).filter(x => !Number.isNaN(x));
+              const res = await fetch('/api/calibration/zones/' + id + '/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minutes: Number(minutes), measurements_mm: measurements })
+              });
+              const body = await res.json().catch(() => ({}));
+              document.getElementById('status').textContent = body.recommendation || body.message || JSON.stringify(body);
+            }
           </script>
         </body>
         </html>
@@ -238,6 +256,26 @@ app.MapPost("/api/zones/{zoneId}/stop", async (
 {
     await runner.StopZoneAsync(zoneId, cancellationToken);
     return Results.Ok(new { stopped = true });
+});
+
+app.MapPost("/api/calibration/zones/{zoneId}/start", async (
+    string zoneId,
+    int? minutes,
+    CalibrationService calibration,
+    CancellationToken cancellationToken) =>
+{
+    var result = await calibration.StartAsync(zoneId, minutes ?? 10, cancellationToken);
+    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+});
+
+app.MapPost("/api/calibration/zones/{zoneId}/complete", async (
+    string zoneId,
+    CalibrationCompleteRequest request,
+    CalibrationService calibration,
+    CancellationToken cancellationToken) =>
+{
+    var result = await calibration.CompleteAsync(zoneId, request, cancellationToken);
+    return result is null ? Results.BadRequest(new { message = "Invalid calibration data." }) : Results.Ok(result);
 });
 
 await app.RunAsync();

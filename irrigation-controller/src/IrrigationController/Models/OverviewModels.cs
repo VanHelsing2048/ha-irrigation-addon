@@ -29,4 +29,6 @@ public sealed class ZoneOverview
     public string State { get; set; } = "unknown";
     public string StateClass { get; set; } = "unknown";
     public double WaterBalanceMm { get; set; }
+    public double? CalibratedPrecipitationRateMmH { get; set; }
+    public string CalibrationText { get; set; } = "-";
 }

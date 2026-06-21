@@ -9,6 +9,7 @@ L'interfaccia Ingress espone:
 - stato runner;
 - avvio manuale dei cicli;
 - avvio/stop rapido delle singole zone;
+- calibrazione guidata resa zona;
 - stop globale.
 
 Endpoint salute:

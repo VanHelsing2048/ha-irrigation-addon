@@ -4,6 +4,7 @@ public sealed class IrrigationRuntimeState
 {
     public Dictionary<string, double> WaterBalance { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, string> LastScheduledRuns { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, CalibrationResult> Calibrations { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public string? LastWaterBalanceUpdateDate { get; set; }
     public List<IrrigationEvent> Events { get; set; } = [];
 }
@@ -30,6 +31,26 @@ public sealed class RunnerSnapshot
 }
 
 public sealed record CommandResult(bool Success, string Message);
+
+public sealed class CalibrationCompleteRequest
+{
+    public int Minutes { get; set; }
+    public List<double> MeasurementsMm { get; set; } = [];
+}
+
+public sealed class CalibrationResult
+{
+    public string ZoneId { get; set; } = "";
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
+    public int Minutes { get; set; }
+    public List<double> MeasurementsMm { get; set; } = [];
+    public double AverageMm { get; set; }
+    public double MinMm { get; set; }
+    public double MaxMm { get; set; }
+    public double PrecipitationRateMmH { get; set; }
+    public double DistributionUniformityPercent { get; set; }
+    public string Recommendation { get; set; } = "";
+}
 
 public sealed record WeatherAdjustment(
     double Et0Mm,
