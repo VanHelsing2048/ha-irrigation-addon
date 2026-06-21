@@ -43,6 +43,19 @@ public sealed class HomeAssistantClient
 
     public async Task<double?> GetNumericStateAsync(string entityId, CancellationToken cancellationToken)
     {
+        var state = await GetStateAsync(entityId, cancellationToken);
+        if (state is null)
+        {
+            return null;
+        }
+
+        return double.TryParse(state, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : null;
+    }
+
+    public async Task<string?> GetStateAsync(string entityId, CancellationToken cancellationToken)
+    {
         using var response = await _httpClient.GetAsync($"states/{Uri.EscapeDataString(entityId)}", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
@@ -51,13 +64,8 @@ public sealed class HomeAssistantClient
         }
 
         using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
-        if (!document.RootElement.TryGetProperty("state", out var state))
-        {
-            return null;
-        }
-
-        return double.TryParse(state.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
-            ? value
+        return document.RootElement.TryGetProperty("state", out var state)
+            ? state.GetString()
             : null;
     }
 
