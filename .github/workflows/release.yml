@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to package, for example 0.1.0"
+        required: true
+        default: "0.1.0"
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-package:
+    name: Validate and package add-on
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore ha-irrigation-addon.slnx
+
+      - name: Build
+        run: dotnet build ha-irrigation-addon.slnx --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet run --project irrigation-controller/tests/IrrigationController.Tests/IrrigationController.Tests.csproj --configuration Release --no-build
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create add-on repository package
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p dist
+          git archive \
+            --format=zip \
+            --worktree-attributes \
+            --prefix=ha-irrigation-addon/ \
+            --output="dist/ha-irrigation-addon-${VERSION}.zip" \
+            HEAD
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ha-irrigation-addon-${{ steps.version.outputs.version }}
+          path: dist/ha-irrigation-addon-${{ steps.version.outputs.version }}.zip
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ha-irrigation-addon-${{ steps.version.outputs.version }}.zip
+          body_path: RELEASE_NOTES.md

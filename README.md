@@ -1,5 +1,7 @@
 # Home Assistant Irrigation Add-on
 
+Versione corrente: `0.1.0`
+
 Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 
 ## Add-on
@@ -30,15 +32,41 @@ In Home Assistant, aggiungi questo repository come add-on repository e installa 
 
 ## Installazione Home Assistant
 
-Quando il repository sara pubblicato:
+Metodo consigliato:
 
 1. Apri Home Assistant.
 2. Vai in Settings -> Add-ons -> Add-on Store.
-3. Aggiungi questo repository tra i repository add-on.
+3. Aggiungi questo repository tra i repository add-on:
+   ```text
+   https://github.com/VanHelsing2048/ha-irrigation-addon
+   ```
 4. Installa `Irrigation Controller`.
 5. Avvia l'add-on e apri la UI Ingress.
-6. Modifica `/data/irrigation.json` usando `irrigation-controller/irrigation.example.json` come riferimento.
+6. Configura le impostazioni generali dalla scheda Config dell'add-on.
+7. Usa la UI Ingress per zone, cicli, calibrazione e diagnostica.
+
+## Pacchetto scaricabile
+
+Ogni release GitHub pubblica anche uno zip del repository add-on:
+
+```text
+ha-irrigation-addon-<version>.zip
+```
+
+Home Assistant normalmente usa direttamente l'URL del repository GitHub. Lo zip serve come artefatto scaricabile/versionato per backup, audit o distribuzioni manuali.
+
+## Versioning
+
+- `irrigation-controller/config.yaml` contiene la versione add-on.
+- `CHANGELOG.md` contiene le note di rilascio.
+- I tag seguono il formato `vX.Y.Z`, per esempio `v0.1.0`.
 
 ## Stato repository
 
-La branch principale locale e `main`. Ogni blocco funzionale viene salvato con un commit separato per rendere semplice una futura pubblicazione su GitHub.
+Flusso previsto:
+
+1. sviluppo su branch dedicati;
+2. merge su `main`;
+3. branch `release/vX.Y.Z` per stabilizzazione;
+4. tag `vX.Y.Z`;
+5. GitHub Release con pacchetto zip allegato.

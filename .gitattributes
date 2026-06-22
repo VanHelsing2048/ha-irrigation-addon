@@ -6,3 +6,6 @@ Dockerfile text eol=lf
 *.cs text eol=crlf
 *.csproj text eol=crlf
 *.slnx text eol=crlf
+.github export-ignore
+scripts export-ignore
+irrigation-controller/tests export-ignore

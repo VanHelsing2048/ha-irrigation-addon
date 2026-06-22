@@ -1,5 +1,7 @@
 # Irrigation Controller
 
+Versione add-on: `0.1.0`
+
 Add-on Home Assistant in C# per gestire irrigazione manuale e automatica.
 
 La prima versione usa le valvole gia disponibili in Home Assistant come `switch.*`, quindi non duplica la gestione MQTT di `MQTT_NET_COMELIT`.
@@ -22,3 +24,7 @@ Endpoint salute:
 - `GET /api/health`
 
 Vedi `DOCS.md` per configurazione e API.
+
+## Release
+
+La versione dell'add-on e definita in `config.yaml`. Le release del repository generano anche uno zip scaricabile del repository Home Assistant add-on.
