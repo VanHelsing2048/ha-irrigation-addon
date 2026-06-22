@@ -1,6 +1,6 @@
 # Irrigation Controller
 
-Versione add-on: `0.1.0`
+Versione add-on: `0.1.1`
 
 Add-on Home Assistant in C# per gestire irrigazione manuale e automatica.
 

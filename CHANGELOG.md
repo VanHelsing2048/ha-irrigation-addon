@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.1] - 2026-06-22
+
+### Added
+
+- Add Home Assistant add-on `icon.png` at 128x128.
+- Add Home Assistant add-on `logo.png` around 250x100.
+
+### Changed
+
+- Bump add-on version to `0.1.1`.
+
 ## [0.1.0] - 2026-06-22
 
 Prima release pubblicabile dell'add-on.
