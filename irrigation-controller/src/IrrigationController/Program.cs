@@ -1,5 +1,6 @@
 using IrrigationController.Models;
 using IrrigationController.Services;
+using System.Reflection;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +41,7 @@ app.MapGet("/ui", (UiRenderer ui) => Results.Content(ui.Render(), "text/html"));
 app.MapGet("/api/health", () => Results.Ok(new
 {
     status = "ok",
+    version = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown",
     timestamp = DateTimeOffset.UtcNow
 }));
 

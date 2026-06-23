@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3] - 2026-06-23
+
+### Changed
+
+- Bump add-on version to `0.1.3` to force Home Assistant Supervisor to see a distinct update after cached `0.1.2` metadata.
+- Add application version to `/api/health`.
+- Show the application version in the Ingress UI sidebar.
+
 ## [0.1.2] - 2026-06-23
 
 ### Fixed

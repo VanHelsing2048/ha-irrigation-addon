@@ -133,7 +133,7 @@ public sealed class UiRenderer
     <aside class="sidebar">
       <div class="brand">
         <h1>Irrigazione</h1>
-        <small>Controller Home Assistant</small>
+        <small>Controller Home Assistant · v0.1.3</small>
       </div>
       <nav class="nav" id="nav"></nav>
     </aside>

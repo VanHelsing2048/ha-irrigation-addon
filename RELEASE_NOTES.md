@@ -1,4 +1,4 @@
-# ha-irrigation-addon 0.1.2
+# ha-irrigation-addon 0.1.3
 
 Bugfix release dell'add-on Home Assistant `Irrigation Controller`.
 
@@ -14,6 +14,8 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
+- Versione distinta `0.1.3` per forzare Home Assistant Supervisor a proporre un aggiornamento pulito dopo cache/metadati `0.1.2`.
+- Versione applicazione visibile nella UI e in `/api/health`.
 - Fix apertura UI dietro Home Assistant Ingress.
 - Fix chiamate API della UI dietro prefisso Ingress.
 - Icona e logo Home Assistant add-on.
