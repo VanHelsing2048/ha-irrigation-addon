@@ -1,4 +1,4 @@
-# ha-irrigation-addon 0.1.5
+# ha-irrigation-addon 0.1.6
 
 Bugfix release dell'add-on Home Assistant `Irrigation Controller`.
 
@@ -14,6 +14,7 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
+- Nuova pagina `Piano` con icone meteo, decisione oggi/domani, dati minimi e cicli automatici previsti.
 - Fix eliminazione zone gia referenziate dai cicli: la UI rimuove automaticamente la zona dagli step prima del salvataggio.
 - Menu suggerimenti per scegliere entita `switch.*` e `valve.*` gia presenti in Home Assistant quando si configurano le zone.
 - Supporto runtime per entita `valve.*`.

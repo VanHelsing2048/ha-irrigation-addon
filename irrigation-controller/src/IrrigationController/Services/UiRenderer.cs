@@ -108,6 +108,15 @@ public sealed class UiRenderer
     .notice { border-left: 4px solid var(--accent); }
     .notice.warn { border-left-color: var(--warn); }
     .notice.danger { border-left-color: var(--danger); }
+    .plan { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .plan-day { display: grid; gap: 12px; }
+    .plan-head { display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 12px; align-items: center; }
+    .weather-icon { font-size: 44px; line-height: 1; width: 64px; height: 64px; display: grid; place-items: center; border-radius: 8px; background: var(--panel-2); }
+    .decision { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 5px; }
+    .mini { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cycle-chip, .zone-chip, .event-chip { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .zone-chip { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
+    .event-chip { color: var(--muted); }
     .toast {
       position: fixed; right: 18px; bottom: 18px; max-width: 420px; padding: 12px 14px;
       border-radius: 8px; background: var(--panel); border: 1px solid var(--border); box-shadow: 0 10px 30px #0003;
@@ -120,7 +129,7 @@ public sealed class UiRenderer
       .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
       .nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .main { padding: 14px; }
-      .metrics, .two, .three { grid-template-columns: 1fr; }
+      .metrics, .two, .three, .plan { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
       .topbar { align-items: flex-start; flex-direction: column; }
@@ -133,7 +142,7 @@ public sealed class UiRenderer
     <aside class="sidebar">
       <div class="brand">
         <h1>Irrigazione</h1>
-        <small>Controller Home Assistant · v0.1.5</small>
+        <small>Controller Home Assistant · v0.1.6</small>
       </div>
       <nav class="nav" id="nav"></nav>
     </aside>
@@ -155,6 +164,7 @@ public sealed class UiRenderer
 <script>
 const pages = [
   ['dashboard', 'Dashboard', 'Stato, prossime partenze e diagnostica'],
+  ['plan', 'Piano', 'Oggi, domani e decisioni meteo'],
   ['zones', 'Zone', 'Valvole, resa, calibrazione e limiti'],
   ['cycles', 'Cicli', 'Sequenze manuali e automatiche'],
   ['weather', 'Meteo', 'Pioggia, ET e soglie di blocco'],
@@ -166,6 +176,7 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
 const dayLabels = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
 let config = null;
 let overview = null;
+let decisionPlan = null;
 let irrigationEntities = [];
 let currentPage = location.hash.replace('#','') || 'dashboard';
 
@@ -198,9 +209,10 @@ function apiUrl(path) {
   return ingressBase + normalizedPath;
 }
 async function reloadAll() {
-  [config, overview, irrigationEntities] = await Promise.all([
+  [config, overview, decisionPlan, irrigationEntities] = await Promise.all([
     api('/api/config'),
     api('/api/overview'),
+    api('/api/decision-plan').catch(() => null),
     api('/api/entities/irrigation').catch(() => [])
   ]);
   render();
@@ -243,6 +255,7 @@ function render() {
   }
   content.innerHTML = ({
     dashboard: renderDashboard,
+    plan: renderPlan,
     zones: renderZones,
     cycles: renderCycles,
     weather: renderWeather,
@@ -255,6 +268,53 @@ function renderNav() {
   document.getElementById('nav').innerHTML = pages.map(([id, label]) =>
     `<button class="${id === currentPage ? 'active' : ''}" onclick="setPage('${id}')">${esc(label)}</button>`
   ).join('');
+}
+function renderPlan() {
+  if (!decisionPlan) {
+    return '<section class="section"><div class="card notice warn"><strong>Piano non disponibile</strong></div></section>';
+  }
+
+  return `<section class="section">
+    <div class="plan">
+      ${dayPlan(decisionPlan.today)}
+      ${dayPlan(decisionPlan.tomorrow)}
+    </div>
+  </section>`;
+}
+function dayPlan(day) {
+  const cycles = day.cycles || [];
+  const events = day.events || [];
+  return `<div class="card plan-day">
+    <div class="plan-head">
+      <div class="weather-icon">${esc(day.icon)}</div>
+      <div>
+        <h2>${esc(day.label)}</h2>
+        <div class="decision"><strong>${esc(day.decision)}</strong><span class="pill ${esc(day.decision_class)}">${esc(day.weather_label)}</span></div>
+        <div class="mini muted">
+          <span>☔ ${num(day.expected_rain_mm).toFixed(1)} mm</span>
+          <span>% ${num(day.rain_probability)}%</span>
+          <span>ET ${num(day.et0_mm).toFixed(1)} mm</span>
+        </div>
+      </div>
+    </div>
+    <div class="list">
+      ${cycles.length ? cycles.map(cyclePlan).join('') : '<div class="muted">Nessun ciclo automatico</div>'}
+    </div>
+    ${events.length ? `<div class="list">${events.map(eventPlan).join('')}</div>` : ''}
+  </div>`;
+}
+function cyclePlan(cycle) {
+  const zones = cycle.zones || [];
+  return `<div class="card">
+    <div class="toolbar">
+      <div class="cycle-chip"><span>${esc(cycle.icon)}</span><strong>${esc(cycle.time)} ${esc(cycle.name)}</strong></div>
+      <span class="pill ${esc(cycle.decision_class)}">${esc(cycle.decision)}</span>
+    </div>
+    ${zones.length ? `<div class="mini">${zones.map(zone => `<span class="zone-chip"><span>${esc(zone.icon)}</span><strong>${esc(zone.name)}</strong><span class="muted">${esc(zone.text)}</span></span>`).join('')}</div>` : ''}
+  </div>`;
+}
+function eventPlan(event) {
+  return `<div class="event-chip"><span>${esc(event.icon)}</span><strong>${esc(event.time)}</strong><span>${esc(event.text)}</span></div>`;
 }
 function renderDashboard() {
   const runner = overview.runner || {};

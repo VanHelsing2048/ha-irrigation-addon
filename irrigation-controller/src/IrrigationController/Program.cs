@@ -26,6 +26,7 @@ builder.Services.AddSingleton<CalibrationService>();
 builder.Services.AddSingleton<DiagnosticsService>();
 builder.Services.AddSingleton<CycleRunner>();
 builder.Services.AddSingleton<IrrigationOverviewService>();
+builder.Services.AddSingleton<DecisionPlanService>();
 builder.Services.AddSingleton<UiRenderer>();
 builder.Services.AddHostedService<StartupSafetyService>();
 builder.Services.AddHostedService<MqttDiscoveryPublisher>();
@@ -93,6 +94,9 @@ app.MapGet("/api/status", async (CycleRunner runner, IrrigationStateStore stateS
 
 app.MapGet("/api/overview", async (IrrigationOverviewService overviewService, CancellationToken cancellationToken) =>
     Results.Ok(await overviewService.GetOverviewAsync(cancellationToken)));
+
+app.MapGet("/api/decision-plan", async (DecisionPlanService decisionPlan, CancellationToken cancellationToken) =>
+    Results.Ok(await decisionPlan.GetAsync(cancellationToken)));
 
 app.MapGet("/api/entities/irrigation", async (HomeAssistantClient homeAssistant, CancellationToken cancellationToken) =>
 {

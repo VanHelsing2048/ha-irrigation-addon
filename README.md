@@ -1,6 +1,6 @@
 # Home Assistant Irrigation Add-on
 
-Versione corrente: `0.1.5`
+Versione corrente: `0.1.6`
 
 Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 
@@ -19,6 +19,7 @@ Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 - La configurazione puo essere modificata dalla UI Ingress con salvataggio e backup automatico.
 - La policy idraulica controlla zone sequenziali, parallelismo e pausa tra zone.
 - La UI Ingress include viste guidate per dashboard, zone, cicli, meteo, impianto, diagnostica e JSON avanzato.
+- La pagina Piano mostra oggi/domani con icone meteo, decisione irrigazione e cicli automatici previsti.
 - Le impostazioni generali dell'add-on sono disponibili nella scheda Config di Home Assistant e vengono lette da `/data/options.json`.
 
 ## Sviluppo locale

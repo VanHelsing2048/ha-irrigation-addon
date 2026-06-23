@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6] - 2026-06-23
+
+### Added
+
+- Add decision plan API for today and tomorrow.
+- Add icon-first `Piano` UI page with weather icon, irrigation decision, compact weather metrics, scheduled automatic cycles and today's events.
+
 ## [0.1.5] - 2026-06-23
 
 ### Fixed
