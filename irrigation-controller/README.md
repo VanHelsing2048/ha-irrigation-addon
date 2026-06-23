@@ -1,15 +1,16 @@
 # Irrigation Controller
 
-Versione add-on: `0.1.3`
+Versione add-on: `0.1.4`
 
 Add-on Home Assistant in C# per gestire irrigazione manuale e automatica.
 
-La prima versione usa le valvole gia disponibili in Home Assistant come `switch.*`, quindi non duplica la gestione MQTT di `MQTT_NET_COMELIT`.
+La prima versione usa le valvole gia disponibili in Home Assistant come `switch.*` o `valve.*`, quindi non duplica la gestione MQTT di `MQTT_NET_COMELIT`.
 
 L'interfaccia Ingress espone:
 
 - dashboard stato runner, zone e cicli;
 - gestione guidata zone;
+- suggerimento automatico delle entita `switch.*` e `valve.*` disponibili in Home Assistant;
 - gestione guidata cicli;
 - configurazione meteo;
 - configurazione impianto, sicurezze e MQTT Discovery;

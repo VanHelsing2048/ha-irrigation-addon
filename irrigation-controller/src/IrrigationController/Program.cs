@@ -94,6 +94,15 @@ app.MapGet("/api/status", async (CycleRunner runner, IrrigationStateStore stateS
 app.MapGet("/api/overview", async (IrrigationOverviewService overviewService, CancellationToken cancellationToken) =>
     Results.Ok(await overviewService.GetOverviewAsync(cancellationToken)));
 
+app.MapGet("/api/entities/irrigation", async (HomeAssistantClient homeAssistant, CancellationToken cancellationToken) =>
+{
+    var entities = await homeAssistant.GetEntitiesAsync(cancellationToken);
+    return Results.Ok(entities
+        .Where(entity => entity.EntityId.StartsWith("switch.", StringComparison.OrdinalIgnoreCase)
+            || entity.EntityId.StartsWith("valve.", StringComparison.OrdinalIgnoreCase))
+        .OrderBy(entity => entity.FriendlyName.Length == 0 ? entity.EntityId : entity.FriendlyName, StringComparer.OrdinalIgnoreCase));
+});
+
 app.MapGet("/api/diagnostics", async (IrrigationStateStore stateStore, CancellationToken cancellationToken) =>
 {
     var state = await stateStore.GetAsync(cancellationToken);

@@ -7,6 +7,7 @@ var tests = new (string Name, Action Test)[]
     ("calibration rejects invalid input", CalibrationRejectsInvalidInput),
     ("config validator catches unknown cycle zone", ConfigValidatorCatchesUnknownCycleZone),
     ("config validator accepts basic sample", ConfigValidatorAcceptsBasicSample),
+    ("config validator accepts valve entity", ConfigValidatorAcceptsValveEntity),
     ("config validator catches invalid hydraulic policy", ConfigValidatorCatchesInvalidHydraulicPolicy)
 };
 
@@ -80,6 +81,23 @@ static void ConfigValidatorAcceptsBasicSample()
     if (!result.IsValid)
     {
         throw new InvalidOperationException(result.Errors[0].Message);
+    }
+}
+
+static void ConfigValidatorAcceptsValveEntity()
+{
+    var config = BasicConfig();
+    config.Zones["prato"].Entity = "valve.prato";
+
+    var result = new IrrigationConfigValidator().Validate(config);
+    if (!result.IsValid)
+    {
+        throw new InvalidOperationException(result.Errors[0].Message);
+    }
+
+    if (result.Warnings.Any(warning => warning.Path == "zones.prato.entity"))
+    {
+        throw new InvalidOperationException("Expected valve entity to be accepted without entity warning.");
     }
 }
 

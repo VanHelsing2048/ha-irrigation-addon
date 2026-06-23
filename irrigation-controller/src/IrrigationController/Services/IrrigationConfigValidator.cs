@@ -119,11 +119,12 @@ public sealed class IrrigationConfigValidator
 
             if (string.IsNullOrWhiteSpace(zone.Entity))
             {
-                Error(result, $"{path}.entity", "Home Assistant switch entity is required.");
+                Error(result, $"{path}.entity", "Home Assistant switch or valve entity is required.");
             }
-            else if (!zone.Entity.StartsWith("switch.", StringComparison.OrdinalIgnoreCase))
+            else if (!zone.Entity.StartsWith("switch.", StringComparison.OrdinalIgnoreCase)
+                && !zone.Entity.StartsWith("valve.", StringComparison.OrdinalIgnoreCase))
             {
-                Warning(result, $"{path}.entity", "Expected a Home Assistant switch entity.");
+                Warning(result, $"{path}.entity", "Expected a Home Assistant switch or valve entity.");
             }
 
             if (zone.PrecipitationRateMmH <= 0)

@@ -1,16 +1,17 @@
 # Home Assistant Irrigation Add-on
 
-Versione corrente: `0.1.3`
+Versione corrente: `0.1.4`
 
 Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 
 ## Add-on
 
-- `irrigation-controller`: orchestra valvole gia presenti in Home Assistant come entita `switch.*`.
+- `irrigation-controller`: orchestra valvole gia presenti in Home Assistant come entita `switch.*` o `valve.*`.
 
 ## Concetti
 
 - Le valvole sono gestite da Home Assistant, ad esempio tramite `MQTT_NET_COMELIT`.
+- La UI propone le entita `switch.*` e `valve.*` gia presenti in Home Assistant quando configuri le zone.
 - I cicli manuali usano tempi statici per zona.
 - I cicli automatici calcolano i tempi usando deficit idrico, ET stimata e pioggia prevista.
 - L'add-on usa le API Home Assistant per chiamare `switch.turn_on`, `switch.turn_off` e `weather.get_forecasts`.

@@ -23,7 +23,7 @@ public sealed class IrrigationSafetyService
                 await _homeAssistant.TurnOnAsync(zone.Entity, token);
                 if (safety.VerifyZoneStateAfterSwitch)
                 {
-                    await VerifyStateAsync(zone.Entity, "on", safety, token);
+                    await VerifyStateAsync(zone.Entity, ExpectedOnStates(zone.Entity), safety, token);
                 }
             },
             cancellationToken);
@@ -39,7 +39,7 @@ public sealed class IrrigationSafetyService
                 await _homeAssistant.TurnOffAsync(zone.Entity, token);
                 if (safety.VerifyZoneStateAfterSwitch)
                 {
-                    await VerifyStateAsync(zone.Entity, "off", safety, token);
+                    await VerifyStateAsync(zone.Entity, ExpectedOffStates(zone.Entity), safety, token);
                 }
             },
             cancellationToken);
@@ -62,17 +62,23 @@ public sealed class IrrigationSafetyService
 
     private async Task VerifyStateAsync(
         string entityId,
-        string expectedState,
+        IReadOnlyCollection<string> expectedStates,
         SafetyConfig safety,
         CancellationToken cancellationToken)
     {
         await Task.Delay(TimeSpan.FromMilliseconds(safety.SwitchRetryDelayMs), cancellationToken);
         var actualState = await _homeAssistant.GetStateAsync(entityId, cancellationToken);
-        if (!string.Equals(actualState, expectedState, StringComparison.OrdinalIgnoreCase))
+        if (actualState is null || !expectedStates.Contains(actualState, StringComparer.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException($"Expected {entityId} to be {expectedState}, but it is {actualState ?? "unknown"}.");
+            throw new InvalidOperationException($"Expected {entityId} to be {string.Join(" or ", expectedStates)}, but it is {actualState ?? "unknown"}.");
         }
     }
+
+    private static string[] ExpectedOnStates(string entityId) =>
+        entityId.StartsWith("valve.", StringComparison.OrdinalIgnoreCase) ? ["open", "opening"] : ["on"];
+
+    private static string[] ExpectedOffStates(string entityId) =>
+        entityId.StartsWith("valve.", StringComparison.OrdinalIgnoreCase) ? ["closed", "closing"] : ["off"];
 
     private async Task ExecuteWithRetryAsync(
         string action,

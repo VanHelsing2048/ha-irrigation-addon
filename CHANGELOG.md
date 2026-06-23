@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4] - 2026-06-23
+
+### Added
+
+- Add Home Assistant entity discovery endpoint for irrigation zone entities.
+- Suggest available `switch.*` and `valve.*` entities in the zone entity field.
+- Support `valve.*` entities with `valve.open_valve` and `valve.close_valve`.
+
 ## [0.1.3] - 2026-06-23
 
 ### Changed

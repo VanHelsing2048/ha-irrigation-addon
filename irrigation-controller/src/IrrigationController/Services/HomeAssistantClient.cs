@@ -36,10 +36,57 @@ public sealed class HomeAssistantClient
     }
 
     public Task TurnOnAsync(string entityId, CancellationToken cancellationToken) =>
-        CallServiceAsync("switch", "turn_on", new { entity_id = entityId }, cancellationToken);
+        entityId.StartsWith("valve.", StringComparison.OrdinalIgnoreCase)
+            ? CallServiceAsync("valve", "open_valve", new { entity_id = entityId }, cancellationToken)
+            : CallServiceAsync("switch", "turn_on", new { entity_id = entityId }, cancellationToken);
 
     public Task TurnOffAsync(string entityId, CancellationToken cancellationToken) =>
-        CallServiceAsync("switch", "turn_off", new { entity_id = entityId }, cancellationToken);
+        entityId.StartsWith("valve.", StringComparison.OrdinalIgnoreCase)
+            ? CallServiceAsync("valve", "close_valve", new { entity_id = entityId }, cancellationToken)
+            : CallServiceAsync("switch", "turn_off", new { entity_id = entityId }, cancellationToken);
+
+    public async Task<List<HomeAssistantEntitySummary>> GetEntitiesAsync(CancellationToken cancellationToken)
+    {
+        using var response = await _httpClient.GetAsync("states", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogWarning("Unable to read Home Assistant states: {StatusCode}", response.StatusCode);
+            return [];
+        }
+
+        using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
+        var entities = new List<HomeAssistantEntitySummary>();
+        foreach (var item in document.RootElement.EnumerateArray())
+        {
+            if (!item.TryGetProperty("entity_id", out var entityIdProperty))
+            {
+                continue;
+            }
+
+            var entityId = entityIdProperty.GetString();
+            if (string.IsNullOrWhiteSpace(entityId))
+            {
+                continue;
+            }
+
+            var friendlyName = "";
+            if (item.TryGetProperty("attributes", out var attributes)
+                && attributes.TryGetProperty("friendly_name", out var friendlyNameProperty))
+            {
+                friendlyName = friendlyNameProperty.GetString() ?? "";
+            }
+
+            var state = item.TryGetProperty("state", out var stateProperty)
+                ? stateProperty.GetString() ?? ""
+                : "";
+
+            entities.Add(new HomeAssistantEntitySummary(entityId, friendlyName, state));
+        }
+
+        return entities
+            .OrderBy(entity => entity.EntityId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
 
     public async Task<double?> GetNumericStateAsync(string entityId, CancellationToken cancellationToken)
     {
@@ -104,3 +151,5 @@ public sealed class HomeAssistantClient
         response.EnsureSuccessStatusCode();
     }
 }
+
+public sealed record HomeAssistantEntitySummary(string EntityId, string FriendlyName, string State);

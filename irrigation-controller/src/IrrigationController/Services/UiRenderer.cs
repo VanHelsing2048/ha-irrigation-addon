@@ -133,7 +133,7 @@ public sealed class UiRenderer
     <aside class="sidebar">
       <div class="brand">
         <h1>Irrigazione</h1>
-        <small>Controller Home Assistant · v0.1.3</small>
+        <small>Controller Home Assistant · v0.1.4</small>
       </div>
       <nav class="nav" id="nav"></nav>
     </aside>
@@ -166,6 +166,7 @@ const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','S
 const dayLabels = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
 let config = null;
 let overview = null;
+let irrigationEntities = [];
 let currentPage = location.hash.replace('#','') || 'dashboard';
 
 function esc(value) {
@@ -197,7 +198,11 @@ function apiUrl(path) {
   return ingressBase + normalizedPath;
 }
 async function reloadAll() {
-  [config, overview] = await Promise.all([api('/api/config'), api('/api/overview')]);
+  [config, overview, irrigationEntities] = await Promise.all([
+    api('/api/config'),
+    api('/api/overview'),
+    api('/api/entities/irrigation').catch(() => [])
+  ]);
   render();
 }
 async function saveConfig(nextConfig = config) {
@@ -289,6 +294,7 @@ function renderZones() {
   const zones = Object.entries(config.zones || {});
   return `<section class="section">
     <div class="toolbar"><h2>Zone</h2><button onclick="addZone()">Nuova zona</button></div>
+    ${entityOptionsList()}
     <div class="list">${zones.map(([id, z]) => zoneForm(id, z)).join('')}</div>
   </section>`;
 }
@@ -299,7 +305,7 @@ function zoneForm(id, z) {
     <div class="row">
       ${field(`zone-${id}-id`, 'ID', id, 'span-2')}
       ${field(`zone-${id}-name`, 'Nome', z.name, 'span-3')}
-      ${field(`zone-${id}-entity`, 'Entità switch', z.entity, 'span-4')}
+      ${entityField(`zone-${id}-entity`, 'Entita valvola/switch', z.entity, 'span-4')}
       ${numberField(`zone-${id}-rate`, 'Resa mm/h', z.precipitation_rate_mm_h, 'span-3', '0.01')}
       ${numberField(`zone-${id}-crop`, 'Coeff. coltura', z.crop_coefficient, 'span-2', '0.01')}
       ${numberField(`zone-${id}-min`, 'Min minuti', z.min_minutes, 'span-2')}
@@ -415,6 +421,16 @@ function validationCard(validation) {
 }
 function field(id, label, value, cls = '') { return `<label class="${cls}"><span>${esc(label)}</span><input id="${esc(id)}" value="${esc(value ?? '')}"></label>`; }
 function numberField(id, label, value, cls = '', step = '1') { return `<label class="${cls}"><span>${esc(label)}</span><input id="${esc(id)}" type="number" step="${esc(step)}" value="${esc(value ?? '')}"></label>`; }
+function entityField(id, label, value, cls = '') {
+  return `<label class="${cls}"><span>${esc(label)}</span><input id="${esc(id)}" list="irrigation-entities" value="${esc(value ?? '')}"></label>`;
+}
+function entityOptionsList() {
+  const options = irrigationEntities.map(entity => {
+    const text = entity.friendly_name ? `${entity.entity_id} - ${entity.friendly_name}` : entity.entity_id;
+    return `<option value="${esc(entity.entity_id)}">${esc(text)}</option>`;
+  }).join('');
+  return `<datalist id="irrigation-entities">${options}</datalist>`;
+}
 function selectBool(id, label, value, cls = '') { return `<label class="${cls}"><span>${esc(label)}</span><select id="${esc(id)}"><option value="true" ${value ? 'selected' : ''}>Sì</option><option value="false" ${!value ? 'selected' : ''}>No</option></select></label>`; }
 function daysControl(id, values) {
   return `<div class="days">${dayNames.map((d, i) => `<label><input type="checkbox" data-days="${esc(id)}" value="${d}" ${values.includes(d) ? 'checked' : ''}>${dayLabels[i]}</label>`).join('')}</div>`;
@@ -469,7 +485,8 @@ async function addZone() {
   if (!id) return;
   const next = cloneConfig();
   next.zones ||= {};
-  next.zones[id] = { name: id, entity: 'switch.', precipitation_rate_mm_h: 10, crop_coefficient: 1, min_minutes: 3, max_minutes: 30, target_deficit_mm: 0, soil_moisture_entity: null, skip_if_soil_moisture_above: null };
+  const firstEntity = irrigationEntities[0]?.entity_id || 'switch.';
+  next.zones[id] = { name: id, entity: firstEntity, precipitation_rate_mm_h: 10, crop_coefficient: 1, min_minutes: 3, max_minutes: 30, target_deficit_mm: 0, soil_moisture_entity: null, skip_if_soil_moisture_above: null };
   await saveConfig(next);
   setPage('zones');
 }

@@ -1,6 +1,6 @@
 # Irrigation Controller
 
-Questo add-on orchestra valvole gia esposte in Home Assistant come entita `switch.*`.
+Questo add-on orchestra valvole gia esposte in Home Assistant come entita `switch.*` o `valve.*`.
 
 ## Configurazione
 
@@ -221,4 +221,4 @@ Le entita create descrivono solo il controller:
 - stato running;
 - conteggio errori/avvisi configurazione.
 
-Le valvole restano le entita `switch.*` gia create da `MQTT_NET_COMELIT`.
+Le valvole restano le entita `switch.*` o `valve.*` gia create da `MQTT_NET_COMELIT` o da altre integrazioni Home Assistant.
