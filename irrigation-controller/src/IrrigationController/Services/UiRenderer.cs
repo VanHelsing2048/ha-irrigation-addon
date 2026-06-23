@@ -1,4 +1,4 @@
-namespace IrrigationController.Services;
+﻿namespace IrrigationController.Services;
 
 public sealed class UiRenderer
 {
@@ -111,7 +111,13 @@ public sealed class UiRenderer
     .plan { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .plan-day { display: grid; gap: 12px; }
     .plan-head { display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 12px; align-items: center; }
-    .weather-icon { font-size: 44px; line-height: 1; width: 64px; height: 64px; display: grid; place-items: center; border-radius: 8px; background: var(--panel-2); }
+    .weather-icon { width: 64px; height: 64px; }
+    .icon-badge {
+      display: inline-grid; place-items: center; border-radius: 8px; background: var(--panel-2);
+      border: 1px solid var(--border); color: var(--text); font-weight: 700; letter-spacing: 0;
+      min-width: 28px; min-height: 28px; padding: 4px 6px; font-size: 12px; line-height: 1;
+    }
+    .icon-badge.big { width: 64px; height: 64px; font-size: 15px; }
     .decision { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 5px; }
     .mini { display: flex; gap: 8px; flex-wrap: wrap; }
     .cycle-chip, .zone-chip, .event-chip { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -142,7 +148,7 @@ public sealed class UiRenderer
     <aside class="sidebar">
       <div class="brand">
         <h1>Irrigazione</h1>
-        <small>Controller Home Assistant · v0.1.6</small>
+        <small>Controller Home Assistant - v0.1.7</small>
       </div>
       <nav class="nav" id="nav"></nav>
     </aside>
@@ -164,7 +170,6 @@ public sealed class UiRenderer
 <script>
 const pages = [
   ['dashboard', 'Dashboard', 'Stato, prossime partenze e diagnostica'],
-  ['plan', 'Piano', 'Oggi, domani e decisioni meteo'],
   ['zones', 'Zone', 'Valvole, resa, calibrazione e limiti'],
   ['cycles', 'Cicli', 'Sequenze manuali e automatiche'],
   ['weather', 'Meteo', 'Pioggia, ET e soglie di blocco'],
@@ -255,7 +260,6 @@ function render() {
   }
   content.innerHTML = ({
     dashboard: renderDashboard,
-    plan: renderPlan,
     zones: renderZones,
     cycles: renderCycles,
     weather: renderWeather,
@@ -274,26 +278,29 @@ function renderPlan() {
     return '<section class="section"><div class="card notice warn"><strong>Piano non disponibile</strong></div></section>';
   }
 
-  return `<section class="section">
+  return `<section class="section">${renderPlanPanel()}</section>`;
+}
+function renderPlanPanel() {
+  if (!decisionPlan) return '<div class="card notice warn"><strong>Piano non disponibile</strong></div>';
+  return `
     <div class="plan">
       ${dayPlan(decisionPlan.today)}
       ${dayPlan(decisionPlan.tomorrow)}
-    </div>
-  </section>`;
+    </div>`;
 }
 function dayPlan(day) {
   const cycles = day.cycles || [];
   const events = day.events || [];
   return `<div class="card plan-day">
     <div class="plan-head">
-      <div class="weather-icon">${esc(day.icon)}</div>
+      <div class="weather-icon">${iconBadge(day.icon, true)}</div>
       <div>
         <h2>${esc(day.label)}</h2>
         <div class="decision"><strong>${esc(day.decision)}</strong><span class="pill ${esc(day.decision_class)}">${esc(day.weather_label)}</span></div>
         <div class="mini muted">
-          <span>☔ ${num(day.expected_rain_mm).toFixed(1)} mm</span>
-          <span>% ${num(day.rain_probability)}%</span>
-          <span>ET ${num(day.et0_mm).toFixed(1)} mm</span>
+          <span title="Pioggia prevista">${iconBadge('RAIN')} ${num(day.expected_rain_mm).toFixed(1)} mm</span>
+          <span title="Probabilita di pioggia">${iconBadge('PCT')} ${num(day.rain_probability)}%</span>
+          <span title="Evapotraspirazione stimata">${iconBadge('ET')} ${num(day.et0_mm).toFixed(1)} mm</span>
         </div>
       </div>
     </div>
@@ -307,20 +314,41 @@ function cyclePlan(cycle) {
   const zones = cycle.zones || [];
   return `<div class="card">
     <div class="toolbar">
-      <div class="cycle-chip"><span>${esc(cycle.icon)}</span><strong>${esc(cycle.time)} ${esc(cycle.name)}</strong></div>
+      <div class="cycle-chip">${iconBadge(cycle.icon)}<strong>${esc(cycle.time)} ${esc(cycle.name)}</strong></div>
       <span class="pill ${esc(cycle.decision_class)}">${esc(cycle.decision)}</span>
     </div>
-    ${zones.length ? `<div class="mini">${zones.map(zone => `<span class="zone-chip"><span>${esc(zone.icon)}</span><strong>${esc(zone.name)}</strong><span class="muted">${esc(zone.text)}</span></span>`).join('')}</div>` : ''}
+    ${zones.length ? `<div class="mini">${zones.map(zone => `<span class="zone-chip">${iconBadge(zone.icon)}<strong>${esc(zone.name)}</strong><span class="muted">${esc(zone.text)}</span></span>`).join('')}</div>` : ''}
   </div>`;
 }
 function eventPlan(event) {
-  return `<div class="event-chip"><span>${esc(event.icon)}</span><strong>${esc(event.time)}</strong><span>${esc(event.text)}</span></div>`;
+  return `<div class="event-chip">${iconBadge(event.icon)}<strong>${esc(event.time)}</strong><span>${esc(event.text)}</span></div>`;
+}
+function iconBadge(code, big = false) {
+  const meta = {
+    SUN: ['SOL', 'Soleggiato'],
+    PARTLY: ['VAR', 'Variabile o parzialmente nuvoloso'],
+    CLOUD: ['CLD', 'Nuvoloso'],
+    RAIN: ['PIO', 'Pioggia prevista'],
+    STORM: ['TMP', 'Temporale'],
+    FOG: ['NEB', 'Nebbia'],
+    SNOW: ['NEV', 'Neve'],
+    DROP: ['IRR', 'Irrigazione prevista'],
+    SKIP: ['SKP', 'Ciclo saltato'],
+    OK: ['OK', 'Nessun intervento necessario'],
+    BAL: ['BIL', 'Bilancio idrico'],
+    PCT: ['%', 'Probabilita di pioggia'],
+    ET: ['ET', 'Evapotraspirazione stimata'],
+    INFO: ['INF', 'Informazione'],
+    NA: ['N/D', 'Dato non disponibile']
+  }[code] || [code || 'N/D', code || 'Dato non disponibile'];
+  return `<span class="icon-badge ${big ? 'big' : ''}" title="${esc(meta[1])}" aria-label="${esc(meta[1])}">${esc(meta[0])}</span>`;
 }
 function renderDashboard() {
   const runner = overview.runner || {};
   const validation = overview.validation || { errors: [], warnings: [] };
   const weather = overview.diagnostics?.last_weather;
   return `
+    ${renderPlanPanel()}
     <section class="grid metrics">
       ${metric('Runner', runner.status || 'idle')}
       ${metric('Ciclo', runner.cycle_name || '-')}
@@ -338,7 +366,7 @@ function renderDashboard() {
         </div>
         <div class="card">
           <h3>Meteo</h3>
-          <p>${weather ? `ET0 ${weather.et0_mm?.toFixed?.(1) ?? weather.et0_mm} mm, pioggia ${weather.expected_rain_mm?.toFixed?.(1) ?? weather.expected_rain_mm} mm, utile ${weather.effective_rain_mm?.toFixed?.(1) ?? weather.effective_rain_mm} mm, probabilità ${weather.max_rain_probability}%` : '-'}</p>
+          <p>${weather ? `ET0 ${weather.et0_mm?.toFixed?.(1) ?? weather.et0_mm} mm, pioggia ${weather.expected_rain_mm?.toFixed?.(1) ?? weather.expected_rain_mm} mm, utile ${weather.effective_rain_mm?.toFixed?.(1) ?? weather.effective_rain_mm} mm, probabilita ${weather.max_rain_probability}%` : '-'}</p>
           <p class="muted">${esc(overview.diagnostics?.last_decision?.message || 'Nessuna decisione registrata')}</p>
         </div>
       </div>
@@ -371,8 +399,8 @@ function zoneForm(id, z) {
       ${numberField(`zone-${id}-min`, 'Min minuti', z.min_minutes, 'span-2')}
       ${numberField(`zone-${id}-max`, 'Max minuti', z.max_minutes, 'span-2')}
       ${numberField(`zone-${id}-target`, 'Deficit target mm', z.target_deficit_mm, 'span-2', '0.1')}
-      ${field(`zone-${id}-soil`, 'Sensore umidità', z.soil_moisture_entity || '', 'span-2')}
-      ${numberField(`zone-${id}-soilskip`, 'Skip umidità sopra', z.skip_if_soil_moisture_above ?? '', 'span-2', '0.1')}
+      ${field(`zone-${id}-soil`, 'Sensore umidita', z.soil_moisture_entity || '', 'span-2')}
+      ${numberField(`zone-${id}-soilskip`, 'Skip umidita sopra', z.skip_if_soil_moisture_above ?? '', 'span-2', '0.1')}
     </div>
     <div class="actions" style="margin-top:12px; justify-content:flex-start">
       <button onclick="saveZone('${esc(id)}')">Salva zona</button>
@@ -399,7 +427,7 @@ function cycleForm(id, c) {
       ${field(`cycle-${id}-id`, 'ID', id, 'span-2')}
       ${field(`cycle-${id}-name`, 'Nome', c.name, 'span-3')}
       <label class="span-2"><span>Modo</span><select id="cycle-${esc(id)}-mode"><option ${c.mode === 'Manual' ? 'selected' : ''}>Manual</option><option ${c.mode === 'Automatic' ? 'selected' : ''}>Automatic</option></select></label>
-      <label class="span-2"><span>Abilitato</span><select id="cycle-${esc(id)}-enabled"><option value="true" ${c.enabled !== false ? 'selected' : ''}>Sì</option><option value="false" ${c.enabled === false ? 'selected' : ''}>No</option></select></label>
+      <label class="span-2"><span>Abilitato</span><select id="cycle-${esc(id)}-enabled"><option value="true" ${c.enabled !== false ? 'selected' : ''}>Si</option><option value="false" ${c.enabled === false ? 'selected' : ''}>No</option></select></label>
       ${field(`cycle-${id}-times`, 'Orari', (schedule.times || []).join(', '), 'span-3')}
       <div class="span-12">${daysControl(`cycle-${id}-days`, schedule.days || [])}</div>
       <label class="span-12"><span>Step: zone separate da virgola, poi | durata minuti. Esempio: prato,orto | 10</span><textarea id="cycle-${esc(id)}-steps">${esc(steps)}</textarea></label>
@@ -415,12 +443,12 @@ function renderWeather() {
   return `<section class="section">
   <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">In uso reale queste opzioni generali sono pensate per la scheda Config dell'add-on. Questa vista resta utile per sviluppo e modifiche avanzate.</p></div>
   <div class="card"><div class="row">
-    ${field('weather-entity', 'Entità meteo', w.entity, 'span-4')}
+    ${field('weather-entity', 'Entita meteo', w.entity, 'span-4')}
     ${field('weather-type', 'Tipo forecast', w.forecast_type || 'hourly', 'span-2')}
     ${numberField('weather-lookahead', 'Ore previsione', w.rain_lookahead_hours, 'span-2')}
     ${numberField('weather-efficiency', 'Efficienza pioggia', w.rain_efficiency, 'span-2', '0.01')}
     ${numberField('weather-skipmm', 'Skip sopra mm', w.skip_if_expected_rain_mm_above, 'span-2', '0.1')}
-    ${numberField('weather-skipprob', 'Skip probabilità %', w.skip_if_rain_probability_above, 'span-2')}
+    ${numberField('weather-skipprob', 'Skip probabilita %', w.skip_if_rain_probability_above, 'span-2')}
     ${field('weather-et0', 'Sensore ET0 opzionale', w.external_et0_sensor_entity || '', 'span-4')}
   </div><div class="actions" style="margin-top:12px; justify-content:flex-start"><button onclick="saveWeather()">Salva meteo</button></div></div></section>`;
 }
@@ -431,12 +459,12 @@ function renderPlant() {
   return `<section class="section">
     <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">Idraulica, sicurezze e MQTT Discovery possono essere gestite dalla scheda Config dell'add-on. Il collegamento laterale usa Ingress con panel_title/panel_icon.</p></div>
     <div class="card"><h3>Idraulica</h3><div class="row">
-      <label class="span-3"><span>Zone parallele</span><select id="hyd-parallel"><option value="false" ${!h.allow_parallel_zones ? 'selected' : ''}>No</option><option value="true" ${h.allow_parallel_zones ? 'selected' : ''}>Sì</option></select></label>
+      <label class="span-3"><span>Zone parallele</span><select id="hyd-parallel"><option value="false" ${!h.allow_parallel_zones ? 'selected' : ''}>No</option><option value="true" ${h.allow_parallel_zones ? 'selected' : ''}>Si</option></select></label>
       ${numberField('hyd-max', 'Max zone insieme', h.max_parallel_zones, 'span-3')}
       ${numberField('hyd-pause', 'Pausa tra zone sec.', h.pause_between_zones_seconds, 'span-3')}
     </div></div>
     <div class="card"><h3>Sicurezze</h3><div class="row">
-      ${selectBool('safe-startup', 'Spegni all’avvio', s.turn_off_all_zones_on_startup, 'span-3')}
+      ${selectBool('safe-startup', "Spegni all'avvio", s.turn_off_all_zones_on_startup, 'span-3')}
       ${selectBool('safe-error', 'Spegni su errore', s.stop_all_known_zones_on_error, 'span-3')}
       ${selectBool('safe-verify', 'Verifica stato valvole', s.verify_zone_state_after_switch, 'span-3')}
       ${selectBool('safe-manualweather', 'Manuale ignora meteo', s.manual_runs_ignore_weather, 'span-3')}
@@ -491,7 +519,7 @@ function entityOptionsList() {
   }).join('');
   return `<datalist id="irrigation-entities">${options}</datalist>`;
 }
-function selectBool(id, label, value, cls = '') { return `<label class="${cls}"><span>${esc(label)}</span><select id="${esc(id)}"><option value="true" ${value ? 'selected' : ''}>Sì</option><option value="false" ${!value ? 'selected' : ''}>No</option></select></label>`; }
+function selectBool(id, label, value, cls = '') { return `<label class="${cls}"><span>${esc(label)}</span><select id="${esc(id)}"><option value="true" ${value ? 'selected' : ''}>Si</option><option value="false" ${!value ? 'selected' : ''}>No</option></select></label>`; }
 function daysControl(id, values) {
   return `<div class="days">${dayNames.map((d, i) => `<label><input type="checkbox" data-days="${esc(id)}" value="${d}" ${values.includes(d) ? 'checked' : ''}>${dayLabels[i]}</label>`).join('')}</div>`;
 }
@@ -652,3 +680,4 @@ reloadAll().catch(error => {
 </html>
 """;
 }
+

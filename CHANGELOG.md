@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.7] - 2026-06-23
+
+### Changed
+
+- Move the decision plan into the Dashboard instead of a separate page.
+- Replace fragile unicode weather icons with stable text badges and hover tooltips.
+- Add an add-on local changelog file for Home Assistant update notes.
+
 ## [0.1.6] - 2026-06-23
 
 ### Added

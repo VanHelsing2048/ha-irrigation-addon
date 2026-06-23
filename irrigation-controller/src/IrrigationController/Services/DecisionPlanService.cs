@@ -25,12 +25,11 @@ public sealed class DecisionPlanService
         var state = await _stateStore.GetAsync(cancellationToken);
         var forecasts = await ReadForecastsAsync(config, cancellationToken);
         var today = DateOnly.FromDateTime(DateTimeOffset.Now.DateTime);
-        var tomorrow = today.AddDays(1);
 
         return new DecisionPlan
         {
             Today = BuildDay("today", "Oggi", today, config, state, forecasts),
-            Tomorrow = BuildDay("tomorrow", "Domani", tomorrow, config, state, forecasts)
+            Tomorrow = BuildDay("tomorrow", "Domani", today.AddDays(1), config, state, forecasts)
         };
     }
 
@@ -48,9 +47,9 @@ public sealed class DecisionPlanService
         var et0 = EstimateEt0(dayForecasts);
         var effectiveRain = Math.Round(rain * config.Weather.RainEfficiency, 2);
         var weather = DescribeWeather(dayForecasts, rain, probability);
-        var cycles = BuildCycles(date, config, state, et0, effectiveRain, rain, probability);
         var shouldSkip = rain >= config.Weather.SkipIfExpectedRainMmAbove
             || probability >= config.Weather.SkipIfRainProbabilityAbove;
+        var cycles = BuildCycles(date, config, state, et0, effectiveRain, shouldSkip);
 
         var decision = shouldSkip
             ? "Salta"
@@ -81,11 +80,8 @@ public sealed class DecisionPlanService
         IrrigationRuntimeState state,
         double et0,
         double effectiveRain,
-        double expectedRain,
-        int rainProbability)
+        bool shouldSkip)
     {
-        var shouldSkip = expectedRain >= config.Weather.SkipIfExpectedRainMmAbove
-            || rainProbability >= config.Weather.SkipIfRainProbabilityAbove;
         var cycles = new List<DecisionCycle>();
 
         foreach (var (cycleId, cycle) in config.Cycles)
@@ -112,7 +108,7 @@ public sealed class DecisionPlanService
                     Id = cycleId,
                     Name = cycle.Name,
                     Time = configuredTime,
-                    Icon = shouldSkip ? "⏭" : "💧",
+                    Icon = shouldSkip ? "SKIP" : "DROP",
                     Decision = shouldSkip ? "Saltato" : "Previsto",
                     DecisionClass = shouldSkip ? "danger" : "ok",
                     Zones = shouldSkip ? [] : BuildZones(config, state, cycle, et0, effectiveRain)
@@ -154,7 +150,7 @@ public sealed class DecisionPlanService
                 {
                     Id = zoneId,
                     Name = zone.Name,
-                    Icon = minutes <= 0 ? "✓" : "💧",
+                    Icon = minutes <= 0 ? "OK" : "DROP",
                     Text = minutes <= 0 ? "ok" : $"{Math.Round(minutes)} min"
                 });
             }
@@ -174,9 +170,9 @@ public sealed class DecisionPlanService
                 Time = item.Timestamp.ToLocalTime().ToString("HH:mm"),
                 Icon = item.Type switch
                 {
-                    "irrigation" => "💧",
-                    "water_balance" => "↕",
-                    _ => "•"
+                    "irrigation" => "DROP",
+                    "water_balance" => "BAL",
+                    _ => "INFO"
                 },
                 Text = item.ZoneId is null ? item.Message : $"{item.ZoneId}: {item.Message}"
             })
@@ -218,7 +214,7 @@ public sealed class DecisionPlanService
     {
         if (forecasts.Count == 0)
         {
-            return ("○", "N/D");
+            return ("NA", "N/D");
         }
 
         var condition = forecasts
@@ -226,48 +222,48 @@ public sealed class DecisionPlanService
             .OrderByDescending(group => group.Count())
             .First().Key;
 
+        if (condition.Contains("lightning", StringComparison.OrdinalIgnoreCase))
+        {
+            return ("STORM", "Temporale");
+        }
+
         if (rain >= 8 || condition.Contains("pouring", StringComparison.OrdinalIgnoreCase))
         {
-            return ("🌧", "Pioggia");
+            return ("RAIN", "Pioggia");
         }
 
         if (probability >= 60 || condition.Contains("rain", StringComparison.OrdinalIgnoreCase))
         {
-            return ("🌦", "Variabile");
-        }
-
-        if (condition.Contains("lightning", StringComparison.OrdinalIgnoreCase))
-        {
-            return ("⛈", "Temporale");
+            return ("PARTLY", "Variabile");
         }
 
         if (condition.Contains("sunny", StringComparison.OrdinalIgnoreCase)
             || condition.Contains("clear", StringComparison.OrdinalIgnoreCase))
         {
-            return ("☀", "Sole");
+            return ("SUN", "Sole");
         }
 
         if (condition.Contains("partly", StringComparison.OrdinalIgnoreCase))
         {
-            return ("⛅", "Variabile");
+            return ("PARTLY", "Variabile");
         }
 
         if (condition.Contains("cloud", StringComparison.OrdinalIgnoreCase))
         {
-            return ("☁", "Nuvoloso");
+            return ("CLOUD", "Nuvoloso");
         }
 
         if (condition.Contains("fog", StringComparison.OrdinalIgnoreCase))
         {
-            return ("≋", "Nebbia");
+            return ("FOG", "Nebbia");
         }
 
         if (condition.Contains("snow", StringComparison.OrdinalIgnoreCase))
         {
-            return ("❄", "Neve");
+            return ("SNOW", "Neve");
         }
 
-        return ("○", "Meteo");
+        return ("NA", "Meteo");
     }
 
     private static double EstimateEt0(List<ForecastItem> forecasts)
