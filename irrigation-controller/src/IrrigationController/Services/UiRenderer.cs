@@ -185,11 +185,16 @@ function toast(message, danger = false) {
   setTimeout(() => el.classList.remove('show'), 4200);
 }
 async function api(path, options = {}) {
-  const res = await fetch(path, options);
+  const res = await fetch(apiUrl(path), options);
   const text = await res.text();
   const body = text ? JSON.parse(text) : {};
   if (!res.ok) throw body;
   return body;
+}
+function apiUrl(path) {
+  const normalizedPath = path.startsWith('/') ? path : '/' + path;
+  const ingressBase = location.pathname.replace(/\/+ui\/?$/, '').replace(/\/$/, '');
+  return ingressBase + normalizedPath;
 }
 async function reloadAll() {
   [config, overview] = await Promise.all([api('/api/config'), api('/api/overview')]);

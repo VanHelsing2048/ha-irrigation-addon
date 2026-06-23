@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.1.1
+# ha-irrigation-addon 0.1.2
 
-Patch release dell'add-on Home Assistant `Irrigation Controller`.
+Bugfix release dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,6 +14,8 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
+- Fix apertura UI dietro Home Assistant Ingress.
+- Fix chiamate API della UI dietro prefisso Ingress.
 - Icona e logo Home Assistant add-on.
 - Add-on Home Assistant in C#/.NET 8.
 - UI Ingress guidata.

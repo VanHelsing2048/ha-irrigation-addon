@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2] - 2026-06-23
+
+### Fixed
+
+- Fix Ingress entry path to avoid URLs with a double slash before `ui`.
+- Resolve UI API calls relative to the current Ingress base path instead of calling Home Assistant root `/api`.
+- Use relative redirects for `/` and `/config` so the browser stays inside the Ingress prefix.
+
 ## [0.1.1] - 2026-06-22
 
 ### Added

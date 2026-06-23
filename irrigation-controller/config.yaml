@@ -1,5 +1,5 @@
 name: "Irrigation Controller"
-version: "0.1.1"
+version: "0.1.2"
 slug: irrigation_controller
 description: "Controller irrigazione con cicli manuali e automatici basati su ET"
 arch:
@@ -10,7 +10,7 @@ boot: auto
 init: false
 ingress: true
 ingress_port: 8080
-ingress_entry: "/ui"
+ingress_entry: "ui"
 webui: "http://[HOST]:[PORT:8080]/ui"
 watchdog: "http://[HOST]:[PORT:8080]/api/health"
 panel_icon: mdi:sprinkler

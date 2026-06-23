@@ -33,8 +33,8 @@ builder.Services.AddHostedService<CycleScheduler>();
 
 var app = builder.Build();
 
-app.MapGet("/", () => Results.Redirect("/ui"));
-app.MapGet("/config", () => Results.Redirect("/ui#settings"));
+app.MapGet("/", () => Results.Redirect("ui"));
+app.MapGet("/config", () => Results.Redirect("ui#settings"));
 app.MapGet("/ui", (UiRenderer ui) => Results.Content(ui.Render(), "text/html"));
 
 app.MapGet("/api/health", () => Results.Ok(new
