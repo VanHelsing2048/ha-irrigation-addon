@@ -133,7 +133,7 @@ public sealed class UiRenderer
     <aside class="sidebar">
       <div class="brand">
         <h1>Irrigazione</h1>
-        <small>Controller Home Assistant · v0.1.4</small>
+        <small>Controller Home Assistant · v0.1.5</small>
       </div>
       <nav class="nav" id="nav"></nav>
     </aside>
@@ -478,6 +478,7 @@ async function saveZone(id) {
   };
   delete next.zones[id];
   next.zones[newId] = z;
+  renameZoneInCycles(next, id, newId);
   await saveConfig(next);
 }
 async function addZone() {
@@ -494,7 +495,25 @@ async function deleteZone(id) {
   if (!confirm('Eliminare la zona ' + id + '?')) return;
   const next = cloneConfig();
   delete next.zones[id];
+  removeZoneFromCycles(next, id);
   await saveConfig(next);
+}
+function removeZoneFromCycles(next, zoneId) {
+  for (const [cycleId, cycle] of Object.entries(next.cycles || {})) {
+    cycle.steps = (cycle.steps || [])
+      .map(step => ({ ...step, zones: (step.zones || []).filter(id => id !== zoneId) }))
+      .filter(step => (step.zones || []).length > 0);
+    if (cycle.steps.length === 0) delete next.cycles[cycleId];
+  }
+}
+function renameZoneInCycles(next, oldZoneId, newZoneId) {
+  if (oldZoneId === newZoneId) return;
+  for (const cycle of Object.values(next.cycles || {})) {
+    cycle.steps = (cycle.steps || []).map(step => ({
+      ...step,
+      zones: (step.zones || []).map(id => id === oldZoneId ? newZoneId : id)
+    }));
+  }
 }
 async function saveCycle(id) {
   const next = cloneConfig();

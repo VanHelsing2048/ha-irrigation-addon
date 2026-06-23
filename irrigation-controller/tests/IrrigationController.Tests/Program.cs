@@ -8,6 +8,7 @@ var tests = new (string Name, Action Test)[]
     ("config validator catches unknown cycle zone", ConfigValidatorCatchesUnknownCycleZone),
     ("config validator accepts basic sample", ConfigValidatorAcceptsBasicSample),
     ("config validator accepts valve entity", ConfigValidatorAcceptsValveEntity),
+    ("config validator accepts empty zone setup", ConfigValidatorAcceptsEmptyZoneSetup),
     ("config validator catches invalid hydraulic policy", ConfigValidatorCatchesInvalidHydraulicPolicy)
 };
 
@@ -98,6 +99,24 @@ static void ConfigValidatorAcceptsValveEntity()
     if (result.Warnings.Any(warning => warning.Path == "zones.prato.entity"))
     {
         throw new InvalidOperationException("Expected valve entity to be accepted without entity warning.");
+    }
+}
+
+static void ConfigValidatorAcceptsEmptyZoneSetup()
+{
+    var config = BasicConfig();
+    config.Zones.Clear();
+    config.Cycles.Clear();
+
+    var result = new IrrigationConfigValidator().Validate(config);
+    if (!result.IsValid)
+    {
+        throw new InvalidOperationException(result.Errors[0].Message);
+    }
+
+    if (!result.Warnings.Any(warning => warning.Path == "zones"))
+    {
+        throw new InvalidOperationException("Expected empty zones to produce a warning.");
     }
 }
 

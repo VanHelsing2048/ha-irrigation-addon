@@ -104,7 +104,7 @@ public sealed class IrrigationConfigValidator
     {
         if (config.Zones.Count == 0)
         {
-            Error(result, "zones", "At least one zone is required.");
+            Warning(result, "zones", "No zones are configured.");
             return;
         }
 
