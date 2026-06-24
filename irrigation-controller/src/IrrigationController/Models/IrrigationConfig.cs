@@ -46,6 +46,7 @@ public sealed class HydraulicConfig
     public bool AllowParallelZones { get; set; }
     public int MaxParallelZones { get; set; } = 1;
     public int PauseBetweenZonesSeconds { get; set; }
+    public string? MasterValveEntity { get; set; }
 }
 
 public sealed class ZoneConfig

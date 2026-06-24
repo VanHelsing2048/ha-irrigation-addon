@@ -34,6 +34,12 @@ public sealed class IrrigationConfigValidator
         {
             Error(result, "hydraulic.pause_between_zones_seconds", "Pause between zones must be between 0 and 3600 seconds.");
         }
+
+        if (!string.IsNullOrWhiteSpace(config.Hydraulic.MasterValveEntity)
+            && !IsSwitchOrValve(config.Hydraulic.MasterValveEntity))
+        {
+            Warning(result, "hydraulic.master_valve_entity", "Expected a Home Assistant switch or valve entity.");
+        }
     }
 
     private static void ValidateMqttDiscovery(IrrigationConfig config, ConfigValidationResult result)
@@ -121,8 +127,7 @@ public sealed class IrrigationConfigValidator
             {
                 Error(result, $"{path}.entity", "Home Assistant switch or valve entity is required.");
             }
-            else if (!zone.Entity.StartsWith("switch.", StringComparison.OrdinalIgnoreCase)
-                && !zone.Entity.StartsWith("valve.", StringComparison.OrdinalIgnoreCase))
+            else if (!IsSwitchOrValve(zone.Entity))
             {
                 Warning(result, $"{path}.entity", "Expected a Home Assistant switch or valve entity.");
             }
@@ -265,4 +270,8 @@ public sealed class IrrigationConfigValidator
 
     private static void Warning(ConfigValidationResult result, string path, string message) =>
         result.Warnings.Add(new ConfigValidationIssue(path, message));
+
+    private static bool IsSwitchOrValve(string entityId) =>
+        entityId.StartsWith("switch.", StringComparison.OrdinalIgnoreCase)
+        || entityId.StartsWith("valve.", StringComparison.OrdinalIgnoreCase);
 }

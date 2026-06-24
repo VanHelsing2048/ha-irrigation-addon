@@ -12,12 +12,14 @@ var tests = new (string Name, Action Test)[]
     ("config validator catches invalid hydraulic policy", ConfigValidatorCatchesInvalidHydraulicPolicy),
     ("config validator accepts interval schedule", ConfigValidatorAcceptsIntervalSchedule),
     ("config validator catches invalid interval schedule", ConfigValidatorCatchesInvalidIntervalSchedule),
+    ("config validator accepts master valve", ConfigValidatorAcceptsMasterValve),
     ("ui uses escaped action handlers", UiUsesEscapedActionHandlers),
     ("ui sends save audit headers", UiSendsSaveAuditHeaders),
     ("ui contains cycle event register", AssertUiContainsCycleRegister),
     ("ui contains weather entity picker", AssertUiContainsWeatherEntityPicker),
     ("ui contains dashboard weather summary", AssertUiContainsDashboardWeatherSummary),
-    ("ui contains cycle step editor", AssertUiContainsCycleStepEditor)
+    ("ui contains cycle step editor", AssertUiContainsCycleStepEditor),
+    ("ui contains master valve setting", AssertUiContainsMasterValveSetting)
 };
 
 var failures = 0;
@@ -222,6 +224,23 @@ static void ConfigValidatorCatchesInvalidIntervalSchedule()
     }
 }
 
+static void ConfigValidatorAcceptsMasterValve()
+{
+    var config = BasicConfig();
+    config.Hydraulic.MasterValveEntity = "valve.master_irrigazione";
+
+    var result = new IrrigationConfigValidator().Validate(config);
+    if (!result.IsValid)
+    {
+        throw new InvalidOperationException(result.Errors[0].Message);
+    }
+
+    if (result.Warnings.Any(warning => warning.Path == "hydraulic.master_valve_entity"))
+    {
+        throw new InvalidOperationException("Expected master valve entity to be accepted without warning.");
+    }
+}
+
 static void AssertUiContainsCycleRegister()
 {
     var html = new UiRenderer().Render();
@@ -293,6 +312,17 @@ static void AssertUiContainsCycleStepEditor()
         {
             throw new InvalidOperationException($"Expected cycle step editor marker '{value}'.");
         }
+    }
+}
+
+static void AssertUiContainsMasterValveSetting()
+{
+    var html = new UiRenderer().Render();
+    if (!html.Contains("Valvola master", StringComparison.Ordinal)
+        || !html.Contains("hyd-master", StringComparison.Ordinal)
+        || !html.Contains("master_valve_entity", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException("Expected master valve setting in UI.");
     }
 }
 

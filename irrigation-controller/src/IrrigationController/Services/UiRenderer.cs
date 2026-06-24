@@ -593,6 +593,8 @@ function renderPlant() {
   return `<section class="section">
     <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">Idraulica, sicurezze e MQTT Discovery possono essere gestite dalla scheda Config dell'add-on. Il collegamento laterale usa Ingress con panel_title/panel_icon.</p></div>
     <div class="card"><h3>Idraulica</h3><div class="row">
+      ${entityOptionsList()}
+      ${entityField('hyd-master', 'Valvola master', h.master_valve_entity || '', 'span-4')}
       <label class="span-3"><span>Zone parallele</span><select id="hyd-parallel"><option value="false" ${!h.allow_parallel_zones ? 'selected' : ''}>No</option><option value="true" ${h.allow_parallel_zones ? 'selected' : ''}>Si</option></select></label>
       ${numberField('hyd-max', 'Max zone insieme', h.max_parallel_zones, 'span-3')}
       ${numberField('hyd-pause', 'Pausa tra zone sec.', h.pause_between_zones_seconds, 'span-3')}
@@ -856,7 +858,7 @@ async function saveWeather() {
 }
 async function savePlant() {
   const next = cloneConfig();
-  next.hydraulic = { allow_parallel_zones: val('hyd-parallel') === 'true', max_parallel_zones: num(val('hyd-max'), 1), pause_between_zones_seconds: num(val('hyd-pause'), 0) };
+  next.hydraulic = { allow_parallel_zones: val('hyd-parallel') === 'true', max_parallel_zones: num(val('hyd-max'), 1), pause_between_zones_seconds: num(val('hyd-pause'), 0), master_valve_entity: val('hyd-master') || null };
   next.safety = {
     ...(next.safety || {}),
     turn_off_all_zones_on_startup: val('safe-startup') === 'true',

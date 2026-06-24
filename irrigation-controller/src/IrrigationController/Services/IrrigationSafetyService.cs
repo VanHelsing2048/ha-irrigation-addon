@@ -58,6 +58,22 @@ public sealed class IrrigationSafetyService
                 _logger.LogWarning(ex, "Unable to turn off {EntityId}.", zone.Entity);
             }
         }
+
+        if (!string.IsNullOrWhiteSpace(config.Hydraulic.MasterValveEntity))
+        {
+            try
+            {
+                await TurnOffZoneAsync(new ZoneConfig
+                {
+                    Name = "Valvola master",
+                    Entity = config.Hydraulic.MasterValveEntity
+                }, config.Safety, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Unable to turn off master valve {EntityId}.", config.Hydraulic.MasterValveEntity);
+            }
+        }
     }
 
     private async Task VerifyStateAsync(

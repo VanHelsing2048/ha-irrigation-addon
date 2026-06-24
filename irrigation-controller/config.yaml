@@ -49,6 +49,7 @@ options:
     allow_parallel_zones: false
     max_parallel_zones: 1
     pause_between_zones_seconds: 0
+    master_valve_entity: ""
 schema:
   irrigation_config_path: str
   weather:
@@ -76,6 +77,7 @@ schema:
     allow_parallel_zones: bool
     max_parallel_zones: "int(1,16)"
     pause_between_zones_seconds: "int(0,3600)"
+    master_valve_entity: "str?"
 map:
   - type: addon_config
     read_only: false

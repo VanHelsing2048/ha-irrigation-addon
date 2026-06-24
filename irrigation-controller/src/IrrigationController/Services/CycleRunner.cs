@@ -272,8 +272,11 @@ public sealed class CycleRunner
         {
             foreach (var run in runs)
             {
-                await RunSingleZoneAsync(config, run, cancellationToken);
-                await PauseBetweenZonesAsync(config, cancellationToken);
+                await RunWithMasterValveAsync(config, [run], async () =>
+                {
+                    await RunSingleZoneAsync(config, run, cancellationToken);
+                    await PauseBetweenZonesAsync(config, cancellationToken);
+                }, cancellationToken);
             }
 
             return;
@@ -284,8 +287,28 @@ public sealed class CycleRunner
             Current.ZoneId = string.Join(",", batch.Select(item => item.ZoneId));
             Current.ZoneName = string.Join(", ", batch.Select(item => item.Zone.Name));
             Current.ExpectedEndAt = DateTimeOffset.UtcNow.Add(batch.Max(item => item.Duration));
-            await Task.WhenAll(batch.Select(run => RunSingleZoneAsync(config, run, cancellationToken)));
-            await PauseBetweenZonesAsync(config, cancellationToken);
+            await RunWithMasterValveAsync(config, batch, async () =>
+            {
+                await Task.WhenAll(batch.Select(run => RunSingleZoneAsync(config, run, cancellationToken)));
+                await PauseBetweenZonesAsync(config, cancellationToken);
+            }, cancellationToken);
+        }
+    }
+
+    private async Task RunWithMasterValveAsync(
+        IrrigationConfig config,
+        IReadOnlyCollection<ZoneRun> runs,
+        Func<Task> operation,
+        CancellationToken cancellationToken)
+    {
+        await TurnOnMasterValveAsync(config, runs, cancellationToken);
+        try
+        {
+            await operation();
+        }
+        finally
+        {
+            await TurnOffMasterValveAsync(config, runs, CancellationToken.None);
         }
     }
 
@@ -321,6 +344,44 @@ public sealed class CycleRunner
                 CancellationToken.None);
         }
     }
+
+    private async Task TurnOnMasterValveAsync(IrrigationConfig config, IReadOnlyCollection<ZoneRun> runs, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(config.Hydraulic.MasterValveEntity))
+        {
+            return;
+        }
+
+        await _safety.TurnOnZoneAsync(MasterValve(config), config.Safety, cancellationToken);
+        await RecordCycleEventAsync(
+            "master_valve_started",
+            $"Valvola master aperta per {string.Join(", ", runs.Select(run => run.Zone.Name))}.",
+            Current.CycleId,
+            null,
+            cancellationToken);
+    }
+
+    private async Task TurnOffMasterValveAsync(IrrigationConfig config, IReadOnlyCollection<ZoneRun> runs, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(config.Hydraulic.MasterValveEntity))
+        {
+            return;
+        }
+
+        await _safety.TurnOffZoneAsync(MasterValve(config), config.Safety, cancellationToken);
+        await RecordCycleEventAsync(
+            "master_valve_stopped",
+            "Valvola master chiusa.",
+            Current.CycleId,
+            null,
+            cancellationToken);
+    }
+
+    private static ZoneConfig MasterValve(IrrigationConfig config) => new()
+    {
+        Name = "Valvola master",
+        Entity = config.Hydraulic.MasterValveEntity ?? ""
+    };
 
     private Task RecordCycleEventAsync(
         string type,
