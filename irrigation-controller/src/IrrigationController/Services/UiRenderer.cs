@@ -786,6 +786,23 @@ function weatherSettingsOverview(w) {
       <div class="setting-tile"><span>Ultima ET0</span><strong>${last ? num(last.et0_mm).toFixed(1) + ' mm' : '-'}</strong></div>
       <div class="setting-tile"><span>Pioggia utile</span><strong>${last ? num(last.effective_rain_mm).toFixed(1) + ' mm' : '-'}</strong></div>
     </div>
+    ${weatherDiagnosticsPanel(last)}
+  </div>`;
+}
+function weatherDiagnosticsPanel(last) {
+  if (!last) return `<div class="empty" style="margin-top:10px"><strong>Dati ricevuti da Home Assistant</strong><span>Nessuna chiamata meteo registrata. Avvia un dry-run o attendi l'aggiornamento automatico del bilancio.</span></div>`;
+  const first = last.first_forecast_at ? new Date(last.first_forecast_at).toLocaleString() : '-';
+  const lastAt = last.last_forecast_at ? new Date(last.last_forecast_at).toLocaleString() : '-';
+  return `<div style="margin-top:12px">
+    <div class="toolbar"><h3>Dati ricevuti da Home Assistant</h3><span class="pill ${last.forecast_available ? 'ok' : 'warn'}">${last.forecast_available ? 'Forecast presente' : 'Forecast assente'}</span></div>
+    <div class="setting-board" style="margin-top:10px">
+      <div class="setting-tile"><span>Entita chiamata</span><strong>${esc(last.entity || '-')}</strong></div>
+      <div class="setting-tile"><span>Tipo forecast</span><strong>${esc(last.forecast_type || '-')}</strong></div>
+      <div class="setting-tile"><span>Record nella finestra</span><strong>${num(last.forecast_records, 0)}</strong></div>
+      <div class="setting-tile"><span>Esito</span><strong>${esc(last.message || '-')}</strong></div>
+      <div class="setting-tile span-6"><span>Prima previsione</span><strong>${esc(first)}</strong></div>
+      <div class="setting-tile span-6"><span>Ultima previsione</span><strong>${esc(lastAt)}</strong></div>
+    </div>
   </div>`;
 }
 function plantFlow(h, s) {

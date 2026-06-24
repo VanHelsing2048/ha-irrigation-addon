@@ -575,6 +575,10 @@ static void AssertUiContainsWeatherAndPlantOverview()
     {
         "Meteo operativo",
         "weatherSettingsOverview",
+        "Dati ricevuti da Home Assistant",
+        "weatherDiagnosticsPanel",
+        "forecast_records",
+        "first_forecast_at",
         "Ultima ET0",
         "Pioggia utile",
         "Schema impianto",

@@ -16,6 +16,13 @@ public sealed class DiagnosticsService
         var state = await _stateStore.GetAsync(cancellationToken);
         state.Diagnostics.LastWeather = new WeatherDiagnostic
         {
+            Entity = weather.Entity,
+            ForecastType = weather.ForecastType,
+            ForecastRecords = weather.ForecastRecords,
+            FirstForecastAt = weather.FirstForecastAt,
+            LastForecastAt = weather.LastForecastAt,
+            ForecastAvailable = weather.ForecastAvailable,
+            Message = weather.Message,
             Et0Mm = weather.Et0Mm,
             ExpectedRainMm = weather.ExpectedRainMm,
             EffectiveRainMm = weather.EffectiveRainMm,

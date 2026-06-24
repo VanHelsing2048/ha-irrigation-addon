@@ -20,6 +20,13 @@ public sealed class DiagnosticsState
 public sealed class WeatherDiagnostic
 {
     public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
+    public string Entity { get; set; } = "";
+    public string ForecastType { get; set; } = "";
+    public int ForecastRecords { get; set; }
+    public DateTimeOffset? FirstForecastAt { get; set; }
+    public DateTimeOffset? LastForecastAt { get; set; }
+    public bool ForecastAvailable { get; set; }
+    public string Message { get; set; } = "";
     public double Et0Mm { get; set; }
     public double ExpectedRainMm { get; set; }
     public double EffectiveRainMm { get; set; }
@@ -92,7 +99,14 @@ public sealed record WeatherAdjustment(
     double ExpectedRainMm,
     double EffectiveRainMm,
     int MaxRainProbability,
-    bool ShouldSkip);
+    bool ShouldSkip,
+    string Entity = "",
+    string ForecastType = "",
+    int ForecastRecords = 0,
+    DateTimeOffset? FirstForecastAt = null,
+    DateTimeOffset? LastForecastAt = null,
+    bool ForecastAvailable = false,
+    string Message = "");
 
 public sealed class ControllerMqttState
 {

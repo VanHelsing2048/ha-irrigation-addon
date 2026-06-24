@@ -20,6 +20,10 @@ public sealed class WeatherAdjustmentService
         var et0 = await ReadExternalEt0Async(weather, cancellationToken);
         var expectedRain = 0d;
         var maxProbability = 0;
+        var records = 0;
+        DateTimeOffset? firstForecastAt = null;
+        DateTimeOffset? lastForecastAt = null;
+        var message = "Forecast Home Assistant disponibile.";
 
         using var forecasts = await _homeAssistant.GetForecastsAsync(weather.Entity, weather.ForecastType, cancellationToken);
         if (forecasts is not null)
@@ -35,6 +39,9 @@ public sealed class WeatherAdjustmentService
 
                 expectedRain += ReadDouble(item, "precipitation", "native_precipitation") ?? 0;
                 maxProbability = Math.Max(maxProbability, (int)(ReadDouble(item, "precipitation_probability") ?? 0));
+                records++;
+                firstForecastAt = firstForecastAt is null || forecastTime < firstForecastAt ? forecastTime : firstForecastAt;
+                lastForecastAt = lastForecastAt is null || forecastTime > lastForecastAt ? forecastTime : lastForecastAt;
 
                 if (et0 is null)
                 {
@@ -42,13 +49,34 @@ public sealed class WeatherAdjustmentService
                 }
             }
         }
+        else
+        {
+            message = "Forecast Home Assistant non disponibile: uso fallback ET0.";
+        }
 
         var et0Value = Math.Max(0, et0 ?? 3);
         var effectiveRain = Math.Max(0, expectedRain * weather.RainEfficiency);
         var shouldSkip = expectedRain >= weather.SkipIfExpectedRainMmAbove
             || maxProbability >= weather.SkipIfRainProbabilityAbove;
 
-        return new WeatherAdjustment(et0Value, expectedRain, effectiveRain, maxProbability, shouldSkip);
+        if (records == 0 && forecasts is not null)
+        {
+            message = "Forecast ricevuto ma senza record nella finestra configurata.";
+        }
+
+        return new WeatherAdjustment(
+            et0Value,
+            expectedRain,
+            effectiveRain,
+            maxProbability,
+            shouldSkip,
+            weather.Entity,
+            weather.ForecastType,
+            records,
+            firstForecastAt,
+            lastForecastAt,
+            records > 0,
+            message);
     }
 
     private async Task<double?> ReadExternalEt0Async(WeatherConfig weather, CancellationToken cancellationToken)
