@@ -51,8 +51,10 @@ app.MapGet("/api/config", async (IrrigationConfigStore store, CancellationToken 
 
 app.MapPut("/api/config", async (
     IrrigationConfig config,
+    HttpRequest request,
     IrrigationConfigStore store,
     IrrigationConfigValidator validator,
+    DiagnosticsService diagnostics,
     CancellationToken cancellationToken) =>
 {
     var validation = validator.Validate(config);
@@ -62,6 +64,12 @@ app.MapPut("/api/config", async (
     }
 
     await store.SaveAsync(config, cancellationToken);
+    await diagnostics.RecordEventAsync(
+        request.Headers["X-Irrigation-Action"].FirstOrDefault() ?? "config_saved",
+        request.Headers["X-Irrigation-Message"].FirstOrDefault() ?? "Configuration saved.",
+        request.Headers["X-Irrigation-Zone"].FirstOrDefault(),
+        cancellationToken);
+
     return Results.Ok(new { message = "Configuration saved.", validation.Warnings });
 });
 

@@ -9,7 +9,9 @@ var tests = new (string Name, Action Test)[]
     ("config validator accepts basic sample", ConfigValidatorAcceptsBasicSample),
     ("config validator accepts valve entity", ConfigValidatorAcceptsValveEntity),
     ("config validator accepts empty zone setup", ConfigValidatorAcceptsEmptyZoneSetup),
-    ("config validator catches invalid hydraulic policy", ConfigValidatorCatchesInvalidHydraulicPolicy)
+    ("config validator catches invalid hydraulic policy", ConfigValidatorCatchesInvalidHydraulicPolicy),
+    ("ui uses escaped action handlers", UiUsesEscapedActionHandlers),
+    ("ui sends save audit headers", UiSendsSaveAuditHeaders)
 };
 
 var failures = 0;
@@ -129,6 +131,51 @@ static void ConfigValidatorCatchesInvalidHydraulicPolicy()
     if (result.IsValid)
     {
         throw new InvalidOperationException("Expected hydraulic validation error.");
+    }
+}
+
+static void UiUsesEscapedActionHandlers()
+{
+    var html = new UiRenderer().Render();
+
+    if (!html.Contains("function action(name, value)", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException("Expected action helper to be rendered.");
+    }
+
+    if (!html.Contains("onclick=\"${esc(action('saveZone', id))}\"", StringComparison.Ordinal)
+        || !html.Contains("onclick=\"${esc(action('saveCycle', id))}\"", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException("Expected save buttons to use escaped action handlers.");
+    }
+
+    if (html.Contains("onclick=\"saveZone(${js(id)})", StringComparison.Ordinal)
+        || html.Contains("onclick=\"saveCycle(${js(id)})", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException("Found an unescaped draft save handler.");
+    }
+}
+
+static void UiSendsSaveAuditHeaders()
+{
+    var html = new UiRenderer().Render();
+    var expected = new[]
+    {
+        "X-Irrigation-Action",
+        "X-Irrigation-Message",
+        "Zona salvata",
+        "Ciclo salvato",
+        "Meteo salvato",
+        "Impianto salvato",
+        "JSON salvato"
+    };
+
+    foreach (var value in expected)
+    {
+        if (!html.Contains(value, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected UI to contain '{value}'.");
+        }
     }
 }
 

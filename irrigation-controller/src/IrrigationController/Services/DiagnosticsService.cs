@@ -53,4 +53,32 @@ public sealed class DiagnosticsService
         };
         await _stateStore.SaveAsync(state, cancellationToken);
     }
+
+    public async Task RecordEventAsync(
+        string type,
+        string message,
+        string? zoneId,
+        CancellationToken cancellationToken)
+    {
+        var state = await _stateStore.GetAsync(cancellationToken);
+        state.Events.Insert(0, new IrrigationEvent
+        {
+            Type = Normalize(type, "user_action"),
+            Message = Normalize(message, "User action completed."),
+            ZoneId = string.IsNullOrWhiteSpace(zoneId) ? null : zoneId.Trim()
+        });
+
+        if (state.Events.Count > 200)
+        {
+            state.Events.RemoveRange(200, state.Events.Count - 200);
+        }
+
+        await _stateStore.SaveAsync(state, cancellationToken);
+    }
+
+    private static string Normalize(string? value, string fallback)
+    {
+        var normalized = string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+        return normalized.Length <= 160 ? normalized : normalized[..160];
+    }
 }

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.11] - 2026-06-24
+
+### Added
+
+- Aggiunte notifiche esplicite per ogni salvataggio configurazione dalla UI.
+- I salvataggi configurazione vengono storicizzati negli eventi diagnostici.
+- Aggiunti test anti-regressione per gli handler dei pulsanti di salvataggio e gli header di audit.
+
 ## [0.1.10] - 2026-06-24
 
 ### Fixed

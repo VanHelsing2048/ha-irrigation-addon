@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.11] - 2026-06-24
+
+### Added
+
+- Add explicit UI notifications for every configuration save action.
+- Record configuration saves in the diagnostics event log.
+- Add regression tests for escaped UI save handlers and save audit headers.
+
 ## [0.1.10] - 2026-06-24
 
 ### Fixed

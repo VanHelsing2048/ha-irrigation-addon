@@ -237,11 +237,16 @@ async function reloadAll() {
   ]);
   render();
 }
-async function saveConfig(nextConfig = config, successMessage = 'Configurazione salvata', renderAfterSave = true) {
+async function saveConfig(nextConfig = config, successMessage = 'Configurazione salvata', renderAfterSave = true, action = 'config_saved', zoneId = '') {
   try {
     const result = await api('/api/config', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Irrigation-Action': action,
+        'X-Irrigation-Message': successMessage,
+        'X-Irrigation-Zone': zoneId
+      },
       body: JSON.stringify(nextConfig)
     });
     config = nextConfig;
@@ -597,7 +602,7 @@ async function saveZone(id) {
   delete next.zones[id];
   next.zones[newId] = z;
   renameZoneInCycles(next, id, newId);
-  if (await saveConfig(next, 'Zona salvata', false)) {
+  if (await saveConfig(next, 'Zona salvata', false, 'zone_saved', newId)) {
     delete draftZones[id];
     delete draftZones[newId];
     render();
@@ -622,7 +627,7 @@ async function deleteZone(id) {
   const next = cloneConfig();
   delete next.zones[id];
   removeZoneFromCycles(next, id);
-  await saveConfig(next);
+  await saveConfig(next, 'Zona eliminata', true, 'zone_deleted', id);
 }
 function removeZoneFromCycles(next, zoneId) {
   for (const [cycleId, cycle] of Object.entries(next.cycles || {})) {
@@ -658,7 +663,7 @@ async function saveCycle(id) {
   };
   delete next.cycles[id];
   next.cycles[newId] = c;
-  if (await saveConfig(next, 'Ciclo salvato', false)) {
+  if (await saveConfig(next, 'Ciclo salvato', false, 'cycle_saved')) {
     delete draftCycles[id];
     delete draftCycles[newId];
     render();
@@ -687,7 +692,7 @@ async function deleteCycle(id) {
   if (!confirm('Eliminare il ciclo ' + id + '?')) return;
   const next = cloneConfig();
   delete next.cycles[id];
-  await saveConfig(next);
+  await saveConfig(next, 'Ciclo eliminato', true, 'cycle_deleted');
 }
 async function saveWeather() {
   const next = cloneConfig();
@@ -699,7 +704,7 @@ async function saveWeather() {
     skip_if_rain_probability_above: num(val('weather-skipprob'), 70),
     external_et0_sensor_entity: val('weather-et0') || null
   };
-  await saveConfig(next);
+  await saveConfig(next, 'Meteo salvato', true, 'weather_saved');
 }
 async function savePlant() {
   const next = cloneConfig();
@@ -715,10 +720,10 @@ async function savePlant() {
     max_zone_minutes: num(val('safe-maxminutes'), 60)
   };
   next.mqtt_discovery = { enabled: val('mqtt-enabled') === 'true', discovery_prefix: val('mqtt-prefix'), base_topic: val('mqtt-topic'), publish_interval_seconds: num(val('mqtt-interval'), 30) };
-  await saveConfig(next);
+  await saveConfig(next, 'Impianto salvato', true, 'plant_saved');
 }
 async function saveRaw() {
-  try { await saveConfig(JSON.parse(val('raw-json'))); }
+  try { await saveConfig(JSON.parse(val('raw-json')), 'JSON salvato', true, 'raw_json_saved'); }
   catch (e) { toast('JSON non valido: ' + e.message, true); }
 }
 function renderValidationError(error) {
