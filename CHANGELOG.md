@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.3] - 2026-06-24
+
+### Added
+
+- Add a structured cycle start-time editor using `input type=time` rows with add/remove controls.
+- Add inline SVG weather icons for sun, cloud, rain, storm, fog, snow, irrigation and status badges.
+- Add regression tests for automatic dry-run ET projection and cycle time editor markers.
+
+### Fixed
+
+- Fix automatic cycle dry-run durations: simulations now project today's ET/rain balance before calculating zone minutes, without mutating real valve state.
+- Avoid adding daily ET twice when the water balance has already been updated today.
+- Replace scattered `N/D` weather fallbacks with clearer labels and current-weather fallback when forecasts are unavailable.
+
 ## [0.2.2] - 2026-06-24
 
 ### Added

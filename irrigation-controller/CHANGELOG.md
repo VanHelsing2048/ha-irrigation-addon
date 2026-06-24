@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.3] - 2026-06-24
+
+### Aggiunto
+
+- Editor orari ciclo con righe `input type=time` e controlli aggiungi/rimuovi.
+- Icone meteo SVG inline per sole, nuvole, pioggia, temporale, nebbia, neve, irrigazione e stati.
+- Test anti-regressione sul calcolo dry-run automatico con ET e sui marker UI degli orari ciclo.
+
+### Corretto
+
+- Il dry-run dei cicli automatici ora proietta il bilancio ET/pioggia del giorno prima di calcolare i minuti zona, senza comandare valvole reali.
+- Evitata la doppia applicazione della ET giornaliera quando il bilancio e gia aggiornato oggi.
+- Sostituiti i fallback meteo `N/D` sparsi con etichette piu chiare e fallback sul meteo corrente quando il forecast non e disponibile.
+
 ## [0.2.2] - 2026-06-24
 
 ### Aggiunto
