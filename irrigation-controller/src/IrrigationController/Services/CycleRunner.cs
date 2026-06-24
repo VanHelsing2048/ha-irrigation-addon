@@ -133,7 +133,7 @@ public sealed class CycleRunner
                     continue;
                 }
 
-                var duration = await ResolveDurationAsync(config, cycle, step, zoneId, zone, cancellationToken);
+                var duration = await ResolveDurationAsync(config, cycle, step, zoneId, zone, adjustment, cancellationToken);
                 if (duration <= TimeSpan.Zero)
                 {
                     await RecordCycleEventAsync(
@@ -332,7 +332,7 @@ public sealed class CycleRunner
                 continue;
             }
 
-            var duration = await ResolveDurationAsync(config, cycle, step, zoneId, zone, cancellationToken);
+            var duration = await ResolveDurationAsync(config, cycle, step, zoneId, zone, adjustment, cancellationToken);
             if (duration <= TimeSpan.Zero)
             {
                 _logger.LogInformation("Skipping zone {ZoneId}; calculated duration is zero.", zoneId);
@@ -501,6 +501,7 @@ public sealed class CycleRunner
         CycleStepConfig step,
         string zoneId,
         ZoneConfig zone,
+        WeatherAdjustment adjustment,
         CancellationToken cancellationToken)
     {
         if (cycle.Mode == CycleMode.Manual)
@@ -522,17 +523,8 @@ public sealed class CycleRunner
         }
 
         var state = await _stateStore.GetAsync(cancellationToken);
-        state.WaterBalance.TryGetValue(zoneId, out var previousDeficit);
-
-        var irrigationDeficit = Math.Max(0, previousDeficit - zone.TargetDeficitMm);
-        var minutes = irrigationDeficit / Math.Max(0.1, zone.PrecipitationRateMmH) * 60;
-        if (minutes <= 0)
-        {
-            return TimeSpan.Zero;
-        }
-
-        minutes = Math.Clamp(minutes, zone.MinMinutes, Math.Min(zone.MaxMinutes, config.Safety.MaxZoneMinutes));
-        return TimeSpan.FromMinutes(minutes);
+        var today = DateOnly.FromDateTime(DateTimeOffset.Now.DateTime);
+        return IrrigationDurationCalculator.EstimateAutomaticDuration(config, state, zoneId, zone, adjustment, today);
     }
 
     private async Task MarkScheduledRunAsync(string cycleId, CancellationToken cancellationToken)

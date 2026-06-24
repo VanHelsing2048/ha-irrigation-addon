@@ -15,6 +15,8 @@ var tests = new (string Name, Action Test)[]
     ("config validator accepts master valve", ConfigValidatorAcceptsMasterValve),
     ("schedule calculator handles interval dates", ScheduleCalculatorHandlesIntervalDates),
     ("schedule calculator finds next run", ScheduleCalculatorFindsNextRun),
+    ("duration calculator projects daily ET for dry-run", DurationCalculatorProjectsDailyEtForDryRun),
+    ("duration calculator avoids double daily ET", DurationCalculatorAvoidsDoubleDailyEt),
     ("ui uses escaped action handlers", UiUsesEscapedActionHandlers),
     ("ui sends save audit headers", UiSendsSaveAuditHeaders),
     ("ui contains cycle event register", AssertUiContainsCycleRegister),
@@ -304,6 +306,49 @@ static void ScheduleCalculatorFindsNextRun()
     if (next is null || next.Value.Date != new DateTime(2026, 6, 26) || next.Value.Hour != 6)
     {
         throw new InvalidOperationException($"Expected next interval run on 2026-06-26 06:00, got {next}.");
+    }
+}
+
+static void DurationCalculatorProjectsDailyEtForDryRun()
+{
+    var config = BasicConfig();
+    var zone = config.Zones["prato"];
+    var state = new IrrigationRuntimeState();
+    var duration = IrrigationDurationCalculator.EstimateAutomaticDuration(
+        config,
+        state,
+        "prato",
+        zone,
+        new WeatherAdjustment(Et0Mm: 4, ExpectedRainMm: 0, EffectiveRainMm: 0, MaxRainProbability: 0, ShouldSkip: false),
+        new DateOnly(2026, 6, 24));
+
+    if (duration <= TimeSpan.Zero)
+    {
+        throw new InvalidOperationException("Expected dry-run automatic duration to include today's ET projection.");
+    }
+}
+
+static void DurationCalculatorAvoidsDoubleDailyEt()
+{
+    var config = BasicConfig();
+    var zone = config.Zones["prato"];
+    var state = new IrrigationRuntimeState
+    {
+        LastWaterBalanceUpdateDate = "2026-06-24",
+        WaterBalance = { ["prato"] = 0 }
+    };
+
+    var duration = IrrigationDurationCalculator.EstimateAutomaticDuration(
+        config,
+        state,
+        "prato",
+        zone,
+        new WeatherAdjustment(Et0Mm: 4, ExpectedRainMm: 0, EffectiveRainMm: 0, MaxRainProbability: 0, ShouldSkip: false),
+        new DateOnly(2026, 6, 24));
+
+    if (duration != TimeSpan.Zero)
+    {
+        throw new InvalidOperationException("Expected already-updated daily balance to avoid adding ET twice.");
     }
 }
 
