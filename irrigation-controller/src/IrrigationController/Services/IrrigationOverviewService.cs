@@ -37,6 +37,7 @@ public sealed class IrrigationOverviewService
             Validation = validation,
             LastWaterBalanceUpdateDate = state.LastWaterBalanceUpdateDate ?? "-",
             Diagnostics = state.Diagnostics,
+            Weather = await BuildWeatherOverviewAsync(config, cancellationToken),
             RecentEvents = state.Events.Take(80).ToList(),
             Cycles = BuildCycleOverview(config),
             Zones = await BuildZoneOverviewAsync(config, state, cancellationToken)
@@ -62,6 +63,18 @@ public sealed class IrrigationOverviewService
             .OrderBy(cycle => cycle.NextRun ?? DateTimeOffset.MaxValue)
             .ThenBy(cycle => cycle.Name)
             .ToList();
+    }
+
+    private async Task<WeatherOverview> BuildWeatherOverviewAsync(
+        IrrigationConfig config,
+        CancellationToken cancellationToken)
+    {
+        return new WeatherOverview
+        {
+            Entity = config.Weather.Entity,
+            ForecastType = config.Weather.ForecastType,
+            State = await ReadStateSafeAsync(config.Weather.Entity, cancellationToken) ?? "unknown"
+        };
     }
 
     private async Task<List<ZoneOverview>> BuildZoneOverviewAsync(

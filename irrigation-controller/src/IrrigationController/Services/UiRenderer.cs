@@ -131,6 +131,11 @@ public sealed class UiRenderer
     .icon-badge.big { width: 64px; height: 64px; font-size: 15px; }
     .decision { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 5px; }
     .mini { display: flex; gap: 8px; flex-wrap: wrap; }
+    .weather-summary { display: grid; grid-template-columns: minmax(220px, 0.8fr) repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
+    .weather-kpi { display: grid; gap: 6px; }
+    .weather-kpi strong { font-size: 22px; }
+    .forecast-card { display: grid; gap: 8px; }
+    .forecast-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .cycle-chip, .zone-chip, .event-chip { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .zone-chip { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
     .event-chip { color: var(--muted); }
@@ -146,7 +151,7 @@ public sealed class UiRenderer
       .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
       .nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .main { padding: 14px; }
-      .metrics, .two, .three, .plan { grid-template-columns: 1fr; }
+      .metrics, .two, .three, .plan, .weather-summary { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
       .topbar { align-items: flex-start; flex-direction: column; }
@@ -377,9 +382,9 @@ function iconBadge(code, big = false) {
 function renderDashboard() {
   const runner = overview.runner || {};
   const validation = overview.validation || { errors: [], warnings: [] };
-  const weather = overview.diagnostics?.last_weather;
   return `
     ${renderPlanPanel()}
+    ${renderWeatherSummaryPanel()}
     <section class="grid metrics">
       ${metric('Runner', runner.status || 'idle')}
       ${metric('Ciclo', runner.cycle_name || '-')}
@@ -395,11 +400,7 @@ function renderDashboard() {
             ${(overview.cycles || []).map(c => `<tr><td><strong>${esc(c.name)}</strong><div class="muted">${esc(c.id)}</div></td><td>${esc(c.mode)}</td><td>${esc(c.next_run_text)}</td><td><button onclick="startCycle('${esc(c.id)}')">Start</button></td></tr>`).join('')}
           </tbody></table>
         </div>
-        <div class="card">
-          <h3>Meteo</h3>
-          <p>${weather ? `ET0 ${weather.et0_mm?.toFixed?.(1) ?? weather.et0_mm} mm, pioggia ${weather.expected_rain_mm?.toFixed?.(1) ?? weather.expected_rain_mm} mm, utile ${weather.effective_rain_mm?.toFixed?.(1) ?? weather.effective_rain_mm} mm, probabilita ${weather.max_rain_probability}%` : '-'}</p>
-          <p class="muted">${esc(overview.diagnostics?.last_decision?.message || 'Nessuna decisione registrata')}</p>
-        </div>
+        ${renderWeatherReasonCard()}
       </div>
       <div class="card">
         <h3>Zone</h3>
@@ -408,6 +409,62 @@ function renderDashboard() {
         </tbody></table>
       </div>
     </section>`;
+}
+function renderWeatherSummaryPanel() {
+  const weather = overview.weather || {};
+  const last = overview.diagnostics?.last_weather;
+  return `<section class="section">
+    <div class="weather-summary">
+      <div class="card weather-kpi">
+        <span class="muted">Meteo attuale</span>
+        <strong>${esc(formatWeatherState(weather.state))}</strong>
+        <span class="muted">${esc(weather.entity || '-')} · forecast ${esc(weather.forecast_type || '-')}</span>
+        <div class="mini">
+          <span title="Evapotraspirazione stimata">${iconBadge('ET')} ${last ? num(last.et0_mm).toFixed(1) : '-'} mm</span>
+          <span title="Pioggia utile stimata">${iconBadge('RAIN')} ${last ? num(last.effective_rain_mm).toFixed(1) : '-'} mm</span>
+        </div>
+      </div>
+      ${forecastCard(decisionPlan?.today, 'Oggi')}
+      ${forecastCard(decisionPlan?.tomorrow, 'Domani')}
+    </div>
+  </section>`;
+}
+function forecastCard(day, fallbackLabel) {
+  if (!day) return `<div class="card forecast-card"><h3>${esc(fallbackLabel)}</h3><p class="muted">Previsione non disponibile</p></div>`;
+  return `<div class="card forecast-card">
+    <div class="forecast-line">${iconBadge(day.icon)}<h3>${esc(day.label || fallbackLabel)}</h3><span class="pill ${esc(day.decision_class)}">${esc(day.decision)}</span></div>
+    <strong>${esc(day.weather_label || '-')}</strong>
+    <div class="mini">
+      <span title="Pioggia prevista">${iconBadge('RAIN')} ${num(day.expected_rain_mm).toFixed(1)} mm</span>
+      <span title="Probabilita di pioggia">${iconBadge('PCT')} ${num(day.rain_probability)}%</span>
+      <span title="Evapotraspirazione">${iconBadge('ET')} ${num(day.et0_mm).toFixed(1)} mm</span>
+    </div>
+  </div>`;
+}
+function renderWeatherReasonCard() {
+  const decision = overview.diagnostics?.last_decision;
+  const last = overview.diagnostics?.last_weather;
+  return `<div class="card">
+    <h3>Perche questa decisione</h3>
+    <p>${esc(decision?.message || 'Nessuna decisione registrata')}</p>
+    <p class="muted">${last ? `ET0 ${num(last.et0_mm).toFixed(1)} mm, pioggia prevista ${num(last.expected_rain_mm).toFixed(1)} mm, pioggia utile ${num(last.effective_rain_mm).toFixed(1)} mm, probabilita ${num(last.max_rain_probability)}%` : 'Nessun calcolo meteo registrato'}</p>
+  </div>`;
+}
+function formatWeatherState(state) {
+  const states = {
+    clear: 'Sereno',
+    sunny: 'Soleggiato',
+    partlycloudy: 'Parzialmente nuvoloso',
+    cloudy: 'Nuvoloso',
+    rainy: 'Pioggia',
+    pouring: 'Pioggia intensa',
+    lightning: 'Temporale',
+    snowy: 'Neve',
+    fog: 'Nebbia',
+    unknown: 'Sconosciuto',
+    unavailable: 'Non disponibile'
+  };
+  return states[String(state || '').toLowerCase()] || state || '-';
 }
 function renderZones() {
   const zones = Object.entries({ ...draftZones, ...(config.zones || {}) });

@@ -13,7 +13,8 @@ var tests = new (string Name, Action Test)[]
     ("ui uses escaped action handlers", UiUsesEscapedActionHandlers),
     ("ui sends save audit headers", UiSendsSaveAuditHeaders),
     ("ui contains cycle event register", AssertUiContainsCycleRegister),
-    ("ui contains weather entity picker", AssertUiContainsWeatherEntityPicker)
+    ("ui contains weather entity picker", AssertUiContainsWeatherEntityPicker),
+    ("ui contains dashboard weather summary", AssertUiContainsDashboardWeatherSummary)
 };
 
 var failures = 0;
@@ -209,6 +210,27 @@ static void AssertUiContainsWeatherEntityPicker()
         if (!html.Contains(value, StringComparison.Ordinal))
         {
             throw new InvalidOperationException($"Expected weather entity picker marker '{value}'.");
+        }
+    }
+}
+
+static void AssertUiContainsDashboardWeatherSummary()
+{
+    var html = new UiRenderer().Render();
+    var expected = new[]
+    {
+        "Meteo attuale",
+        "Perche questa decisione",
+        "renderWeatherSummaryPanel",
+        "forecastCard",
+        "formatWeatherState"
+    };
+
+    foreach (var value in expected)
+    {
+        if (!html.Contains(value, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected dashboard weather summary marker '{value}'.");
         }
     }
 }

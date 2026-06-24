@@ -7,9 +7,17 @@ public sealed class IrrigationOverview
     public ConfigValidationResult Validation { get; set; } = new();
     public string LastWaterBalanceUpdateDate { get; set; } = "-";
     public DiagnosticsState Diagnostics { get; set; } = new();
+    public WeatherOverview Weather { get; set; } = new();
     public List<IrrigationEvent> RecentEvents { get; set; } = [];
     public List<CycleOverview> Cycles { get; set; } = [];
     public List<ZoneOverview> Zones { get; set; } = [];
+}
+
+public sealed class WeatherOverview
+{
+    public string Entity { get; set; } = "";
+    public string State { get; set; } = "unknown";
+    public string ForecastType { get; set; } = "";
 }
 
 public sealed class CycleOverview
