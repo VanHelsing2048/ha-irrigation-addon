@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.5] - 2026-06-25
+
+### Added
+
+- Add weather data diagnostics with entity, forecast type, record count, first/last forecast timestamps and fetch status.
+- Add per-zone irrigation calculation details in the decision plan: deficit, crop ET, effective rain, irrigation deficit and minutes.
+- Add a polished dashboard operating header with controller status, active cycle/zone, water balance and weather decision reason.
+
+### Changed
+
+- Make dashboard cycle and weather sections more operational and less form-like.
+
 ## [0.2.4] - 2026-06-25
 
 ### Fixed

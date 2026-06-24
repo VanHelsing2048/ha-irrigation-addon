@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.2.4
+# ha-irrigation-addon 0.2.5
 
-Release correttiva per la dashboard meteo dell'add-on Home Assistant `Irrigation Controller`.
+Release UI/diagnostica dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,9 +14,10 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- La Dashboard ora combina forecast configurato e forecast `daily` per popolare meglio oggi/domani.
-- Le schede oggi/domani indicano se i dati arrivano davvero da Home Assistant oppure se e stato usato un fallback.
-- Domani non resta piu una scheda muta quando il forecast configurato restituisce solo dati orari di oggi.
+- Pagina Meteo con diagnostica dei dati ricevuti da Home Assistant: record, tipo forecast, primo/ultimo timestamp ed esito.
+- Piano decisionale piu trasparente: ogni zona mostra deficit, ET, pioggia utile, mm da reintegrare e minuti.
+- Dashboard piu operativa con stato controller, ciclo/zona attivi, bilancio e motivazione meteo in alto.
+- Restyling compatto delle card operative e dei riepiloghi.
 - Test locali estesi a 28 controlli anti-regressione.
 
 ## Pacchetto

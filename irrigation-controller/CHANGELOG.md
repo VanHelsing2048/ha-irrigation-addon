@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.5] - 2026-06-25
+
+### Aggiunto
+
+- Diagnostica meteo con entita, tipo forecast, numero record, primo/ultimo timestamp ed esito della chiamata.
+- Dettagli di calcolo per zona nel piano decisionale: deficit, ET zona, pioggia utile, mm da reintegrare e minuti.
+- Fascia operativa in Dashboard con stato controller, ciclo/zona attivi, bilancio e motivazione meteo.
+
+### Modificato
+
+- Dashboard resa piu operativa e meno simile a una pagina di form.
+
 ## [0.2.4] - 2026-06-25
 
 ### Corretto
