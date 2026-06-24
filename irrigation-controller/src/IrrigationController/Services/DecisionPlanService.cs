@@ -71,6 +71,8 @@ public sealed class DecisionPlanService
             EffectiveRainMm = effectiveRain,
             RainProbability = probability,
             Et0Mm = Math.Round(et0, 1),
+            ForecastCount = dayForecasts.Count,
+            HasForecast = dayForecasts.Count > 0,
             Cycles = cycles,
             Events = key == "today" ? BuildTodayEvents(state) : []
         };
@@ -183,8 +185,25 @@ public sealed class DecisionPlanService
 
     private async Task<List<ForecastItem>> ReadForecastsAsync(IrrigationConfig config, CancellationToken cancellationToken)
     {
-        using var document = await _homeAssistant.GetForecastsAsync(config.Weather.Entity, config.Weather.ForecastType, cancellationToken);
-        if (document is null || !document.RootElement.TryGetProperty(config.Weather.Entity, out var entity)
+        var items = new List<ForecastItem>();
+        items.AddRange(await ReadForecastsAsync(config.Weather.Entity, config.Weather.ForecastType, cancellationToken));
+
+        if (!string.Equals(config.Weather.ForecastType, "daily", StringComparison.OrdinalIgnoreCase))
+        {
+            items.AddRange(await ReadForecastsAsync(config.Weather.Entity, "daily", cancellationToken));
+        }
+
+        return items
+            .GroupBy(item => item.When)
+            .Select(group => group.First())
+            .OrderBy(item => item.When)
+            .ToList();
+    }
+
+    private async Task<List<ForecastItem>> ReadForecastsAsync(string weatherEntity, string forecastType, CancellationToken cancellationToken)
+    {
+        using var document = await _homeAssistant.GetForecastsAsync(weatherEntity, forecastType, cancellationToken);
+        if (document is null || !document.RootElement.TryGetProperty(weatherEntity, out var entity)
             || !entity.TryGetProperty("forecast", out var forecast))
         {
             return [];

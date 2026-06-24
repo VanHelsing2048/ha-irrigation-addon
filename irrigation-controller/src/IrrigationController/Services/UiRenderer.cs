@@ -159,6 +159,7 @@ public sealed class UiRenderer
     .weather-kpi strong { font-size: 22px; }
     .forecast-card { display: grid; gap: 8px; }
     .forecast-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .forecast-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 12px; }
     .cycle-preview { display: grid; gap: 8px; margin-top: 12px; }
     .cycle-preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .cycle-preview-day { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
@@ -371,12 +372,14 @@ function renderPlanPanel() {
 function dayPlan(day) {
   const cycles = day.cycles || [];
   const events = day.events || [];
+  const forecastText = day.has_forecast ? `${day.forecast_count} previsioni ricevute` : 'Nessuna previsione ricevuta da Home Assistant';
   return `<div class="card plan-day">
     <div class="plan-head">
       <div class="weather-icon">${iconBadge(day.icon, true)}</div>
       <div>
         <h2>${esc(day.label)}</h2>
         <div class="decision"><strong>${esc(day.decision)}</strong><span class="pill ${esc(day.decision_class)}">${esc(day.weather_label)}</span></div>
+        <div class="forecast-meta">${iconBadge(day.has_forecast ? 'OK' : 'INFO')} ${esc(forecastText)}</div>
         <div class="mini muted">
           <span title="Pioggia prevista">${iconBadge('RAIN')} ${num(day.expected_rain_mm).toFixed(1)} mm</span>
           <span title="Probabilita di pioggia">${iconBadge('PCT')} ${num(day.rain_probability)}%</span>
@@ -494,9 +497,11 @@ function renderWeatherSummaryPanel() {
 }
 function forecastCard(day, fallbackLabel) {
   if (!day) return `<div class="card forecast-card"><h3>${esc(fallbackLabel)}</h3><p class="muted">Previsione non disponibile</p></div>`;
+  const forecastText = day.has_forecast ? `${day.forecast_count} previsioni HA` : 'Fallback: forecast HA non disponibile';
   return `<div class="card forecast-card">
     <div class="forecast-line">${iconBadge(day.icon)}<h3>${esc(day.label || fallbackLabel)}</h3><span class="pill ${esc(day.decision_class)}">${esc(day.decision)}</span></div>
     <strong>${esc(day.weather_label || '-')}</strong>
+    <div class="forecast-meta">${iconBadge(day.has_forecast ? 'OK' : 'INFO')} ${esc(forecastText)}</div>
     <div class="mini">
       <span title="Pioggia prevista">${iconBadge('RAIN')} ${num(day.expected_rain_mm).toFixed(1)} mm</span>
       <span title="Probabilita di pioggia">${iconBadge('PCT')} ${num(day.rain_probability)}%</span>

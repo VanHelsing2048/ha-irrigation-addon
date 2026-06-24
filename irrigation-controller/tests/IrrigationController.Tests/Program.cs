@@ -17,6 +17,7 @@ var tests = new (string Name, Action Test)[]
     ("schedule calculator finds next run", ScheduleCalculatorFindsNextRun),
     ("duration calculator projects daily ET for dry-run", DurationCalculatorProjectsDailyEtForDryRun),
     ("duration calculator avoids double daily ET", DurationCalculatorAvoidsDoubleDailyEt),
+    ("decision plan requests daily forecasts", DecisionPlanRequestsDailyForecasts),
     ("ui uses escaped action handlers", UiUsesEscapedActionHandlers),
     ("ui sends save audit headers", UiSendsSaveAuditHeaders),
     ("ui contains cycle event register", AssertUiContainsCycleRegister),
@@ -352,6 +353,26 @@ static void DurationCalculatorAvoidsDoubleDailyEt()
     }
 }
 
+static void DecisionPlanRequestsDailyForecasts()
+{
+    var source = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "../../../../../src/IrrigationController/Services/DecisionPlanService.cs"));
+    var expected = new[]
+    {
+        "ReadForecastsAsync(config.Weather.Entity, config.Weather.ForecastType",
+        "ReadForecastsAsync(config.Weather.Entity, \"daily\"",
+        "ForecastCount = dayForecasts.Count",
+        "HasForecast = dayForecasts.Count > 0"
+    };
+
+    foreach (var value in expected)
+    {
+        if (!source.Contains(value, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected decision plan forecast marker '{value}'.");
+        }
+    }
+}
+
 static void AssertUiContainsCycleRegister()
 {
     var html = new UiRenderer().Render();
@@ -393,6 +414,8 @@ static void AssertUiContainsDashboardWeatherSummary()
         "renderWeatherSummaryPanel",
         "forecastCard",
         "formatWeatherState",
+        "Fallback: forecast HA non disponibile",
+        "previsioni HA",
         "iconSvg",
         "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"4\"></circle>"
     };

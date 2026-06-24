@@ -18,6 +18,8 @@ public sealed class DecisionDay
     public double EffectiveRainMm { get; set; }
     public int RainProbability { get; set; }
     public double Et0Mm { get; set; }
+    public int ForecastCount { get; set; }
+    public bool HasForecast { get; set; }
     public List<DecisionCycle> Cycles { get; set; } = [];
     public List<DecisionEvent> Events { get; set; } = [];
 }
