@@ -167,7 +167,7 @@ public sealed class UiRenderer
     .plant-flow { display: grid; grid-template-columns: minmax(180px, .55fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
     .flow-node { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
     .flow-zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
-    .step-row { display: grid; grid-template-columns: minmax(180px, 1fr) 130px auto; gap: 8px; align-items: end; }
+    .step-row, .time-row { display: grid; grid-template-columns: minmax(180px, 1fr) 130px auto; gap: 8px; align-items: end; }
     .cycle-chip, .zone-chip, .event-chip { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .zone-chip { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
     .event-chip { color: var(--muted); }
@@ -187,7 +187,7 @@ public sealed class UiRenderer
       .main { padding: 14px; }
       .metrics, .summary, .two, .three, .plan, .weather-summary { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
-      .step-row, .cycle-preview-grid, .setting-board, .plant-flow { grid-template-columns: 1fr; }
+      .step-row, .time-row, .cycle-preview-grid, .setting-board, .plant-flow { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
       .topbar { align-items: flex-start; flex-direction: column; }
       .actions { justify-content: flex-start; }
@@ -581,7 +581,10 @@ function cycleForm(id, c) {
       ${field(`cycle-${id}-name`, 'Nome', c.name, 'span-3')}
       <label class="span-2"><span>Modo</span><select id="cycle-${esc(id)}-mode"><option ${c.mode === 'Manual' ? 'selected' : ''}>Manual</option><option ${c.mode === 'Automatic' ? 'selected' : ''}>Automatic</option></select></label>
       <label class="span-2"><span>Abilitato</span><select id="cycle-${esc(id)}-enabled"><option value="true" ${c.enabled !== false ? 'selected' : ''}>Si</option><option value="false" ${c.enabled === false ? 'selected' : ''}>No</option></select></label>
-      ${field(`cycle-${id}-times`, 'Orari', (schedule.times || []).join(', '), 'span-3')}
+      <div class="span-12">
+        <div class="toolbar"><h3>Orari partenza</h3><button type="button" onclick="${esc(action('addCycleTime', id))}">Aggiungi orario</button></div>
+        <div class="list" id="cycle-${esc(id)}-times-list">${cycleTimesEditor(id, schedule.times || [])}</div>
+      </div>
       <label class="span-3"><span>Programmazione</span><select id="cycle-${esc(id)}-schedule-mode"><option value="weekly" ${scheduleMode === 'weekly' ? 'selected' : ''}>Giorni settimana</option><option value="interval" ${scheduleMode === 'interval' ? 'selected' : ''}>Ogni N giorni</option></select></label>
       <div class="span-12">${daysControl(`cycle-${id}-days`, schedule.days || [])}</div>
       ${field(`cycle-${id}-start`, 'Data inizio alternanza', schedule.start_date || '', 'span-3')}
@@ -632,6 +635,17 @@ function cycleDecisionTile(label, item) {
 function cycleStepsEditor(id, steps) {
   const normalized = steps.length ? steps : [{ zones: [], duration_seconds: 600, duration_minutes: 10 }];
   return normalized.map(step => cycleStepRow(id, (step.zones || [])[0] || '', stepDurationText(step))).join('');
+}
+function cycleTimesEditor(id, times) {
+  const normalized = times.length ? times : ['06:00'];
+  return normalized.map(time => cycleTimeRow(id, time)).join('');
+}
+function cycleTimeRow(id, time = '06:00') {
+  return `<div class="time-row">
+    <label><span>Ora start</span><input class="cycle-time" type="time" value="${esc(time)}"></label>
+    <span class="muted">Formato 24h</span>
+    <button type="button" class="danger" onclick="removeCycleTime(this)">Rimuovi</button>
+  </div>`;
 }
 function cycleStepRow(id, zoneId = '', duration = '00:10:00') {
   return `<div class="step-row">
@@ -865,8 +879,23 @@ function addCycleStep(id) {
   if (!list) return;
   list.insertAdjacentHTML('beforeend', cycleStepRow(id, Object.keys(config.zones || {})[0] || '', '00:10:00'));
 }
+function addCycleTime(id) {
+  const list = document.getElementById(`cycle-${id}-times-list`);
+  if (!list) return;
+  list.insertAdjacentHTML('beforeend', cycleTimeRow(id, '06:00'));
+}
+function removeCycleTime(button) {
+  button.closest('.time-row')?.remove();
+}
 function removeCycleStep(button) {
   button.closest('.step-row')?.remove();
+}
+function collectCycleTimes(id) {
+  const list = document.getElementById(`cycle-${id}-times-list`);
+  if (!list) return [];
+  return [...list.querySelectorAll('.cycle-time')]
+    .map(input => input.value)
+    .filter(Boolean);
 }
 function collectCycleSteps(id) {
   const list = document.getElementById(`cycle-${id}-steps-list`);
@@ -968,7 +997,7 @@ async function saveCycle(id) {
   if (!newId) return toast('ID ciclo obbligatorio', true);
   if (newId !== id && next.cycles[newId]) return toast('Esiste gia un ciclo con questo ID', true);
   const mode = val(`cycle-${id}-mode`);
-  const times = val(`cycle-${id}-times`).split(',').map(x => x.trim()).filter(Boolean);
+  const times = collectCycleTimes(id);
   const scheduleMode = val(`cycle-${id}-schedule-mode`);
   const schedule = mode === 'Automatic'
     ? {
@@ -978,6 +1007,7 @@ async function saveCycle(id) {
         every_days: scheduleMode === 'interval' ? num(val(`cycle-${id}-every`), 1) : null
       }
     : null;
+  if (mode === 'Automatic' && times.length === 0) return toast('Aggiungi almeno un orario di partenza valido', true);
   const steps = collectCycleSteps(id);
   if (steps.length === 0) return toast('Aggiungi almeno uno step con zona e tempo hh:mm:ss valido', true);
   const c = {

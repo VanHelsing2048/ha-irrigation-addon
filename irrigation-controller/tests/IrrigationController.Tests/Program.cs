@@ -413,6 +413,10 @@ static void AssertUiContainsCycleStepEditor()
         "Tempo hh:mm:ss",
         "collectCycleSteps",
         "parseDurationInput",
+        "Orari partenza",
+        "type=\"time\"",
+        "collectCycleTimes",
+        "addCycleTime",
         "Data inizio alternanza",
         "Ogni quanti giorni"
     };
