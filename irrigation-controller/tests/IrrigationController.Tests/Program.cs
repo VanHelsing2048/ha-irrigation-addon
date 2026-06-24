@@ -22,7 +22,8 @@ var tests = new (string Name, Action Test)[]
     ("ui contains master valve setting", AssertUiContainsMasterValveSetting),
     ("ui contains dry run action", AssertUiContainsDryRunAction),
     ("ui contains polished shell", AssertUiContainsPolishedShell),
-    ("ui contains operation summaries", AssertUiContainsOperationSummaries)
+    ("ui contains operation summaries", AssertUiContainsOperationSummaries),
+    ("ui contains inline validation", AssertUiContainsInlineValidation)
 };
 
 var failures = 0;
@@ -381,6 +382,32 @@ static void AssertUiContainsOperationSummaries()
         {
             throw new InvalidOperationException($"Expected operation summary marker '{value}'.");
         }
+    }
+}
+
+static void AssertUiContainsInlineValidation()
+{
+    var html = new UiRenderer().Render();
+    var expected = new[]
+    {
+        "let lastValidation = null",
+        "validationPanel('zones')",
+        "validationPanel('cycles')",
+        "Salvataggio non riuscito",
+        "Correggi questi punti e salva di nuovo."
+    };
+
+    foreach (var value in expected)
+    {
+        if (!html.Contains(value, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected inline validation marker '{value}'.");
+        }
+    }
+
+    if (html.Contains("alert(details)", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException("Expected validation errors to be rendered inline instead of shown with alert().");
     }
 }
 

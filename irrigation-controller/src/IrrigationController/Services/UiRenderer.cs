@@ -136,6 +136,11 @@ public sealed class UiRenderer
     .notice { border-left: 4px solid var(--accent); }
     .notice.warn { border-left-color: var(--warn); }
     .notice.danger { border-left-color: var(--danger); }
+    .validation-panel { display: grid; gap: 8px; }
+    .validation-panel ul { margin: 0; padding-left: 18px; }
+    .validation-panel li { margin: 4px 0; }
+    .validation-panel .danger { color: var(--danger); }
+    .validation-panel .warn { color: var(--warn); }
     .plan { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .plan-day { display: grid; gap: 12px; }
     .plan-head { display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 12px; align-items: center; }
@@ -224,6 +229,7 @@ let irrigationEntities = [];
 let weatherEntities = [];
 let draftZones = {};
 let draftCycles = {};
+let lastValidation = null;
 let currentPage = location.hash.replace('#','') || 'dashboard';
 
 function esc(value) {
@@ -264,6 +270,7 @@ async function reloadAll() {
     api('/api/entities/irrigation').catch(() => []),
     api('/api/entities/weather').catch(() => [])
   ]);
+  lastValidation = null;
   render();
 }
 async function saveConfig(nextConfig = config, successMessage = 'Configurazione salvata', renderAfterSave = true, action = 'config_saved', zoneId = '', cycleId = '') {
@@ -281,10 +288,12 @@ async function saveConfig(nextConfig = config, successMessage = 'Configurazione 
     });
     config = nextConfig;
     overview = await api('/api/overview');
+    lastValidation = null;
     if (renderAfterSave) render();
     toast(successMessage);
     return true;
   } catch (error) {
+    lastValidation = error;
     renderValidationError(error);
     toast('Configurazione non valida', true);
     return false;
@@ -502,6 +511,7 @@ function renderZones() {
       ${metric('In bozza', Object.keys(draftZones).length)}
       ${metric('Calibrate', calibratedCount)}
     </div>
+    ${validationPanel('zones')}
     ${entityOptionsList()}
     <div class="list">${zones.length ? zones.map(([id, z]) => zoneForm(id, z)).join('') : emptyState('Nessuna zona', 'Crea una zona per associare una valvola e impostare resa, limiti e calibrazione.')}</div>
   </section>`;
@@ -546,6 +556,7 @@ function renderCycles() {
       ${metric('Automatici', automaticCount)}
       ${metric('In bozza', Object.keys(draftCycles).length)}
     </div>
+    ${validationPanel('cycles')}
     <div class="list">${cycles.length ? cycles.map(([id, c]) => cycleForm(id, c)).join('') : emptyState('Nessun ciclo', 'Crea un ciclo per organizzare gruppi di zone, orari e simulazioni dry-run.')}</div>
   </section>`;
 }
@@ -634,6 +645,7 @@ function renderWeather() {
   const w = config.weather || {};
   return `<section class="section">
   <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">In uso reale queste opzioni generali sono pensate per la scheda Config dell'add-on. Questa vista resta utile per sviluppo e modifiche avanzate.</p></div>
+  ${validationPanel('weather')}
   <div class="card"><div class="row">
     ${weatherEntityOptionsList()}
     ${weatherEntityField('weather-entity', 'Entita meteo', w.entity, 'span-4')}
@@ -651,6 +663,9 @@ function renderPlant() {
   const m = config.mqtt_discovery || {};
   return `<section class="section">
     <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">Idraulica, sicurezze e MQTT Discovery possono essere gestite dalla scheda Config dell'add-on. Il collegamento laterale usa Ingress con panel_title/panel_icon.</p></div>
+    ${validationPanel('hydraulic')}
+    ${validationPanel('safety')}
+    ${validationPanel('mqtt_discovery')}
     <div class="card"><h3>Idraulica</h3><div class="row">
       ${entityOptionsList()}
       ${entityField('hyd-master', 'Valvola master', h.master_valve_entity || '', 'span-4')}
@@ -690,6 +705,7 @@ function renderDiagnostics() {
 }
 function renderRaw() {
   return `<section class="section"><div class="card">
+    ${validationPanel()}
     <textarea id="raw-json" style="min-height:65vh">${esc(JSON.stringify(config, null, 2))}</textarea>
     <div class="actions" style="margin-top:12px; justify-content:flex-start"><button onclick="saveRaw()">Salva JSON</button></div>
   </div></section>`;
@@ -702,6 +718,21 @@ function validationCard(validation) {
   const issues = [...errors.map(x => ['danger', x]), ...warnings.map(x => ['warn', x])];
   if (!issues.length) return '<div class="card notice"><strong>Configurazione valida</strong></div>';
   return `<div class="card notice ${errors.length ? 'danger' : 'warn'}"><strong>Configurazione da verificare</strong><ul>${issues.map(([cls, x]) => `<li class="${cls}"><strong>${esc(x.path)}</strong> ${esc(x.message)}</li>`).join('')}</ul></div>`;
+}
+function validationIssues(scope = '') {
+  if (!lastValidation) return [];
+  const errors = (lastValidation.errors || []).map(x => ({ ...x, level: 'danger' }));
+  const warnings = (lastValidation.warnings || []).map(x => ({ ...x, level: 'warn' }));
+  return [...errors, ...warnings].filter(issue => !scope || String(issue.path || '').startsWith(scope));
+}
+function validationPanel(scope = '') {
+  const issues = validationIssues(scope);
+  if (!issues.length) return '';
+  return `<div class="card notice ${issues.some(x => x.level === 'danger') ? 'danger' : 'warn'} validation-panel">
+    <strong>Salvataggio non riuscito</strong>
+    <span class="muted">Correggi questi punti e salva di nuovo.</span>
+    <ul>${issues.map(issue => `<li class="${esc(issue.level)}"><strong>${esc(issue.path || 'config')}</strong> ${esc(issue.message || '')}</li>`).join('')}</ul>
+  </div>`;
 }
 function field(id, label, value, cls = '') { return `<label class="${cls}"><span>${esc(label)}</span><input id="${esc(id)}" value="${esc(value ?? '')}"></label>`; }
 function numberField(id, label, value, cls = '', step = '1') { return `<label class="${cls}"><span>${esc(label)}</span><input id="${esc(id)}" type="number" step="${esc(step)}" value="${esc(value ?? '')}"></label>`; }
@@ -938,8 +969,7 @@ async function saveRaw() {
   catch (e) { toast('JSON non valido: ' + e.message, true); }
 }
 function renderValidationError(error) {
-  const details = [...(error.errors || []), ...(error.warnings || [])].map(x => `${x.path}: ${x.message}`).join('\n');
-  if (details) alert(details);
+  if (error?.errors?.length || error?.warnings?.length) render();
 }
 reloadAll().catch(error => {
   document.getElementById('content').innerHTML = `<div class="card notice danger"><strong>Errore caricamento</strong><p>${esc(error.message || JSON.stringify(error))}</p></div>`;
