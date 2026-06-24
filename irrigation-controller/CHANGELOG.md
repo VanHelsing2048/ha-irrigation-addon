@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0] - 2026-06-24
+
+### Added
+
+- Registro eventi dedicato per ogni ciclo nella pagina Cicli.
+- Selettore entita Home Assistant `weather.*` nella configurazione meteo.
+- Dashboard meteo con stato attuale, previsione oggi/domani, ET, pioggia e motivazione decisionale.
+- Editor cicli strutturato con righe aggiungibili/rimuovibili, selezione zona e durata `hh:mm:ss`.
+- Programmazione automatica alternativa con data iniziale e cadenza ogni N giorni.
+- Valvola master opzionale a monte delle zone.
+- Dry-run ciclo con log delle azioni pianificate senza comandare valvole reali.
+- Test anti-regressione estesi su UI, validazione, master valve e dry-run.
+
 ## [0.1.11] - 2026-06-24
 
 ### Added

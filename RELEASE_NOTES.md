@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.1.11
+# ha-irrigation-addon 0.2.0
 
-Bugfix release dell'add-on Home Assistant `Irrigation Controller`.
+Feature release dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,26 +14,14 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Ogni salvataggio dalla UI mostra una notifica specifica.
-- I salvataggi configurazione vengono storicizzati negli eventi diagnostici.
-- Aggiunti test anti-regressione per gli handler dei pulsanti di salvataggio e gli header di audit.
-- Fix eliminazione zone gia referenziate dai cicli: la UI rimuove automaticamente la zona dagli step prima del salvataggio.
-- Menu suggerimenti per scegliere entita `switch.*` e `valve.*` gia presenti in Home Assistant quando si configurano le zone.
-- Supporto runtime per entita `valve.*`.
-- Versione distinta `0.1.3` per forzare Home Assistant Supervisor a proporre un aggiornamento pulito dopo cache/metadati `0.1.2`.
-- Versione applicazione visibile nella UI e in `/api/health`.
-- Fix apertura UI dietro Home Assistant Ingress.
-- Fix chiamate API della UI dietro prefisso Ingress.
-- Icona e logo Home Assistant add-on.
-- Add-on Home Assistant in C#/.NET 8.
-- UI Ingress guidata.
-- Config generale dalla scheda Config add-on.
-- Gestione zone e cicli.
-- Calibrazione zone.
-- Cicli automatici con bilancio idrico.
-- Meteo via Home Assistant.
-- MQTT Discovery.
-- Diagnostica e sicurezze runtime.
+- Dashboard meteo riorganizzata con stato attuale, oggi/domani, ET, pioggia prevista, probabilita e motivazione decisionale.
+- Registro eventi dedicato per ogni ciclo, oltre alla diagnostica generale.
+- Selettore entita meteo `weather.*` letto da Home Assistant.
+- Editor cicli strutturato con step aggiungibili/rimuovibili, selezione zona e durata `hh:mm:ss`.
+- Programmazione automatica con scelta tra giorni settimana oppure ogni N giorni da data iniziale.
+- Valvola master opzionale a monte di tutte le zone.
+- Dry-run ciclo con registro di cosa la logica farebbe senza comandare valvole reali.
+- Test anti-regressione estesi per UI, validazione schedule, master valve e dry-run.
 
 ## Pacchetto
 

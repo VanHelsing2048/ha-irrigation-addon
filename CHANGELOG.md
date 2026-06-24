@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0] - 2026-06-24
+
+### Added
+
+- Add per-cycle event register in the Cycles page.
+- Add Home Assistant `weather.*` entity picker for weather configuration.
+- Add dashboard weather summary with current weather state, today/tomorrow forecast, ET, rain and decision reason.
+- Add structured cycle step editor with add/remove rows, zone selector and `hh:mm:ss` duration input.
+- Add automatic schedule interval mode using start date plus every N days.
+- Add optional master valve support for upstream irrigation valves.
+- Add cycle dry-run simulation that logs planned actions without switching real valves.
+- Add regression tests for cycle register, weather picker, dashboard weather summary, cycle step editor, master valve and dry-run UI.
+
 ## [0.1.11] - 2026-06-24
 
 ### Added
