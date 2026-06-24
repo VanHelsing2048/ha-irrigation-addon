@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.8] - 2026-06-24
+
+### Fixed
+
+- Fix zone creation from the web UI by creating an editable draft instead of immediately saving a new zone.
+- Fix cycle creation from the web UI by creating an editable draft and blocking cycle creation until at least one zone is saved.
+- Normalize IDs entered in creation prompts to avoid problematic characters in generated HTML controls.
+
 ## [0.1.7] - 2026-06-23
 
 ### Changed

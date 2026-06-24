@@ -183,11 +183,14 @@ let config = null;
 let overview = null;
 let decisionPlan = null;
 let irrigationEntities = [];
+let draftZones = {};
+let draftCycles = {};
 let currentPage = location.hash.replace('#','') || 'dashboard';
 
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function js(value) { return JSON.stringify(String(value ?? '')); }
 function num(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -272,6 +275,12 @@ function renderNav() {
   document.getElementById('nav').innerHTML = pages.map(([id, label]) =>
     `<button class="${id === currentPage ? 'active' : ''}" onclick="setPage('${id}')">${esc(label)}</button>`
   ).join('');
+}
+function normalizeId(raw) {
+  return String(raw ?? '').trim().toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/_+/g, '_');
 }
 function renderPlan() {
   if (!decisionPlan) {
@@ -379,7 +388,7 @@ function renderDashboard() {
     </section>`;
 }
 function renderZones() {
-  const zones = Object.entries(config.zones || {});
+  const zones = Object.entries({ ...draftZones, ...(config.zones || {}) });
   return `<section class="section">
     <div class="toolbar"><h2>Zone</h2><button onclick="addZone()">Nuova zona</button></div>
     ${entityOptionsList()}
@@ -388,8 +397,9 @@ function renderZones() {
 }
 function zoneForm(id, z) {
   const ov = (overview.zones || []).find(x => x.id === id);
+  const isDraft = Object.prototype.hasOwnProperty.call(draftZones, id);
   return `<div class="card" id="zone-${esc(id)}">
-    <div class="toolbar"><h3>${esc(z.name || id)}</h3><button class="danger" onclick="deleteZone('${esc(id)}')">Elimina</button></div>
+    <div class="toolbar"><h3>${esc(z.name || id)}${isDraft ? ' <span class="pill warn">bozza</span>' : ''}</h3><button class="danger" onclick="deleteZone(${js(id)})">Elimina</button></div>
     <div class="row">
       ${field(`zone-${id}-id`, 'ID', id, 'span-2')}
       ${field(`zone-${id}-name`, 'Nome', z.name, 'span-3')}
@@ -403,26 +413,28 @@ function zoneForm(id, z) {
       ${numberField(`zone-${id}-soilskip`, 'Skip umidita sopra', z.skip_if_soil_moisture_above ?? '', 'span-2', '0.1')}
     </div>
     <div class="actions" style="margin-top:12px; justify-content:flex-start">
-      <button onclick="saveZone('${esc(id)}')">Salva zona</button>
-      <button class="secondary" onclick="calibrateZone('${esc(id)}')">Calibra</button>
-      <button class="secondary" onclick="applyCalibration('${esc(id)}')">Applica calibrazione</button>
-      <button class="blue" onclick="startZone('${esc(id)}')">Avvia 5 min</button>
-      <button class="secondary" onclick="stopZone('${esc(id)}')">Stop</button>
+      <button onclick="saveZone(${js(id)})">Salva zona</button>
+      <button class="secondary" onclick="calibrateZone(${js(id)})">Calibra</button>
+      <button class="secondary" onclick="applyCalibration(${js(id)})">Applica calibrazione</button>
+      <button class="blue" onclick="startZone(${js(id)})">Avvia 5 min</button>
+      <button class="secondary" onclick="stopZone(${js(id)})">Stop</button>
       <span class="muted">Ultima calibrazione: ${esc(ov?.calibration_text || '-')}</span>
     </div>
   </div>`;
 }
 function renderCycles() {
+  const cycles = Object.entries({ ...draftCycles, ...(config.cycles || {}) });
   return `<section class="section">
     <div class="toolbar"><h2>Cicli</h2><button onclick="addCycle()">Nuovo ciclo</button></div>
-    <div class="list">${Object.entries(config.cycles || {}).map(([id, c]) => cycleForm(id, c)).join('')}</div>
+    <div class="list">${cycles.map(([id, c]) => cycleForm(id, c)).join('')}</div>
   </section>`;
 }
 function cycleForm(id, c) {
   const schedule = c.schedule || { days: [], times: [] };
   const steps = (c.steps || []).map(s => `${(s.zones || []).join(',')} | ${s.duration_minutes ?? ''}`).join('\n');
+  const isDraft = Object.prototype.hasOwnProperty.call(draftCycles, id);
   return `<div class="card">
-    <div class="toolbar"><h3>${esc(c.name || id)}</h3><button class="danger" onclick="deleteCycle('${esc(id)}')">Elimina</button></div>
+    <div class="toolbar"><h3>${esc(c.name || id)}${isDraft ? ' <span class="pill warn">bozza</span>' : ''}</h3><button class="danger" onclick="deleteCycle(${js(id)})">Elimina</button></div>
     <div class="row">
       ${field(`cycle-${id}-id`, 'ID', id, 'span-2')}
       ${field(`cycle-${id}-name`, 'Nome', c.name, 'span-3')}
@@ -433,8 +445,8 @@ function cycleForm(id, c) {
       <label class="span-12"><span>Step: zone separate da virgola, poi | durata minuti. Esempio: prato,orto | 10</span><textarea id="cycle-${esc(id)}-steps">${esc(steps)}</textarea></label>
     </div>
     <div class="actions" style="margin-top:12px; justify-content:flex-start">
-      <button onclick="saveCycle('${esc(id)}')">Salva ciclo</button>
-      <button class="blue" onclick="startCycle('${esc(id)}')">Avvia</button>
+      <button onclick="saveCycle(${js(id)})">Salva ciclo</button>
+      <button class="blue" onclick="startCycle(${js(id)})">Avvia</button>
     </div>
   </div>`;
 }
@@ -552,8 +564,10 @@ async function calibrateZone(id) {
 }
 async function saveZone(id) {
   const next = cloneConfig();
-  const newId = val(`zone-${id}-id`).trim();
+  next.zones ||= {};
+  const newId = normalizeId(val(`zone-${id}-id`));
   if (!newId) return toast('ID zona obbligatorio', true);
+  if (newId !== id && next.zones[newId]) return toast('Esiste gia una zona con questo ID', true);
   const z = {
     name: val(`zone-${id}-name`), entity: val(`zone-${id}-entity`),
     precipitation_rate_mm_h: num(val(`zone-${id}-rate`), 10),
@@ -568,18 +582,25 @@ async function saveZone(id) {
   next.zones[newId] = z;
   renameZoneInCycles(next, id, newId);
   await saveConfig(next);
+  delete draftZones[id];
+  delete draftZones[newId];
+  render();
 }
 async function addZone() {
-  const id = prompt('ID nuova zona, es. prato_nord');
+  const id = normalizeId(prompt('ID nuova zona, es. prato_nord'));
   if (!id) return;
-  const next = cloneConfig();
-  next.zones ||= {};
+  if ((config.zones || {})[id] || draftZones[id]) return toast('Esiste gia una zona con questo ID', true);
   const firstEntity = irrigationEntities[0]?.entity_id || 'switch.';
-  next.zones[id] = { name: id, entity: firstEntity, precipitation_rate_mm_h: 10, crop_coefficient: 1, min_minutes: 3, max_minutes: 30, target_deficit_mm: 0, soil_moisture_entity: null, skip_if_soil_moisture_above: null };
-  await saveConfig(next);
+  draftZones[id] = { name: id, entity: firstEntity, precipitation_rate_mm_h: 10, crop_coefficient: 1, min_minutes: 3, max_minutes: 30, target_deficit_mm: 0, soil_moisture_entity: null, skip_if_soil_moisture_above: null };
   setPage('zones');
+  render();
 }
 async function deleteZone(id) {
+  if (draftZones[id]) {
+    delete draftZones[id];
+    render();
+    return;
+  }
   if (!confirm('Eliminare la zona ' + id + '?')) return;
   const next = cloneConfig();
   delete next.zones[id];
@@ -605,8 +626,10 @@ function renameZoneInCycles(next, oldZoneId, newZoneId) {
 }
 async function saveCycle(id) {
   const next = cloneConfig();
-  const newId = val(`cycle-${id}-id`).trim();
+  next.cycles ||= {};
+  const newId = normalizeId(val(`cycle-${id}-id`));
   if (!newId) return toast('ID ciclo obbligatorio', true);
+  if (newId !== id && next.cycles[newId]) return toast('Esiste gia un ciclo con questo ID', true);
   const mode = val(`cycle-${id}-mode`);
   const times = val(`cycle-${id}-times`).split(',').map(x => x.trim()).filter(Boolean);
   const c = {
@@ -619,18 +642,31 @@ async function saveCycle(id) {
   delete next.cycles[id];
   next.cycles[newId] = c;
   await saveConfig(next);
+  delete draftCycles[id];
+  delete draftCycles[newId];
+  render();
 }
 async function addCycle() {
-  const id = prompt('ID nuovo ciclo, es. mattina_prato');
+  const id = normalizeId(prompt('ID nuovo ciclo, es. mattina_prato'));
   if (!id) return;
   const firstZone = Object.keys(config.zones || {})[0] || '';
+  if (!firstZone) {
+    toast('Crea e salva almeno una zona prima di aggiungere un ciclo', true);
+    setPage('zones');
+    return;
+  }
+  if ((config.cycles || {})[id] || draftCycles[id]) return toast('Esiste gia un ciclo con questo ID', true);
   const next = cloneConfig();
-  next.cycles ||= {};
-  next.cycles[id] = { name: id, enabled: true, mode: 'Manual', schedule: null, steps: [{ zones: firstZone ? [firstZone] : [], duration_minutes: 10 }] };
-  await saveConfig(next);
+  draftCycles[id] = { name: id, enabled: true, mode: 'Manual', schedule: null, steps: [{ zones: [firstZone], duration_minutes: 10 }] };
   setPage('cycles');
+  render();
 }
 async function deleteCycle(id) {
+  if (draftCycles[id]) {
+    delete draftCycles[id];
+    render();
+    return;
+  }
   if (!confirm('Eliminare il ciclo ' + id + '?')) return;
   const next = cloneConfig();
   delete next.cycles[id];

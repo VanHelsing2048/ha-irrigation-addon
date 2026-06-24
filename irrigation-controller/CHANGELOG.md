@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.8] - 2026-06-24
+
+### Fixed
+
+- Corretta l'aggiunta di zone dalla UI: il pulsante crea una bozza modificabile invece di salvare subito.
+- Corretta l'aggiunta di cicli dalla UI: il pulsante crea una bozza modificabile e richiede almeno una zona gia salvata.
+- Normalizzati gli ID inseriti nei popup per evitare caratteri problematici nei controlli HTML.
+
 ## [0.1.7] - 2026-06-23
 
 ### Changed

@@ -1,4 +1,4 @@
-# ha-irrigation-addon 0.1.7
+# ha-irrigation-addon 0.1.8
 
 Bugfix release dell'add-on Home Assistant `Irrigation Controller`.
 
@@ -14,9 +14,9 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Piano decisionale spostato direttamente in Dashboard.
-- Badge meteo testuali con tooltip al posto di icone unicode fragili.
-- Changelog locale dell'add-on per Home Assistant.
+- Fix aggiunta zone: il pulsante crea una bozza nella pagina Zone e salva solo quando premi `Salva zona`.
+- Fix aggiunta cicli: il pulsante crea una bozza nella pagina Cicli e richiede almeno una zona gia salvata.
+- Normalizzazione degli ID inseriti nei popup, per evitare caratteri problematici nei controlli HTML.
 - Fix eliminazione zone gia referenziate dai cicli: la UI rimuove automaticamente la zona dagli step prima del salvataggio.
 - Menu suggerimenti per scegliere entita `switch.*` e `valve.*` gia presenti in Home Assistant quando si configurano le zone.
 - Supporto runtime per entita `valve.*`.
