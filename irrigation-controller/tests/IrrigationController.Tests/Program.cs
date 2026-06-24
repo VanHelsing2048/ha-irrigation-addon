@@ -12,7 +12,8 @@ var tests = new (string Name, Action Test)[]
     ("config validator catches invalid hydraulic policy", ConfigValidatorCatchesInvalidHydraulicPolicy),
     ("ui uses escaped action handlers", UiUsesEscapedActionHandlers),
     ("ui sends save audit headers", UiSendsSaveAuditHeaders),
-    ("ui contains cycle event register", AssertUiContainsCycleRegister)
+    ("ui contains cycle event register", AssertUiContainsCycleRegister),
+    ("ui contains weather entity picker", AssertUiContainsWeatherEntityPicker)
 };
 
 var failures = 0;
@@ -189,6 +190,26 @@ static void AssertUiContainsCycleRegister()
         || !html.Contains("cycle_id", StringComparison.Ordinal))
     {
         throw new InvalidOperationException("Expected UI to render per-cycle event register.");
+    }
+}
+
+static void AssertUiContainsWeatherEntityPicker()
+{
+    var html = new UiRenderer().Render();
+    var expected = new[]
+    {
+        "api('/api/entities/weather')",
+        "let weatherEntities = []",
+        "weather-entities",
+        "weatherEntityField('weather-entity'"
+    };
+
+    foreach (var value in expected)
+    {
+        if (!html.Contains(value, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected weather entity picker marker '{value}'.");
+        }
     }
 }
 

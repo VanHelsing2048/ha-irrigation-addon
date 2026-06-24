@@ -194,6 +194,7 @@ let config = null;
 let overview = null;
 let decisionPlan = null;
 let irrigationEntities = [];
+let weatherEntities = [];
 let draftZones = {};
 let draftCycles = {};
 let currentPage = location.hash.replace('#','') || 'dashboard';
@@ -229,11 +230,12 @@ function apiUrl(path) {
   return ingressBase + normalizedPath;
 }
 async function reloadAll() {
-  [config, overview, decisionPlan, irrigationEntities] = await Promise.all([
+  [config, overview, decisionPlan, irrigationEntities, weatherEntities] = await Promise.all([
     api('/api/config'),
     api('/api/overview'),
     api('/api/decision-plan').catch(() => null),
-    api('/api/entities/irrigation').catch(() => [])
+    api('/api/entities/irrigation').catch(() => []),
+    api('/api/entities/weather').catch(() => [])
   ]);
   render();
 }
@@ -488,7 +490,8 @@ function renderWeather() {
   return `<section class="section">
   <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">In uso reale queste opzioni generali sono pensate per la scheda Config dell'add-on. Questa vista resta utile per sviluppo e modifiche avanzate.</p></div>
   <div class="card"><div class="row">
-    ${field('weather-entity', 'Entita meteo', w.entity, 'span-4')}
+    ${weatherEntityOptionsList()}
+    ${weatherEntityField('weather-entity', 'Entita meteo', w.entity, 'span-4')}
     ${field('weather-type', 'Tipo forecast', w.forecast_type || 'hourly', 'span-2')}
     ${numberField('weather-lookahead', 'Ore previsione', w.rain_lookahead_hours, 'span-2')}
     ${numberField('weather-efficiency', 'Efficienza pioggia', w.rain_efficiency, 'span-2', '0.01')}
@@ -563,6 +566,16 @@ function entityOptionsList() {
     return `<option value="${esc(entity.entity_id)}">${esc(text)}</option>`;
   }).join('');
   return `<datalist id="irrigation-entities">${options}</datalist>`;
+}
+function weatherEntityField(id, label, value, cls = '') {
+  return `<label class="${cls}"><span>${esc(label)}</span><input id="${esc(id)}" list="weather-entities" value="${esc(value ?? '')}"></label>`;
+}
+function weatherEntityOptionsList() {
+  const options = weatherEntities.map(entity => {
+    const text = entity.friendly_name ? `${entity.entity_id} - ${entity.friendly_name}` : entity.entity_id;
+    return `<option value="${esc(entity.entity_id)}">${esc(text)}</option>`;
+  }).join('');
+  return `<datalist id="weather-entities">${options}</datalist>`;
 }
 function selectBool(id, label, value, cls = '') { return `<label class="${cls}"><span>${esc(label)}</span><select id="${esc(id)}"><option value="true" ${value ? 'selected' : ''}>Si</option><option value="false" ${!value ? 'selected' : ''}>No</option></select></label>`; }
 function daysControl(id, values) {

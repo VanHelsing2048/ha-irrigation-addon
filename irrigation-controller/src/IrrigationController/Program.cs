@@ -116,6 +116,14 @@ app.MapGet("/api/entities/irrigation", async (HomeAssistantClient homeAssistant,
         .OrderBy(entity => entity.FriendlyName.Length == 0 ? entity.EntityId : entity.FriendlyName, StringComparer.OrdinalIgnoreCase));
 });
 
+app.MapGet("/api/entities/weather", async (HomeAssistantClient homeAssistant, CancellationToken cancellationToken) =>
+{
+    var entities = await homeAssistant.GetEntitiesAsync(cancellationToken);
+    return Results.Ok(entities
+        .Where(entity => entity.EntityId.StartsWith("weather.", StringComparison.OrdinalIgnoreCase))
+        .OrderBy(entity => entity.FriendlyName.Length == 0 ? entity.EntityId : entity.FriendlyName, StringComparer.OrdinalIgnoreCase));
+});
+
 app.MapGet("/api/diagnostics", async (IrrigationStateStore stateStore, CancellationToken cancellationToken) =>
 {
     var state = await stateStore.GetAsync(cancellationToken);
