@@ -23,7 +23,8 @@ var tests = new (string Name, Action Test)[]
     ("ui contains dry run action", AssertUiContainsDryRunAction),
     ("ui contains polished shell", AssertUiContainsPolishedShell),
     ("ui contains operation summaries", AssertUiContainsOperationSummaries),
-    ("ui contains inline validation", AssertUiContainsInlineValidation)
+    ("ui contains inline validation", AssertUiContainsInlineValidation),
+    ("ui contains cycle decision preview", AssertUiContainsCycleDecisionPreview)
 };
 
 var failures = 0;
@@ -408,6 +409,27 @@ static void AssertUiContainsInlineValidation()
     if (html.Contains("alert(details)", StringComparison.Ordinal))
     {
         throw new InvalidOperationException("Expected validation errors to be rendered inline instead of shown with alert().");
+    }
+}
+
+static void AssertUiContainsCycleDecisionPreview()
+{
+    var html = new UiRenderer().Render();
+    var expected = new[]
+    {
+        "Anteprima decisionale",
+        "cycleDecisionPreview",
+        "cycleDecisionForDay",
+        "Nessuna partenza prevista",
+        "Nessuna valutazione pianificata"
+    };
+
+    foreach (var value in expected)
+    {
+        if (!html.Contains(value, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected cycle decision preview marker '{value}'.");
+        }
     }
 }
 

@@ -158,6 +158,9 @@ public sealed class UiRenderer
     .weather-kpi strong { font-size: 22px; }
     .forecast-card { display: grid; gap: 8px; }
     .forecast-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .cycle-preview { display: grid; gap: 8px; margin-top: 12px; }
+    .cycle-preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .cycle-preview-day { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
     .step-row { display: grid; grid-template-columns: minmax(180px, 1fr) 130px auto; gap: 8px; align-items: end; }
     .cycle-chip, .zone-chip, .event-chip { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .zone-chip { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
@@ -178,7 +181,7 @@ public sealed class UiRenderer
       .main { padding: 14px; }
       .metrics, .summary, .two, .three, .plan, .weather-summary { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
-      .step-row { grid-template-columns: 1fr; }
+      .step-row, .cycle-preview-grid { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
       .topbar { align-items: flex-start; flex-direction: column; }
       .actions { justify-content: flex-start; }
@@ -587,7 +590,37 @@ function cycleForm(id, c) {
       <button class="blue" onclick="${esc(action('startCycle', id))}">Avvia</button>
       <button class="secondary" onclick="${esc(action('dryRunCycle', id))}">Simula</button>
     </div>
+    ${cycleDecisionPreview(id, c)}
     ${cycleEventRegister(id)}
+  </div>`;
+}
+function cycleDecisionPreview(id, c) {
+  if (!decisionPlan) return '';
+  const today = cycleDecisionForDay(decisionPlan.today, id, c);
+  const tomorrow = cycleDecisionForDay(decisionPlan.tomorrow, id, c);
+  if (!today && !tomorrow) {
+    return `<div class="cycle-preview">
+      <h3>Anteprima decisionale</h3>
+      <div class="cycle-preview-day">${emptyState('Nessuna valutazione pianificata', 'I cicli manuali partono solo quando li avvii. Per i cicli automatici imposta giorni/orari o alternanza.')}</div>
+    </div>`;
+  }
+  return `<div class="cycle-preview">
+    <h3>Anteprima decisionale</h3>
+    <div class="cycle-preview-grid">
+      ${cycleDecisionTile('Oggi', today)}
+      ${cycleDecisionTile('Domani', tomorrow)}
+    </div>
+  </div>`;
+}
+function cycleDecisionForDay(day, id, c) {
+  return (day?.cycles || []).find(item => item.id === id || item.name === c.name || item.name === id);
+}
+function cycleDecisionTile(label, item) {
+  if (!item) return `<div class="cycle-preview-day"><div class="forecast-line">${iconBadge('NA')}<strong>${esc(label)}</strong></div><span class="muted">Nessuna partenza prevista</span></div>`;
+  const zones = item.zones || [];
+  return `<div class="cycle-preview-day">
+    <div class="forecast-line">${iconBadge(item.icon)}<strong>${esc(label)} ${esc(item.time || '')}</strong><span class="pill ${esc(item.decision_class)}">${esc(item.decision || '-')}</span></div>
+    ${zones.length ? `<div class="mini">${zones.map(zone => `<span class="zone-chip">${iconBadge(zone.icon)}<strong>${esc(zone.name)}</strong><span class="muted">${esc(zone.text)}</span></span>`).join('')}</div>` : '<span class="muted">Nessuna zona da irrigare</span>'}
   </div>`;
 }
 function cycleStepsEditor(id, steps) {
