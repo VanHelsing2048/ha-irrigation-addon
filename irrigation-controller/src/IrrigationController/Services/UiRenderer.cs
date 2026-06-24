@@ -103,6 +103,15 @@ public sealed class UiRenderer
     .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .grid { display: grid; gap: 12px; }
     .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .dashboard-hero { display: grid; grid-template-columns: minmax(260px, .9fr) minmax(0, 1.1fr); gap: 12px; align-items: stretch; margin-bottom: 12px; }
+    .status-panel { display: grid; gap: 12px; background: linear-gradient(135deg, var(--panel), var(--panel-2)); }
+    .status-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .status-title { display: grid; gap: 5px; }
+    .status-value { font-size: 26px; font-weight: 800; }
+    .quick-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .quick-metric { display: grid; gap: 3px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+    .quick-metric span { color: var(--muted); font-size: 12px; }
+    .quick-metric strong { font-size: 16px; overflow-wrap: anywhere; }
     .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -190,7 +199,7 @@ public sealed class UiRenderer
       .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
       .nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .main { padding: 14px; }
-      .metrics, .summary, .two, .three, .plan, .weather-summary { grid-template-columns: 1fr; }
+      .metrics, .summary, .two, .three, .plan, .weather-summary, .dashboard-hero, .quick-metrics { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
       .step-row, .time-row, .cycle-preview-grid, .setting-board, .plant-flow { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
@@ -463,24 +472,16 @@ function renderDashboard() {
   const runner = overview.runner || {};
   const validation = overview.validation || { errors: [], warnings: [] };
   return `
+    ${dashboardHero(runner)}
     ${renderPlanPanel()}
     ${renderWeatherSummaryPanel()}
-    <section class="grid metrics">
-      ${metric('Runner', runner.status || 'idle')}
-      ${metric('Ciclo', runner.cycle_name || '-')}
-      ${metric('Zona', runner.zone_name || '-')}
-      ${metric('Bilancio', overview.last_water_balance_update_date || '-')}
-    </section>
     <section class="section">
       ${validationCard(validation)}
-      <div class="grid two">
-        <div class="card">
-          <h3>Cicli</h3>
-          <table><thead><tr><th>Nome</th><th>Modo</th><th>Prossima</th><th></th></tr></thead><tbody>
-            ${(overview.cycles || []).length ? (overview.cycles || []).map(c => `<tr><td><strong>${esc(c.name)}</strong><div class="muted">${esc(c.id)}</div></td><td>${esc(c.mode)}</td><td>${esc(c.next_run_text)}</td><td><button onclick="startCycle('${esc(c.id)}')">Start</button></td></tr>`).join('') : `<tr><td colspan="4">${emptyState('Nessun ciclo configurato', 'Crea un ciclo dalla pagina Cicli per iniziare a programmare irrigazioni.')}</td></tr>`}
-          </tbody></table>
-        </div>
-        ${renderWeatherReasonCard()}
+      <div class="card">
+        <h3>Cicli</h3>
+        <table><thead><tr><th>Nome</th><th>Modo</th><th>Prossima</th><th></th></tr></thead><tbody>
+          ${(overview.cycles || []).length ? (overview.cycles || []).map(c => `<tr><td><strong>${esc(c.name)}</strong><div class="muted">${esc(c.id)}</div></td><td>${esc(c.mode)}</td><td>${esc(c.next_run_text)}</td><td><button onclick="startCycle('${esc(c.id)}')">Start</button></td></tr>`).join('') : `<tr><td colspan="4">${emptyState('Nessun ciclo configurato', 'Crea un ciclo dalla pagina Cicli per iniziare a programmare irrigazioni.')}</td></tr>`}
+        </tbody></table>
       </div>
       <div class="card">
         <h3>Zone</h3>
@@ -489,6 +490,28 @@ function renderDashboard() {
         </tbody></table>
       </div>
     </section>`;
+}
+function dashboardHero(runner) {
+  const active = runner.is_running ? 'In esecuzione' : 'In attesa';
+  const statusClass = runner.is_running ? 'ok' : 'warn';
+  return `<section class="dashboard-hero">
+    <div class="card status-panel">
+      <div class="status-head">
+        <div class="status-title">
+          <span class="muted">Stato controller</span>
+          <span class="status-value">${esc(active)}</span>
+          <span class="muted">${esc(runner.status || 'idle')}</span>
+        </div>
+        <span class="pill ${statusClass}">${esc(runner.is_running ? 'RUN' : 'IDLE')}</span>
+      </div>
+      <div class="quick-metrics">
+        <div class="quick-metric"><span>Ciclo</span><strong>${esc(runner.cycle_name || '-')}</strong></div>
+        <div class="quick-metric"><span>Zona</span><strong>${esc(runner.zone_name || '-')}</strong></div>
+        <div class="quick-metric"><span>Bilancio</span><strong>${esc(overview.last_water_balance_update_date || '-')}</strong></div>
+      </div>
+    </div>
+    ${renderWeatherReasonCard()}
+  </section>`;
 }
 function renderWeatherSummaryPanel() {
   const weather = overview.weather || {};

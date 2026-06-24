@@ -487,6 +487,9 @@ static void AssertUiContainsPolishedShell()
     {
         "nav-code",
         "Ingress UI",
+        "dashboardHero",
+        "status-panel",
+        "quick-metrics",
         "emptyState",
         "Nessuna zona configurata",
         "Nessun ciclo configurato",
