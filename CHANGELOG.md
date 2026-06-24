@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.9] - 2026-06-24
+
+### Fixed
+
+- Read the Ingress UI version from the .NET assembly instead of a hardcoded sidebar string.
+
 ## [0.1.8] - 2026-06-24
 
 ### Fixed

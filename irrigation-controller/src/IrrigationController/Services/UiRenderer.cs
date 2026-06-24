@@ -2,7 +2,18 @@
 
 public sealed class UiRenderer
 {
-    public string Render() => """
+    public string Render()
+    {
+        var versionAttribute = System.Reflection.Assembly.GetExecutingAssembly()
+            .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+            .OfType<System.Reflection.AssemblyInformationalVersionAttribute>()
+            .FirstOrDefault();
+        var version = versionAttribute?.InformationalVersion ?? "unknown";
+
+        return HtmlTemplate.Replace("{{APP_VERSION}}", version, StringComparison.Ordinal);
+    }
+
+    private const string HtmlTemplate = """
 <!doctype html>
 <html lang="it">
 <head>
@@ -148,7 +159,7 @@ public sealed class UiRenderer
     <aside class="sidebar">
       <div class="brand">
         <h1>Irrigazione</h1>
-        <small>Controller Home Assistant - v0.1.7</small>
+        <small>Controller Home Assistant - v{{APP_VERSION}}</small>
       </div>
       <nav class="nav" id="nav"></nav>
     </aside>

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.9] - 2026-06-24
+
+### Fixed
+
+- La versione mostrata nella UI Ingress ora viene letta dall'assembly .NET invece di essere hardcoded nella sidebar.
+
 ## [0.1.8] - 2026-06-24
 
 ### Fixed

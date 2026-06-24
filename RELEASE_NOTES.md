@@ -1,4 +1,4 @@
-# ha-irrigation-addon 0.1.8
+# ha-irrigation-addon 0.1.9
 
 Bugfix release dell'add-on Home Assistant `Irrigation Controller`.
 
@@ -14,9 +14,8 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Fix aggiunta zone: il pulsante crea una bozza nella pagina Zone e salva solo quando premi `Salva zona`.
-- Fix aggiunta cicli: il pulsante crea una bozza nella pagina Cicli e richiede almeno una zona gia salvata.
-- Normalizzazione degli ID inseriti nei popup, per evitare caratteri problematici nei controlli HTML.
+- La versione mostrata nella UI Ingress ora viene letta automaticamente dall'assembly .NET.
+- Rimossa la versione hardcoded dalla sidebar, cosi la UI resta allineata a `config.yaml` e `/api/health`.
 - Fix eliminazione zone gia referenziate dai cicli: la UI rimuove automaticamente la zona dagli step prima del salvataggio.
 - Menu suggerimenti per scegliere entita `switch.*` e `valve.*` gia presenti in Home Assistant quando si configurano le zone.
 - Supporto runtime per entita `valve.*`.
