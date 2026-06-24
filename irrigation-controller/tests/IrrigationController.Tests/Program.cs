@@ -24,7 +24,8 @@ var tests = new (string Name, Action Test)[]
     ("ui contains polished shell", AssertUiContainsPolishedShell),
     ("ui contains operation summaries", AssertUiContainsOperationSummaries),
     ("ui contains inline validation", AssertUiContainsInlineValidation),
-    ("ui contains cycle decision preview", AssertUiContainsCycleDecisionPreview)
+    ("ui contains cycle decision preview", AssertUiContainsCycleDecisionPreview),
+    ("ui contains weather and plant overview", AssertUiContainsWeatherAndPlantOverview)
 };
 
 var failures = 0;
@@ -429,6 +430,30 @@ static void AssertUiContainsCycleDecisionPreview()
         if (!html.Contains(value, StringComparison.Ordinal))
         {
             throw new InvalidOperationException($"Expected cycle decision preview marker '{value}'.");
+        }
+    }
+}
+
+static void AssertUiContainsWeatherAndPlantOverview()
+{
+    var html = new UiRenderer().Render();
+    var expected = new[]
+    {
+        "Meteo operativo",
+        "weatherSettingsOverview",
+        "Ultima ET0",
+        "Pioggia utile",
+        "Schema impianto",
+        "plantFlow",
+        "Zone collegate",
+        "Master attiva"
+    };
+
+    foreach (var value in expected)
+    {
+        if (!html.Contains(value, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected weather/plant overview marker '{value}'.");
         }
     }
 }

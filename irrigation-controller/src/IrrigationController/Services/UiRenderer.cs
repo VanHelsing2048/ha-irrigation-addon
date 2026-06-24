@@ -161,6 +161,12 @@ public sealed class UiRenderer
     .cycle-preview { display: grid; gap: 8px; margin-top: 12px; }
     .cycle-preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .cycle-preview-day { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .setting-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .setting-tile { display: grid; gap: 5px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .setting-tile span:first-child { color: var(--muted); font-size: 12px; }
+    .plant-flow { display: grid; grid-template-columns: minmax(180px, .55fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
+    .flow-node { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+    .flow-zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
     .step-row { display: grid; grid-template-columns: minmax(180px, 1fr) 130px auto; gap: 8px; align-items: end; }
     .cycle-chip, .zone-chip, .event-chip { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .zone-chip { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
@@ -181,7 +187,7 @@ public sealed class UiRenderer
       .main { padding: 14px; }
       .metrics, .summary, .two, .three, .plan, .weather-summary { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
-      .step-row, .cycle-preview-grid { grid-template-columns: 1fr; }
+      .step-row, .cycle-preview-grid, .setting-board, .plant-flow { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
       .topbar { align-items: flex-start; flex-direction: column; }
       .actions { justify-content: flex-start; }
@@ -679,6 +685,7 @@ function renderWeather() {
   return `<section class="section">
   <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">In uso reale queste opzioni generali sono pensate per la scheda Config dell'add-on. Questa vista resta utile per sviluppo e modifiche avanzate.</p></div>
   ${validationPanel('weather')}
+  ${weatherSettingsOverview(w)}
   <div class="card"><div class="row">
     ${weatherEntityOptionsList()}
     ${weatherEntityField('weather-entity', 'Entita meteo', w.entity, 'span-4')}
@@ -699,6 +706,7 @@ function renderPlant() {
     ${validationPanel('hydraulic')}
     ${validationPanel('safety')}
     ${validationPanel('mqtt_discovery')}
+    ${plantFlow(h, s)}
     <div class="card"><h3>Idraulica</h3><div class="row">
       ${entityOptionsList()}
       ${entityField('hyd-master', 'Valvola master', h.master_valve_entity || '', 'span-4')}
@@ -723,6 +731,49 @@ function renderPlant() {
     </div></div>
     <div class="actions" style="justify-content:flex-start"><button onclick="savePlant()">Salva impianto</button></div>
   </section>`;
+}
+function weatherSettingsOverview(w) {
+  const weather = overview.weather || {};
+  const last = overview.diagnostics?.last_weather;
+  return `<div class="card">
+    <div class="toolbar"><h3>Meteo operativo</h3><span class="pill">${esc(formatWeatherState(weather.state))}</span></div>
+    <div class="setting-board" style="margin-top:10px">
+      <div class="setting-tile"><span>Entita HA</span><strong>${esc(w.entity || weather.entity || '-')}</strong></div>
+      <div class="setting-tile"><span>Forecast</span><strong>${esc(w.forecast_type || weather.forecast_type || 'hourly')}</strong></div>
+      <div class="setting-tile"><span>Finestra pioggia</span><strong>${num(w.rain_lookahead_hours, 24)} h</strong></div>
+      <div class="setting-tile"><span>Efficienza pioggia</span><strong>${Math.round(num(w.rain_efficiency, .75) * 100)}%</strong></div>
+      <div class="setting-tile"><span>Skip pioggia</span><strong>${num(w.skip_if_expected_rain_mm_above, 4).toFixed(1)} mm</strong></div>
+      <div class="setting-tile"><span>Skip probabilita</span><strong>${num(w.skip_if_rain_probability_above, 70)}%</strong></div>
+      <div class="setting-tile"><span>Ultima ET0</span><strong>${last ? num(last.et0_mm).toFixed(1) + ' mm' : '-'}</strong></div>
+      <div class="setting-tile"><span>Pioggia utile</span><strong>${last ? num(last.effective_rain_mm).toFixed(1) + ' mm' : '-'}</strong></div>
+    </div>
+  </div>`;
+}
+function plantFlow(h, s) {
+  const zones = Object.entries(config.zones || {});
+  const master = h.master_valve_entity || 'Nessuna valvola master configurata';
+  return `<div class="card">
+    <div class="toolbar"><h3>Schema impianto</h3><span class="pill ${h.master_valve_entity ? 'ok' : 'warn'}">${h.master_valve_entity ? 'Master attiva' : 'Master assente'}</span></div>
+    <div class="plant-flow" style="margin-top:10px">
+      <div class="flow-node">
+        <div class="forecast-line">${iconBadge('OK')}<strong>Monte impianto</strong></div>
+        <span class="muted">${esc(master)}</span>
+        <span>${h.allow_parallel_zones ? `Fino a ${num(h.max_parallel_zones, 1)} zone insieme` : 'Una zona alla volta'}</span>
+        <span class="muted">Pausa tra zone: ${num(h.pause_between_zones_seconds, 0)} sec.</span>
+      </div>
+      <div class="flow-node">
+        <div class="forecast-line">${iconBadge('DROP')}<strong>Zone collegate</strong><span class="pill">${zones.length}</span></div>
+        <div class="flow-zones">
+          ${zones.length ? zones.map(([id, zone]) => `<span class="zone-chip">${iconBadge('DROP')}<strong>${esc(zone.name || id)}</strong><span class="muted">${esc(zone.entity || '-')}</span></span>`).join('') : emptyState('Nessuna zona', 'Aggiungi una zona per vedere qui il ramo idraulico.')}
+        </div>
+      </div>
+    </div>
+    <div class="mini muted" style="margin-top:10px">
+      <span>${s.turn_off_all_zones_on_startup ? "Spegnimento valvole all'avvio attivo" : "Spegnimento valvole all'avvio disattivo"}</span>
+      <span>${s.stop_all_known_zones_on_error ? 'Stop su errore attivo' : 'Stop su errore disattivo'}</span>
+      <span>${s.verify_zone_state_after_switch ? 'Verifica stato valvole attiva' : 'Verifica stato valvole disattiva'}</span>
+    </div>
+  </div>`;
 }
 function renderDiagnostics() {
   const events = overview.recent_events || [];
