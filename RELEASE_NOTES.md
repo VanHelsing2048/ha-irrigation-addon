@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.2.0
+# ha-irrigation-addon 0.2.1
 
-Feature release dell'add-on Home Assistant `Irrigation Controller`.
+Polish release dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,14 +14,11 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Dashboard meteo riorganizzata con stato attuale, oggi/domani, ET, pioggia prevista, probabilita e motivazione decisionale.
-- Registro eventi dedicato per ogni ciclo, oltre alla diagnostica generale.
-- Selettore entita meteo `weather.*` letto da Home Assistant.
-- Editor cicli strutturato con step aggiungibili/rimuovibili, selezione zona e durata `hh:mm:ss`.
-- Programmazione automatica con scelta tra giorni settimana oppure ogni N giorni da data iniziale.
-- Valvola master opzionale a monte di tutte le zone.
-- Dry-run ciclo con registro di cosa la logica farebbe senza comandare valvole reali.
-- Test anti-regressione estesi per UI, validazione schedule, master valve e dry-run.
+- Shell UI piu curata con sidebar rifinita, navigazione codificata e focus/hover piu chiari.
+- Dashboard, zone e cicli mostrano stati vuoti guidati invece di aree anonime.
+- Pagine Zone e Cicli mostrano riepiloghi operativi in alto.
+- Registro ciclo piu leggibile con etichette evento compatte.
+- Test anti-regressione estesi per verificare i marker della UI rifinita.
 
 ## Pacchetto
 

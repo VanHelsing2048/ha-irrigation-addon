@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.1] - 2026-06-24
+
+### Changed
+
+- Polish the Ingress UI shell with stronger visual hierarchy, improved sidebar navigation and clearer focus/hover states.
+- Add guided empty states for dashboard, zones, cycles and per-cycle event registers.
+- Add operation summaries to Zones and Cycles pages.
+- Render per-cycle event types with compact user-facing labels.
+- Add regression tests for the polished UI shell and operation summaries.
+
 ## [0.2.0] - 2026-06-24
 
 ### Added

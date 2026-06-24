@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.1] - 2026-06-24
+
+### Changed
+
+- Rifinita la shell UI Ingress con gerarchia visiva piu forte, navigazione piu leggibile e stati focus/hover.
+- Aggiunti stati vuoti guidati per dashboard, zone, cicli e registro ciclo.
+- Aggiunti riepiloghi operativi nelle pagine Zone e Cicli.
+- Registro ciclo piu leggibile con etichette evento compatte.
+- Aggiunti test anti-regressione per shell UI e riepiloghi operativi.
+
 ## [0.2.0] - 2026-06-24
 
 ### Added

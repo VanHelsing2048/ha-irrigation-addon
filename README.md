@@ -1,6 +1,6 @@
 # Home Assistant Irrigation Add-on
 
-Versione corrente: `0.2.0`
+Versione corrente: `0.2.1`
 
 Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 
@@ -26,6 +26,7 @@ Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 - La programmazione automatica supporta giorni settimana oppure cadenza ogni N giorni da una data iniziale.
 - L'impianto puo usare una valvola master a monte delle zone.
 - I cicli possono essere simulati in dry-run senza comandare valvole reali.
+- La UI usa una shell piu curata con navigazione codificata, riepiloghi operativi, stati vuoti e tabelle piu leggibili.
 - Le impostazioni generali dell'add-on sono disponibili nella scheda Config di Home Assistant e vengono lette da `/data/options.json`.
 
 ## Sviluppo locale
