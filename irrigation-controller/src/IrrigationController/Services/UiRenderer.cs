@@ -136,6 +136,7 @@ public sealed class UiRenderer
     .weather-kpi strong { font-size: 22px; }
     .forecast-card { display: grid; gap: 8px; }
     .forecast-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .step-row { display: grid; grid-template-columns: minmax(180px, 1fr) 130px auto; gap: 8px; align-items: end; }
     .cycle-chip, .zone-chip, .event-chip { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .zone-chip { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
     .event-chip { color: var(--muted); }
@@ -153,6 +154,7 @@ public sealed class UiRenderer
       .main { padding: 14px; }
       .metrics, .two, .three, .plan, .weather-summary { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
+      .step-row { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
       .topbar { align-items: flex-start; flex-direction: column; }
       .actions { justify-content: flex-start; }
@@ -511,7 +513,7 @@ function renderCycles() {
 }
 function cycleForm(id, c) {
   const schedule = c.schedule || { days: [], times: [] };
-  const steps = (c.steps || []).map(s => `${(s.zones || []).join(',')} | ${s.duration_minutes ?? ''}`).join('\n');
+  const scheduleMode = schedule.start_date || schedule.every_days ? 'interval' : 'weekly';
   const isDraft = Object.prototype.hasOwnProperty.call(draftCycles, id);
   const status = isDraft ? '<span class="pill warn">bozza</span>' : '<span class="pill ok">salvato</span>';
   return `<div class="card">
@@ -522,8 +524,14 @@ function cycleForm(id, c) {
       <label class="span-2"><span>Modo</span><select id="cycle-${esc(id)}-mode"><option ${c.mode === 'Manual' ? 'selected' : ''}>Manual</option><option ${c.mode === 'Automatic' ? 'selected' : ''}>Automatic</option></select></label>
       <label class="span-2"><span>Abilitato</span><select id="cycle-${esc(id)}-enabled"><option value="true" ${c.enabled !== false ? 'selected' : ''}>Si</option><option value="false" ${c.enabled === false ? 'selected' : ''}>No</option></select></label>
       ${field(`cycle-${id}-times`, 'Orari', (schedule.times || []).join(', '), 'span-3')}
+      <label class="span-3"><span>Programmazione</span><select id="cycle-${esc(id)}-schedule-mode"><option value="weekly" ${scheduleMode === 'weekly' ? 'selected' : ''}>Giorni settimana</option><option value="interval" ${scheduleMode === 'interval' ? 'selected' : ''}>Ogni N giorni</option></select></label>
       <div class="span-12">${daysControl(`cycle-${id}-days`, schedule.days || [])}</div>
-      <label class="span-12"><span>Step: zone separate da virgola, poi | durata minuti. Esempio: prato,orto | 10</span><textarea id="cycle-${esc(id)}-steps">${esc(steps)}</textarea></label>
+      ${field(`cycle-${id}-start`, 'Data inizio alternanza', schedule.start_date || '', 'span-3')}
+      ${numberField(`cycle-${id}-every`, 'Ogni quanti giorni', schedule.every_days ?? '', 'span-3')}
+      <div class="span-12">
+        <div class="toolbar"><h3>Step zone</h3><button type="button" onclick="${esc(action('addCycleStep', id))}">Aggiungi step</button></div>
+        <div class="list" id="cycle-${esc(id)}-steps-list">${cycleStepsEditor(id, c.steps || [])}</div>
+      </div>
     </div>
     <div class="actions" style="margin-top:12px; justify-content:flex-start">
       <button onclick="${esc(action('saveCycle', id))}">Salva ciclo</button>
@@ -531,6 +539,27 @@ function cycleForm(id, c) {
     </div>
     ${cycleEventRegister(id)}
   </div>`;
+}
+function cycleStepsEditor(id, steps) {
+  const normalized = steps.length ? steps : [{ zones: [], duration_seconds: 600, duration_minutes: 10 }];
+  return normalized.map(step => cycleStepRow(id, (step.zones || [])[0] || '', stepDurationText(step))).join('');
+}
+function cycleStepRow(id, zoneId = '', duration = '00:10:00') {
+  return `<div class="step-row">
+    <label><span>Zona</span>${zoneSelect(zoneId)}</label>
+    <label><span>Tempo hh:mm:ss</span><input class="cycle-step-duration" value="${esc(duration)}" placeholder="00:10:00"></label>
+    <button type="button" class="danger" onclick="removeCycleStep(this)">Rimuovi</button>
+  </div>`;
+}
+function zoneSelect(value = '') {
+  const options = Object.entries(config.zones || {}).map(([id, zone]) =>
+    `<option value="${esc(id)}" ${id === value ? 'selected' : ''}>${esc(zone.name || id)}</option>`
+  ).join('');
+  return `<select class="cycle-step-zone">${options}</select>`;
+}
+function stepDurationText(step) {
+  const seconds = step.duration_seconds ?? ((step.duration_minutes ?? 10) * 60);
+  return formatDurationInput(seconds);
 }
 function cycleEventRegister(id) {
   const events = (overview.recent_events || []).filter(event => event.cycle_id === id).slice(0, 8);
@@ -639,12 +668,38 @@ function daysControl(id, values) {
   return `<div class="days">${dayNames.map((d, i) => `<label><input type="checkbox" data-days="${esc(id)}" value="${d}" ${values.includes(d) ? 'checked' : ''}>${dayLabels[i]}</label>`).join('')}</div>`;
 }
 function getDays(id) { return [...document.querySelectorAll(`[data-days="${id}"]:checked`)].map(x => x.value); }
-function parseSteps(text) {
-  return text.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
-    const [zonesPart, durationPart] = line.split('|').map(x => (x || '').trim());
-    const duration = durationPart ? Number(durationPart) : null;
-    return { zones: zonesPart.split(',').map(x => x.trim()).filter(Boolean), duration_minutes: Number.isFinite(duration) ? duration : null };
-  });
+function formatDurationInput(seconds) {
+  const total = Math.max(0, Number(seconds) || 0);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = Math.floor(total % 60);
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+function parseDurationInput(value) {
+  const parts = String(value || '').trim().split(':').map(x => Number(x));
+  if (parts.length !== 3 || parts.some(x => !Number.isInteger(x) || x < 0)) return null;
+  const [hours, minutes, seconds] = parts;
+  if (minutes > 59 || seconds > 59) return null;
+  const total = hours * 3600 + minutes * 60 + seconds;
+  return total > 0 ? total : null;
+}
+function addCycleStep(id) {
+  const list = document.getElementById(`cycle-${id}-steps-list`);
+  if (!list) return;
+  list.insertAdjacentHTML('beforeend', cycleStepRow(id, Object.keys(config.zones || {})[0] || '', '00:10:00'));
+}
+function removeCycleStep(button) {
+  button.closest('.step-row')?.remove();
+}
+function collectCycleSteps(id) {
+  const list = document.getElementById(`cycle-${id}-steps-list`);
+  if (!list) return [];
+  return [...list.querySelectorAll('.step-row')].map(row => {
+    const zoneId = row.querySelector('.cycle-step-zone')?.value || '';
+    const seconds = parseDurationInput(row.querySelector('.cycle-step-duration')?.value || '');
+    if (!zoneId || seconds === null) return null;
+    return { zones: [zoneId], duration_seconds: seconds, duration_minutes: Math.ceil(seconds / 60) };
+  }).filter(Boolean);
 }
 async function startCycle(id) { try { toast((await api('/api/cycles/' + id + '/start', { method: 'POST' })).message); } catch(e) { toast(e.message || 'Errore avvio ciclo', true); } }
 async function startZone(id) { try { toast((await api('/api/zones/' + id + '/start?minutes=5', { method: 'POST' })).message); } catch(e) { toast(e.message || 'Errore avvio zona', true); } }
@@ -736,12 +791,23 @@ async function saveCycle(id) {
   if (newId !== id && next.cycles[newId]) return toast('Esiste gia un ciclo con questo ID', true);
   const mode = val(`cycle-${id}-mode`);
   const times = val(`cycle-${id}-times`).split(',').map(x => x.trim()).filter(Boolean);
+  const scheduleMode = val(`cycle-${id}-schedule-mode`);
+  const schedule = mode === 'Automatic'
+    ? {
+        days: scheduleMode === 'weekly' ? getDays(`cycle-${id}-days`) : [],
+        times,
+        start_date: scheduleMode === 'interval' ? val(`cycle-${id}-start`) || null : null,
+        every_days: scheduleMode === 'interval' ? num(val(`cycle-${id}-every`), 1) : null
+      }
+    : null;
+  const steps = collectCycleSteps(id);
+  if (steps.length === 0) return toast('Aggiungi almeno uno step con zona e tempo hh:mm:ss valido', true);
   const c = {
     name: val(`cycle-${id}-name`),
     enabled: val(`cycle-${id}-enabled`) === 'true',
     mode,
-    schedule: mode === 'Automatic' ? { days: getDays(`cycle-${id}-days`), times } : null,
-    steps: parseSteps(val(`cycle-${id}-steps`))
+    schedule,
+    steps
   };
   delete next.cycles[id];
   next.cycles[newId] = c;
@@ -761,7 +827,7 @@ async function addCycle() {
     return;
   }
   if ((config.cycles || {})[id] || draftCycles[id]) return toast('Esiste gia un ciclo con questo ID', true);
-  draftCycles[id] = { name: id, enabled: true, mode: 'Manual', schedule: null, steps: [{ zones: [firstZone], duration_minutes: 10 }] };
+  draftCycles[id] = { name: id, enabled: true, mode: 'Manual', schedule: null, steps: [{ zones: [firstZone], duration_seconds: 600, duration_minutes: 10 }] };
   setPage('cycles');
   render();
 }

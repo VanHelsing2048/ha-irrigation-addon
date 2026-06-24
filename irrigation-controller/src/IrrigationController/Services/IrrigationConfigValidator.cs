@@ -208,6 +208,22 @@ public sealed class IrrigationConfigValidator
                 Error(result, $"{path}.schedule.times[{index}]", "Invalid time format. Use HH:mm.");
             }
         }
+
+        var usesInterval = !string.IsNullOrWhiteSpace(cycle.Schedule.StartDate) || cycle.Schedule.EveryDays is not null;
+        if (!usesInterval)
+        {
+            return;
+        }
+
+        if (!DateOnly.TryParse(cycle.Schedule.StartDate, out _))
+        {
+            Error(result, $"{path}.schedule.start_date", "Invalid start date. Use yyyy-MM-dd.");
+        }
+
+        if (cycle.Schedule.EveryDays is null or < 1 or > 365)
+        {
+            Error(result, $"{path}.schedule.every_days", "Every days must be between 1 and 365.");
+        }
     }
 
     private static void ValidateStep(
@@ -233,14 +249,14 @@ public sealed class IrrigationConfigValidator
             }
         }
 
-        if (cycle.Mode == CycleMode.Manual && step.DurationMinutes is null)
+        if (cycle.Mode == CycleMode.Manual && step.DurationMinutes is null && step.DurationSeconds is null)
         {
-            Error(result, $"{path}.duration_minutes", "Manual steps require duration_minutes.");
+            Error(result, $"{path}.duration", "Manual steps require a duration.");
         }
 
-        if (step.DurationMinutes is <= 0)
+        if (step.DurationSeconds is <= 0 || step.DurationMinutes is <= 0)
         {
-            Error(result, $"{path}.duration_minutes", "Duration must be greater than zero.");
+            Error(result, $"{path}.duration", "Duration must be greater than zero.");
         }
     }
 

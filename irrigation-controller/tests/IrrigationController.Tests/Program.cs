@@ -10,11 +10,14 @@ var tests = new (string Name, Action Test)[]
     ("config validator accepts valve entity", ConfigValidatorAcceptsValveEntity),
     ("config validator accepts empty zone setup", ConfigValidatorAcceptsEmptyZoneSetup),
     ("config validator catches invalid hydraulic policy", ConfigValidatorCatchesInvalidHydraulicPolicy),
+    ("config validator accepts interval schedule", ConfigValidatorAcceptsIntervalSchedule),
+    ("config validator catches invalid interval schedule", ConfigValidatorCatchesInvalidIntervalSchedule),
     ("ui uses escaped action handlers", UiUsesEscapedActionHandlers),
     ("ui sends save audit headers", UiSendsSaveAuditHeaders),
     ("ui contains cycle event register", AssertUiContainsCycleRegister),
     ("ui contains weather entity picker", AssertUiContainsWeatherEntityPicker),
-    ("ui contains dashboard weather summary", AssertUiContainsDashboardWeatherSummary)
+    ("ui contains dashboard weather summary", AssertUiContainsDashboardWeatherSummary),
+    ("ui contains cycle step editor", AssertUiContainsCycleStepEditor)
 };
 
 var failures = 0;
@@ -183,6 +186,42 @@ static void UiSendsSaveAuditHeaders()
     }
 }
 
+static void ConfigValidatorAcceptsIntervalSchedule()
+{
+    var config = BasicConfig();
+    config.Cycles["manuale"].Mode = CycleMode.Automatic;
+    config.Cycles["manuale"].Schedule = new ScheduleConfig
+    {
+        StartDate = "2026-06-24",
+        EveryDays = 2,
+        Times = ["06:00"]
+    };
+
+    var result = new IrrigationConfigValidator().Validate(config);
+    if (!result.IsValid)
+    {
+        throw new InvalidOperationException(result.Errors[0].Message);
+    }
+}
+
+static void ConfigValidatorCatchesInvalidIntervalSchedule()
+{
+    var config = BasicConfig();
+    config.Cycles["manuale"].Mode = CycleMode.Automatic;
+    config.Cycles["manuale"].Schedule = new ScheduleConfig
+    {
+        StartDate = "not-a-date",
+        EveryDays = 0,
+        Times = ["06:00"]
+    };
+
+    var result = new IrrigationConfigValidator().Validate(config);
+    if (result.IsValid)
+    {
+        throw new InvalidOperationException("Expected invalid interval schedule to fail.");
+    }
+}
+
 static void AssertUiContainsCycleRegister()
 {
     var html = new UiRenderer().Render();
@@ -231,6 +270,28 @@ static void AssertUiContainsDashboardWeatherSummary()
         if (!html.Contains(value, StringComparison.Ordinal))
         {
             throw new InvalidOperationException($"Expected dashboard weather summary marker '{value}'.");
+        }
+    }
+}
+
+static void AssertUiContainsCycleStepEditor()
+{
+    var html = new UiRenderer().Render();
+    var expected = new[]
+    {
+        "Aggiungi step",
+        "Tempo hh:mm:ss",
+        "collectCycleSteps",
+        "parseDurationInput",
+        "Data inizio alternanza",
+        "Ogni quanti giorni"
+    };
+
+    foreach (var value in expected)
+    {
+        if (!html.Contains(value, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected cycle step editor marker '{value}'.");
         }
     }
 }

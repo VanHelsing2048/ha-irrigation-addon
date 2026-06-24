@@ -74,12 +74,15 @@ public sealed class ScheduleConfig
 {
     public List<DayOfWeek> Days { get; set; } = [];
     public List<string> Times { get; set; } = [];
+    public string? StartDate { get; set; }
+    public int? EveryDays { get; set; }
 }
 
 public sealed class CycleStepConfig
 {
     public List<string> Zones { get; set; } = [];
     public int? DurationMinutes { get; set; }
+    public int? DurationSeconds { get; set; }
 }
 
 public enum CycleMode

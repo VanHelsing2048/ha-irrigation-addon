@@ -131,7 +131,7 @@ public sealed class IrrigationOverviewService
         for (var dayOffset = 0; dayOffset <= 14; dayOffset++)
         {
             var date = now.Date.AddDays(dayOffset);
-            if (cycle.Schedule.Days.Count > 0 && !cycle.Schedule.Days.Contains(date.DayOfWeek))
+            if (!IsScheduledDate(cycle.Schedule, DateOnly.FromDateTime(date)))
             {
                 continue;
             }
@@ -152,6 +152,22 @@ public sealed class IrrigationOverviewService
         }
 
         return null;
+    }
+
+    private static bool IsScheduledDate(ScheduleConfig schedule, DateOnly date)
+    {
+        if (!string.IsNullOrWhiteSpace(schedule.StartDate) || schedule.EveryDays is not null)
+        {
+            if (!DateOnly.TryParse(schedule.StartDate, out var startDate) || schedule.EveryDays is null or < 1)
+            {
+                return false;
+            }
+
+            var days = date.DayNumber - startDate.DayNumber;
+            return days >= 0 && days % schedule.EveryDays.Value == 0;
+        }
+
+        return schedule.Days.Count == 0 || schedule.Days.Contains(date.DayOfWeek);
     }
 
     private static string FormatDateTime(DateTimeOffset? value)

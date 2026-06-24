@@ -70,7 +70,7 @@ public sealed class CycleRunner
         {
             Name = $"Manual zone {zone.Name}",
             Mode = CycleMode.Manual,
-            Steps = [new CycleStepConfig { Zones = [zoneId], DurationMinutes = (int)Math.Ceiling(duration.TotalMinutes) }]
+            Steps = [new CycleStepConfig { Zones = [zoneId], DurationSeconds = (int)Math.Ceiling(duration.TotalSeconds) }]
         };
 
         if (!await _runLock.WaitAsync(0, cancellationToken))
@@ -353,8 +353,11 @@ public sealed class CycleRunner
     {
         if (cycle.Mode == CycleMode.Manual)
         {
-            var manualMinutes = step.DurationMinutes ?? zone.MinMinutes;
-            return TimeSpan.FromMinutes(Math.Clamp(manualMinutes, 0, config.Safety.MaxZoneMinutes));
+            var manualDuration = step.DurationSeconds is > 0
+                ? TimeSpan.FromSeconds(step.DurationSeconds.Value)
+                : TimeSpan.FromMinutes(step.DurationMinutes ?? zone.MinMinutes);
+            var maxDuration = TimeSpan.FromMinutes(config.Safety.MaxZoneMinutes);
+            return manualDuration > maxDuration ? maxDuration : manualDuration;
         }
 
         if (!string.IsNullOrWhiteSpace(zone.SoilMoistureEntity) && zone.SkipIfSoilMoistureAbove is not null)
