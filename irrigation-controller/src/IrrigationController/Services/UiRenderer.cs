@@ -103,6 +103,7 @@ public sealed class UiRenderer
     .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .grid { display: grid; gap: 12px; }
     .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px; min-width: 0; box-shadow: var(--shadow); }
@@ -170,7 +171,7 @@ public sealed class UiRenderer
       .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
       .nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .main { padding: 14px; }
-      .metrics, .two, .three, .plan, .weather-summary { grid-template-columns: 1fr; }
+      .metrics, .summary, .two, .three, .plan, .weather-summary { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
       .step-row { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
@@ -492,8 +493,15 @@ function formatWeatherState(state) {
 }
 function renderZones() {
   const zones = Object.entries({ ...draftZones, ...(config.zones || {}) });
+  const savedCount = Object.keys(config.zones || {}).length;
+  const calibratedCount = (overview.zones || []).filter(zone => zone.calibrated_precipitation_rate_mm_h).length;
   return `<section class="section">
     <div class="toolbar"><h2>Zone</h2><button onclick="addZone()">Nuova zona</button></div>
+    <div class="grid summary">
+      ${metric('Zone salvate', savedCount)}
+      ${metric('In bozza', Object.keys(draftZones).length)}
+      ${metric('Calibrate', calibratedCount)}
+    </div>
     ${entityOptionsList()}
     <div class="list">${zones.length ? zones.map(([id, z]) => zoneForm(id, z)).join('') : emptyState('Nessuna zona', 'Crea una zona per associare una valvola e impostare resa, limiti e calibrazione.')}</div>
   </section>`;
@@ -528,8 +536,16 @@ function zoneForm(id, z) {
 }
 function renderCycles() {
   const cycles = Object.entries({ ...draftCycles, ...(config.cycles || {}) });
+  const savedCycles = Object.values(config.cycles || {});
+  const automaticCount = savedCycles.filter(cycle => cycle.mode === 'Automatic').length;
+  const enabledCount = savedCycles.filter(cycle => cycle.enabled !== false).length;
   return `<section class="section">
     <div class="toolbar"><h2>Cicli</h2><button onclick="addCycle()">Nuovo ciclo</button></div>
+    <div class="grid summary">
+      ${metric('Cicli abilitati', enabledCount)}
+      ${metric('Automatici', automaticCount)}
+      ${metric('In bozza', Object.keys(draftCycles).length)}
+    </div>
     <div class="list">${cycles.length ? cycles.map(([id, c]) => cycleForm(id, c)).join('') : emptyState('Nessun ciclo', 'Crea un ciclo per organizzare gruppi di zone, orari e simulazioni dry-run.')}</div>
   </section>`;
 }
@@ -590,9 +606,29 @@ function cycleEventRegister(id) {
   return `<div style="margin-top:12px">
     <h3>Registro ciclo</h3>
     <table><thead><tr><th>Quando</th><th>Tipo</th><th>Zona</th><th>Messaggio</th></tr></thead><tbody>
-      ${events.map(e => `<tr><td>${esc(new Date(e.timestamp).toLocaleString())}</td><td>${esc(e.type)}</td><td>${esc(e.zone_id || '-')}</td><td>${esc(e.message)}</td></tr>`).join('')}
+      ${events.map(e => `<tr><td>${esc(new Date(e.timestamp).toLocaleString())}</td><td><span class="pill">${esc(eventLabel(e.type))}</span></td><td>${esc(e.zone_id || '-')}</td><td>${esc(e.message)}</td></tr>`).join('')}
     </tbody></table>
   </div>`;
+}
+function eventLabel(type) {
+  const labels = {
+    cycle_started: 'Avvio',
+    cycle_completed: 'Fine',
+    cycle_skipped: 'Saltato',
+    zone_started: 'Zona on',
+    zone_completed: 'Zona off',
+    zone_skipped: 'Zona skip',
+    dry_run_started: 'Sim start',
+    dry_run_completed: 'Sim fine',
+    dry_run_zone_planned: 'Sim zona',
+    dry_run_zone_skipped: 'Sim skip',
+    dry_run_master_valve: 'Sim master',
+    master_valve_started: 'Master on',
+    master_valve_stopped: 'Master off',
+    cycle_saved: 'Salvato',
+    cycle_deleted: 'Eliminato'
+  };
+  return labels[type] || type || '-';
 }
 function renderWeather() {
   const w = config.weather || {};

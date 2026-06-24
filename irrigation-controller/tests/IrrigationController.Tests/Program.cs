@@ -21,7 +21,8 @@ var tests = new (string Name, Action Test)[]
     ("ui contains cycle step editor", AssertUiContainsCycleStepEditor),
     ("ui contains master valve setting", AssertUiContainsMasterValveSetting),
     ("ui contains dry run action", AssertUiContainsDryRunAction),
-    ("ui contains polished shell", AssertUiContainsPolishedShell)
+    ("ui contains polished shell", AssertUiContainsPolishedShell),
+    ("ui contains operation summaries", AssertUiContainsOperationSummaries)
 };
 
 var failures = 0;
@@ -357,6 +358,28 @@ static void AssertUiContainsPolishedShell()
         if (!html.Contains(value, StringComparison.Ordinal))
         {
             throw new InvalidOperationException($"Expected polished UI marker '{value}'.");
+        }
+    }
+}
+
+static void AssertUiContainsOperationSummaries()
+{
+    var html = new UiRenderer().Render();
+    var expected = new[]
+    {
+        "Zone salvate",
+        "Calibrate",
+        "Cicli abilitati",
+        "Automatici",
+        "eventLabel",
+        "Master on"
+    };
+
+    foreach (var value in expected)
+    {
+        if (!html.Contains(value, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected operation summary marker '{value}'.");
         }
     }
 }
