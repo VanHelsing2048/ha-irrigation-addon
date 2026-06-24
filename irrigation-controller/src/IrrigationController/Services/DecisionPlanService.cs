@@ -144,10 +144,11 @@ public sealed class DecisionPlanService
                 }
 
                 state.WaterBalance.TryGetValue(zoneId, out var currentDeficit);
-                var projectedDeficit = Math.Max(0, currentDeficit + et0 * zone.CropCoefficient - effectiveRain - zone.TargetDeficitMm);
-                var minutes = projectedDeficit <= 0
+                var cropEt = et0 * zone.CropCoefficient;
+                var irrigationDeficit = Math.Max(0, currentDeficit + cropEt - effectiveRain - zone.TargetDeficitMm);
+                var minutes = irrigationDeficit <= 0
                     ? 0
-                    : projectedDeficit / Math.Max(0.1, zone.PrecipitationRateMmH) * 60;
+                    : irrigationDeficit / Math.Max(0.1, zone.PrecipitationRateMmH) * 60;
                 minutes = minutes <= 0 ? 0 : Math.Clamp(minutes, zone.MinMinutes, Math.Min(zone.MaxMinutes, config.Safety.MaxZoneMinutes));
 
                 zones.Add(new DecisionZone
@@ -155,7 +156,12 @@ public sealed class DecisionPlanService
                     Id = zoneId,
                     Name = zone.Name,
                     Icon = minutes <= 0 ? "OK" : "DROP",
-                    Text = minutes <= 0 ? "ok" : $"{Math.Round(minutes)} min"
+                    Text = minutes <= 0 ? "ok" : $"{Math.Round(minutes)} min",
+                    CurrentDeficitMm = Math.Round(currentDeficit, 1),
+                    CropEtMm = Math.Round(cropEt, 1),
+                    EffectiveRainMm = Math.Round(effectiveRain, 1),
+                    IrrigationDeficitMm = Math.Round(irrigationDeficit, 1),
+                    Minutes = (int)Math.Round(minutes)
                 });
             }
         }

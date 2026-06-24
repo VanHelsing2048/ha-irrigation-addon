@@ -172,6 +172,9 @@ public sealed class UiRenderer
     .step-row, .time-row { display: grid; grid-template-columns: minmax(180px, 1fr) 130px auto; gap: 8px; align-items: end; }
     .cycle-chip, .zone-chip, .event-chip { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .zone-chip { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
+    .zone-explain { display: grid; gap: 7px; min-width: 220px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
+    .zone-explain .mini { gap: 6px; }
+    .zone-explain .mini span { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; }
     .event-chip { color: var(--muted); }
     .toast {
       position: fixed; right: 18px; bottom: 18px; max-width: 420px; padding: 12px 14px;
@@ -400,8 +403,19 @@ function cyclePlan(cycle) {
       <div class="cycle-chip">${iconBadge(cycle.icon)}<strong>${esc(cycle.time)} ${esc(cycle.name)}</strong></div>
       <span class="pill ${esc(cycle.decision_class)}">${esc(cycle.decision)}</span>
     </div>
-    ${zones.length ? `<div class="mini">${zones.map(zone => `<span class="zone-chip">${iconBadge(zone.icon)}<strong>${esc(zone.name)}</strong><span class="muted">${esc(zone.text)}</span></span>`).join('')}</div>` : ''}
+    ${zones.length ? `<div class="mini">${zones.map(zoneDecisionCard).join('')}</div>` : ''}
   </div>`;
+}
+function zoneDecisionCard(zone) {
+  return `<span class="zone-explain">
+    <span class="zone-chip">${iconBadge(zone.icon)}<strong>${esc(zone.name)}</strong><span class="muted">${esc(zone.text)}</span></span>
+    <span class="mini muted">
+      <span title="Deficit idrico attuale">Def ${num(zone.current_deficit_mm).toFixed(1)} mm</span>
+      <span title="ET della zona stimata">ET ${num(zone.crop_et_mm).toFixed(1)} mm</span>
+      <span title="Pioggia utile">Rain ${num(zone.effective_rain_mm).toFixed(1)} mm</span>
+      <span title="Millimetri da reintegrare">Need ${num(zone.irrigation_deficit_mm).toFixed(1)} mm</span>
+    </span>
+  </span>`;
 }
 function eventPlan(event) {
   return `<div class="event-chip">${iconBadge(event.icon)}<strong>${esc(event.time)}</strong><span>${esc(event.text)}</span></div>`;
@@ -654,7 +668,7 @@ function cycleDecisionTile(label, item) {
   const zones = item.zones || [];
   return `<div class="cycle-preview-day">
     <div class="forecast-line">${iconBadge(item.icon)}<strong>${esc(label)} ${esc(item.time || '')}</strong><span class="pill ${esc(item.decision_class)}">${esc(item.decision || '-')}</span></div>
-    ${zones.length ? `<div class="mini">${zones.map(zone => `<span class="zone-chip">${iconBadge(zone.icon)}<strong>${esc(zone.name)}</strong><span class="muted">${esc(zone.text)}</span></span>`).join('')}</div>` : '<span class="muted">Nessuna zona da irrigare</span>'}
+    ${zones.length ? `<div class="mini">${zones.map(zoneDecisionCard).join('')}</div>` : '<span class="muted">Nessuna zona da irrigare</span>'}
   </div>`;
 }
 function cycleStepsEditor(id, steps) {

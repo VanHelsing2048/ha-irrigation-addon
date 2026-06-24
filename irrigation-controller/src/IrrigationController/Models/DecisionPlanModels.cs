@@ -41,6 +41,11 @@ public sealed class DecisionZone
     public string Name { get; set; } = "";
     public string Icon { get; set; } = "DROP";
     public string Text { get; set; } = "";
+    public double CurrentDeficitMm { get; set; }
+    public double CropEtMm { get; set; }
+    public double EffectiveRainMm { get; set; }
+    public double IrrigationDeficitMm { get; set; }
+    public int Minutes { get; set; }
 }
 
 public sealed class DecisionEvent
