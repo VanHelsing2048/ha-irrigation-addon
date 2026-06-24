@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.2.3
+# ha-irrigation-addon 0.2.4
 
-Release correttiva per dry-run automatico, orari ciclo e meteo dell'add-on Home Assistant `Irrigation Controller`.
+Release correttiva per la dashboard meteo dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,12 +14,10 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Corretto il dry-run dei cicli automatici: ora calcola i minuti zona proiettando ET/pioggia del giorno.
-- Il dry-run non modifica lo stato reale e non applica due volte la ET se il bilancio e gia aggiornato.
-- Gli orari di partenza dei cicli usano input orario guidato con aggiungi/rimuovi, non piu un campo testuale con virgole.
-- Dashboard e piano meteo usano icone SVG per sole, nuvole, pioggia, temporale e altri stati.
-- Migliorati i fallback meteo: meno `N/D`, piu etichette leggibili quando Home Assistant non fornisce forecast.
-- Test locali estesi a 27 controlli anti-regressione.
+- La Dashboard ora combina forecast configurato e forecast `daily` per popolare meglio oggi/domani.
+- Le schede oggi/domani indicano se i dati arrivano davvero da Home Assistant oppure se e stato usato un fallback.
+- Domani non resta piu una scheda muta quando il forecast configurato restituisce solo dati orari di oggi.
+- Test locali estesi a 28 controlli anti-regressione.
 
 ## Pacchetto
 

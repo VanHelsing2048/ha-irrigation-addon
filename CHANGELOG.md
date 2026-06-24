@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.4] - 2026-06-25
+
+### Fixed
+
+- Improve dashboard weather forecast cards by combining configured forecast data with `daily` forecasts when available.
+- Show whether each today/tomorrow card is using real Home Assistant forecasts or a fallback.
+- Add regression coverage for daily forecast reads and forecast UI markers.
+
 ## [0.2.3] - 2026-06-24
 
 ### Added

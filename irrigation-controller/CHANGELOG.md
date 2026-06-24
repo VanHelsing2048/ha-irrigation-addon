@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.4] - 2026-06-25
+
+### Corretto
+
+- Migliorate le schede meteo della Dashboard combinando forecast configurato e forecast `daily` quando disponibile.
+- Ogni scheda oggi/domani indica se sta usando previsioni reali di Home Assistant oppure un fallback.
+- Aggiunta copertura anti-regressione per lettura forecast daily e marker UI delle previsioni.
+
 ## [0.2.3] - 2026-06-24
 
 ### Aggiunto
