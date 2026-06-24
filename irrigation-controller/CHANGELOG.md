@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.2] - 2026-06-24
+
+### Aggiunto
+
+- Errori di salvataggio inline nelle pagine operative al posto dei popup bloccanti.
+- Anteprima decisionale oggi/domani dentro ogni scheda ciclo.
+- Riepilogo meteo operativo con entita HA, soglie, ultima ET0 e pioggia utile.
+- Vista impianto con valvola master, zone collegate e stato delle sicurezze principali.
+- Test condivisi sulla programmazione automatica settimanale e ogni N giorni.
+
+### Corretto
+
+- Il piano decisionale usa la stessa logica calendario di scheduler e overview, inclusa la cadenza ogni N giorni da una data iniziale.
+
 ## [0.2.1] - 2026-06-24
 
 ### Changed

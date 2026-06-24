@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.2] - 2026-06-24
+
+### Added
+
+- Add inline validation feedback in the operative UI pages, replacing blocking validation popups.
+- Add today/tomorrow decision preview inside each cycle card.
+- Add a richer weather settings overview with HA entity, thresholds, latest ET0 and useful rain.
+- Add a plant overview showing master valve, zone branches and main safety settings.
+- Add shared schedule calculation tests for weekly and every-N-days automatic schedules.
+
+### Fixed
+
+- Make the decision plan use the same schedule calculation as the scheduler and overview, including start date plus every-N-days schedules.
+
 ## [0.2.1] - 2026-06-24
 
 ### Changed
