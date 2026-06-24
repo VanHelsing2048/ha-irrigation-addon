@@ -91,7 +91,7 @@ public sealed class DecisionPlanService
                 continue;
             }
 
-            if (cycle.Schedule.Days.Count > 0 && !cycle.Schedule.Days.Contains(date.DayOfWeek))
+            if (!ScheduleCalculator.IsScheduledDate(cycle.Schedule, date))
             {
                 continue;
             }

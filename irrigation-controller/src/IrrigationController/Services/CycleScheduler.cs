@@ -55,7 +55,7 @@ public sealed class CycleScheduler : BackgroundService
                 continue;
             }
 
-            if (!IsScheduledDate(cycle.Schedule, DateOnly.FromDateTime(now.Date)))
+            if (!ScheduleCalculator.IsScheduledDate(cycle.Schedule, DateOnly.FromDateTime(now.Date)))
             {
                 continue;
             }
@@ -89,19 +89,4 @@ public sealed class CycleScheduler : BackgroundService
         }
     }
 
-    private static bool IsScheduledDate(ScheduleConfig schedule, DateOnly date)
-    {
-        if (!string.IsNullOrWhiteSpace(schedule.StartDate) || schedule.EveryDays is not null)
-        {
-            if (!DateOnly.TryParse(schedule.StartDate, out var startDate) || schedule.EveryDays is null or < 1)
-            {
-                return false;
-            }
-
-            var days = date.DayNumber - startDate.DayNumber;
-            return days >= 0 && days % schedule.EveryDays.Value == 0;
-        }
-
-        return schedule.Days.Count == 0 || schedule.Days.Contains(date.DayOfWeek);
-    }
 }

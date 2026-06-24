@@ -13,6 +13,8 @@ var tests = new (string Name, Action Test)[]
     ("config validator accepts interval schedule", ConfigValidatorAcceptsIntervalSchedule),
     ("config validator catches invalid interval schedule", ConfigValidatorCatchesInvalidIntervalSchedule),
     ("config validator accepts master valve", ConfigValidatorAcceptsMasterValve),
+    ("schedule calculator handles interval dates", ScheduleCalculatorHandlesIntervalDates),
+    ("schedule calculator finds next run", ScheduleCalculatorFindsNextRun),
     ("ui uses escaped action handlers", UiUsesEscapedActionHandlers),
     ("ui sends save audit headers", UiSendsSaveAuditHeaders),
     ("ui contains cycle event register", AssertUiContainsCycleRegister),
@@ -244,6 +246,64 @@ static void ConfigValidatorAcceptsMasterValve()
     if (result.Warnings.Any(warning => warning.Path == "hydraulic.master_valve_entity"))
     {
         throw new InvalidOperationException("Expected master valve entity to be accepted without warning.");
+    }
+}
+
+static void ScheduleCalculatorHandlesIntervalDates()
+{
+    var schedule = new ScheduleConfig
+    {
+        StartDate = "2026-06-24",
+        EveryDays = 3,
+        Times = ["06:00"]
+    };
+
+    if (!ScheduleCalculator.IsScheduledDate(schedule, new DateOnly(2026, 6, 24)))
+    {
+        throw new InvalidOperationException("Expected start date to be scheduled.");
+    }
+
+    if (!ScheduleCalculator.IsScheduledDate(schedule, new DateOnly(2026, 6, 27)))
+    {
+        throw new InvalidOperationException("Expected third day after start date to be scheduled.");
+    }
+
+    if (ScheduleCalculator.IsScheduledDate(schedule, new DateOnly(2026, 6, 25)))
+    {
+        throw new InvalidOperationException("Expected date outside interval to be skipped.");
+    }
+
+    if (ScheduleCalculator.IsScheduledDate(schedule, new DateOnly(2026, 6, 23)))
+    {
+        throw new InvalidOperationException("Expected date before start date to be skipped.");
+    }
+}
+
+static void ScheduleCalculatorFindsNextRun()
+{
+    var cycle = new CycleConfig
+    {
+        Enabled = true,
+        Mode = CycleMode.Automatic,
+        Schedule = new ScheduleConfig
+        {
+            StartDate = "2026-06-24",
+            EveryDays = 2,
+            Times = ["06:00", "21:30"]
+        }
+    };
+
+    var next = ScheduleCalculator.CalculateNextRun(cycle, new DateTimeOffset(2026, 6, 24, 7, 0, 0, TimeSpan.FromHours(2)));
+
+    if (next is null || next.Value.Date != new DateTime(2026, 6, 24) || next.Value.Hour != 21 || next.Value.Minute != 30)
+    {
+        throw new InvalidOperationException($"Expected next run on 2026-06-24 21:30, got {next}.");
+    }
+
+    next = ScheduleCalculator.CalculateNextRun(cycle, new DateTimeOffset(2026, 6, 24, 22, 0, 0, TimeSpan.FromHours(2)));
+    if (next is null || next.Value.Date != new DateTime(2026, 6, 26) || next.Value.Hour != 6)
+    {
+        throw new InvalidOperationException($"Expected next interval run on 2026-06-26 06:00, got {next}.");
     }
 }
 
