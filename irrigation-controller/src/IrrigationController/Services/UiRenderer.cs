@@ -536,6 +536,7 @@ function cycleForm(id, c) {
     <div class="actions" style="margin-top:12px; justify-content:flex-start">
       <button onclick="${esc(action('saveCycle', id))}">Salva ciclo</button>
       <button class="blue" onclick="${esc(action('startCycle', id))}">Avvia</button>
+      <button class="secondary" onclick="${esc(action('dryRunCycle', id))}">Simula</button>
     </div>
     ${cycleEventRegister(id)}
   </div>`;
@@ -704,6 +705,7 @@ function collectCycleSteps(id) {
   }).filter(Boolean);
 }
 async function startCycle(id) { try { toast((await api('/api/cycles/' + id + '/start', { method: 'POST' })).message); } catch(e) { toast(e.message || 'Errore avvio ciclo', true); } }
+async function dryRunCycle(id) { try { toast((await api('/api/cycles/' + id + '/dry-run', { method: 'POST' })).message); await reloadAll(); } catch(e) { toast(e.message || 'Errore simulazione ciclo', true); } }
 async function startZone(id) { try { toast((await api('/api/zones/' + id + '/start?minutes=5', { method: 'POST' })).message); } catch(e) { toast(e.message || 'Errore avvio zona', true); } }
 async function stopZone(id) { try { await api('/api/zones/' + id + '/stop', { method: 'POST' }); toast('Zona fermata'); } catch(e) { toast(e.message || 'Errore stop zona', true); } }
 async function globalStop() { try { await api('/api/stop', { method: 'POST' }); toast('Stop richiesto'); } catch(e) { toast(e.message || 'Errore stop', true); } }

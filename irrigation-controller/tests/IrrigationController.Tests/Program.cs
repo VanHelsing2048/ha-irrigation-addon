@@ -19,7 +19,8 @@ var tests = new (string Name, Action Test)[]
     ("ui contains weather entity picker", AssertUiContainsWeatherEntityPicker),
     ("ui contains dashboard weather summary", AssertUiContainsDashboardWeatherSummary),
     ("ui contains cycle step editor", AssertUiContainsCycleStepEditor),
-    ("ui contains master valve setting", AssertUiContainsMasterValveSetting)
+    ("ui contains master valve setting", AssertUiContainsMasterValveSetting),
+    ("ui contains dry run action", AssertUiContainsDryRunAction)
 };
 
 var failures = 0;
@@ -323,6 +324,17 @@ static void AssertUiContainsMasterValveSetting()
         || !html.Contains("master_valve_entity", StringComparison.Ordinal))
     {
         throw new InvalidOperationException("Expected master valve setting in UI.");
+    }
+}
+
+static void AssertUiContainsDryRunAction()
+{
+    var html = new UiRenderer().Render();
+    if (!html.Contains("Simula", StringComparison.Ordinal)
+        || !html.Contains("dryRunCycle", StringComparison.Ordinal)
+        || !html.Contains("/dry-run", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException("Expected dry-run action in UI.");
     }
 }
 

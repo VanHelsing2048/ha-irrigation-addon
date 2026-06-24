@@ -83,6 +83,97 @@ public sealed class CycleRunner
         return new CommandResult(true, $"Zone {zoneId} started.");
     }
 
+    public async Task<CommandResult> DryRunCycleAsync(string cycleId, CancellationToken cancellationToken)
+    {
+        var config = await _configStore.GetAsync(cancellationToken);
+        var validation = _validator.Validate(config);
+        if (!validation.IsValid)
+        {
+            return new CommandResult(false, $"Invalid configuration: {validation.Errors[0].Path} - {validation.Errors[0].Message}");
+        }
+
+        if (!config.Cycles.TryGetValue(cycleId, out var cycle))
+        {
+            return new CommandResult(false, $"Unknown cycle {cycleId}.");
+        }
+
+        var usesWeather = cycle.Mode == CycleMode.Automatic || !config.Safety.ManualRunsIgnoreWeather;
+        var adjustment = usesWeather
+            ? await _weather.CalculateAsync(config, cancellationToken)
+            : new WeatherAdjustment(0, 0, 0, 0, false);
+        if (usesWeather)
+        {
+            await _diagnostics.RecordWeatherAsync(adjustment, cancellationToken);
+        }
+
+        await RecordCycleEventAsync(
+            "dry_run_started",
+            "Simulazione ciclo avviata: nessuna valvola verra comandata.",
+            cycleId,
+            null,
+            cancellationToken);
+
+        if (adjustment.ShouldSkip)
+        {
+            await RecordCycleEventAsync(
+                "dry_run_cycle_skipped",
+                $"La logica salterebbe il ciclo per meteo: pioggia={adjustment.ExpectedRainMm:0.0}mm, probabilita={adjustment.MaxRainProbability}%.",
+                cycleId,
+                null,
+                cancellationToken);
+            return new CommandResult(true, $"Dry-run {cycleId} completed: cycle would be skipped.");
+        }
+
+        foreach (var step in cycle.Steps)
+        {
+            foreach (var zoneId in step.Zones)
+            {
+                if (!config.Zones.TryGetValue(zoneId, out var zone))
+                {
+                    continue;
+                }
+
+                var duration = await ResolveDurationAsync(config, cycle, step, zoneId, zone, cancellationToken);
+                if (duration <= TimeSpan.Zero)
+                {
+                    await RecordCycleEventAsync(
+                        "dry_run_zone_skipped",
+                        $"La logica salterebbe {zone.Name}: durata calcolata zero.",
+                        cycleId,
+                        zoneId,
+                        cancellationToken);
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(config.Hydraulic.MasterValveEntity))
+                {
+                    await RecordCycleEventAsync(
+                        "dry_run_master_valve",
+                        $"La valvola master verrebbe aperta prima di {zone.Name}.",
+                        cycleId,
+                        null,
+                        cancellationToken);
+                }
+
+                await RecordCycleEventAsync(
+                    "dry_run_zone_planned",
+                    $"La logica irrigerebbe {zone.Name} per {FormatDuration(duration)}.",
+                    cycleId,
+                    zoneId,
+                    cancellationToken);
+            }
+        }
+
+        await RecordCycleEventAsync(
+            "dry_run_completed",
+            "Simulazione ciclo completata.",
+            cycleId,
+            null,
+            cancellationToken);
+
+        return new CommandResult(true, $"Dry-run {cycleId} completed. Check the cycle register.");
+    }
+
     public async Task StopAsync(string reason)
     {
         _logger.LogInformation("Stopping irrigation: {Reason}", reason);

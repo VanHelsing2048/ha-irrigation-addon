@@ -139,6 +139,15 @@ app.MapPost("/api/cycles/{cycleId}/start", async (
     return result.Success ? Results.Ok(result) : Results.BadRequest(result);
 });
 
+app.MapPost("/api/cycles/{cycleId}/dry-run", async (
+    string cycleId,
+    CycleRunner runner,
+    CancellationToken cancellationToken) =>
+{
+    var result = await runner.DryRunCycleAsync(cycleId, cancellationToken);
+    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+});
+
 app.MapPost("/api/cycles/{cycleId}/stop", async (string cycleId, CycleRunner runner) =>
 {
     await runner.StopAsync($"Stop requested for {cycleId}");
