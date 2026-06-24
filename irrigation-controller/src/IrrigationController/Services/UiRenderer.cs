@@ -24,19 +24,21 @@ public sealed class UiRenderer
     :root {
       color-scheme: light dark;
       font-family: "Segoe UI", system-ui, sans-serif;
-      background: #f5f6f0;
+      background: #eef3ee;
       color: #20231f;
-      --bg: #f5f6f0;
+      --bg: #eef3ee;
       --panel: #ffffff;
-      --panel-2: #f0f3ea;
-      --border: #d4dccb;
+      --panel-2: #f6f8f3;
+      --panel-3: #e6eee4;
+      --border: #cfdbcf;
       --text: #20231f;
       --muted: #606b5a;
-      --accent: #25734c;
-      --accent-2: #0d5f7a;
+      --accent: #216e48;
+      --accent-2: #0c6478;
       --danger: #b33b32;
       --warn: #a86d00;
       --ok: #247747;
+      --shadow: 0 10px 30px rgba(34, 49, 34, .08);
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -45,7 +47,8 @@ public sealed class UiRenderer
         --bg: #171a16;
         --panel: #20241e;
         --panel-2: #272d24;
-        --border: #384030;
+        --panel-3: #30382d;
+        --border: #3b4638;
         --text: #eef2e9;
         --muted: #aeb8a7;
         --accent: #4fa873;
@@ -53,14 +56,23 @@ public sealed class UiRenderer
         --danger: #cf6259;
         --warn: #d49a3a;
         --ok: #58b77b;
+        --shadow: 0 12px 34px rgba(0, 0, 0, .28);
       }
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); }
     button, input, select, textarea { font: inherit; }
     button {
-      border: 0; border-radius: 6px; min-height: 36px; padding: 8px 12px;
+      border: 0; border-radius: 7px; min-height: 36px; padding: 8px 12px;
       background: var(--accent); color: white; cursor: pointer; white-space: nowrap;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease, background .12s ease;
+    }
+    button:hover { filter: brightness(1.05); }
+    button:active { transform: translateY(1px); }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+      outline-offset: 2px;
     }
     button.secondary { background: #5c6856; }
     button.blue { background: var(--accent-2); }
@@ -68,7 +80,7 @@ public sealed class UiRenderer
     button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
     button:disabled { opacity: .5; cursor: default; }
     input, select, textarea {
-      width: 100%; min-height: 36px; padding: 8px 10px; border-radius: 6px;
+      width: 100%; min-height: 36px; padding: 8px 10px; border-radius: 7px;
       border: 1px solid var(--border); background: var(--panel); color: var(--text);
     }
     textarea { resize: vertical; min-height: 90px; font-family: Consolas, monospace; }
@@ -78,22 +90,25 @@ public sealed class UiRenderer
     h1 { font-size: 26px; }
     h2 { font-size: 18px; }
     h3 { font-size: 15px; }
-    .app { min-height: 100vh; display: grid; grid-template-columns: 232px minmax(0, 1fr); }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 252px minmax(0, 1fr); }
     .sidebar { padding: 18px; border-right: 1px solid var(--border); background: var(--panel); position: sticky; top: 0; height: 100vh; }
-    .brand { display: grid; gap: 4px; margin-bottom: 22px; }
+    .brand { display: grid; gap: 6px; margin-bottom: 22px; padding: 12px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); }
     .brand small { color: var(--muted); }
     .nav { display: grid; gap: 6px; }
-    .nav button { justify-content: flex-start; text-align: left; background: transparent; color: var(--text); border: 1px solid transparent; }
-    .nav button.active { background: var(--panel-2); border-color: var(--border); }
+    .nav button { justify-content: flex-start; text-align: left; background: transparent; color: var(--text); border: 1px solid transparent; min-height: 40px; }
+    .nav button.active { background: var(--panel-2); border-color: var(--border); box-shadow: inset 3px 0 0 var(--accent); }
+    .nav-code { display: inline-grid; place-items: center; width: 32px; height: 26px; border-radius: 7px; background: var(--panel-3); font-size: 11px; font-weight: 800; color: var(--accent); }
     .main { min-width: 0; padding: 22px; }
-    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .grid { display: grid; gap: 12px; }
     .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px; min-width: 0; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px; min-width: 0; box-shadow: var(--shadow); }
+    .metric { display: grid; gap: 4px; }
     .metric strong { display: block; font-size: 20px; margin-top: 3px; overflow-wrap: anywhere; }
+    .metric span:first-child { text-transform: uppercase; letter-spacing: .02em; font-size: 11px; }
     .muted { color: var(--muted); }
     .section { display: grid; gap: 12px; margin-top: 18px; }
     .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -109,6 +124,7 @@ public sealed class UiRenderer
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
     th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+    tbody tr:hover { background: var(--panel-2); }
     .pill { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 999px; font-size: 12px; background: var(--panel-2); }
     .pill.on, .pill.ok { color: var(--ok); }
     .pill.warn { color: var(--warn); }
@@ -146,6 +162,8 @@ public sealed class UiRenderer
       display: none; z-index: 5;
     }
     .toast.show { display: block; }
+    .empty { display: grid; gap: 6px; padding: 18px; border: 1px dashed var(--border); border-radius: 8px; background: var(--panel-2); color: var(--muted); }
+    .empty strong { color: var(--text); }
     .hidden { display: none !important; }
     @media (max-width: 900px) {
       .app { grid-template-columns: 1fr; }
@@ -167,6 +185,7 @@ public sealed class UiRenderer
       <div class="brand">
         <h1>Irrigazione</h1>
         <small>Controller Home Assistant - v{{APP_VERSION}}</small>
+        <span class="pill ok">Ingress UI</span>
       </div>
       <nav class="nav" id="nav"></nav>
     </aside>
@@ -302,8 +321,11 @@ function render() {
 }
 function renderNav() {
   document.getElementById('nav').innerHTML = pages.map(([id, label]) =>
-    `<button class="${id === currentPage ? 'active' : ''}" onclick="setPage('${id}')">${esc(label)}</button>`
+    `<button class="${id === currentPage ? 'active' : ''}" onclick="setPage('${id}')"><span class="nav-code">${esc(navCode(id))}</span>${esc(label)}</button>`
   ).join('');
+}
+function navCode(id) {
+  return ({ dashboard: 'DB', zones: 'ZN', cycles: 'CY', weather: 'MT', plant: 'IM', diagnostics: 'LG', raw: 'JS' })[id] || 'UI';
 }
 function normalizeId(raw) {
   return String(raw ?? '').trim().toLowerCase()
@@ -343,7 +365,7 @@ function dayPlan(day) {
       </div>
     </div>
     <div class="list">
-      ${cycles.length ? cycles.map(cyclePlan).join('') : '<div class="muted">Nessun ciclo automatico</div>'}
+      ${cycles.length ? cycles.map(cyclePlan).join('') : emptyState('Nessun ciclo automatico', 'Aggiungi un ciclo automatico per vedere qui le prossime valutazioni meteo.')}
     </div>
     ${events.length ? `<div class="list">${events.map(eventPlan).join('')}</div>` : ''}
   </div>`;
@@ -399,7 +421,7 @@ function renderDashboard() {
         <div class="card">
           <h3>Cicli</h3>
           <table><thead><tr><th>Nome</th><th>Modo</th><th>Prossima</th><th></th></tr></thead><tbody>
-            ${(overview.cycles || []).map(c => `<tr><td><strong>${esc(c.name)}</strong><div class="muted">${esc(c.id)}</div></td><td>${esc(c.mode)}</td><td>${esc(c.next_run_text)}</td><td><button onclick="startCycle('${esc(c.id)}')">Start</button></td></tr>`).join('')}
+            ${(overview.cycles || []).length ? (overview.cycles || []).map(c => `<tr><td><strong>${esc(c.name)}</strong><div class="muted">${esc(c.id)}</div></td><td>${esc(c.mode)}</td><td>${esc(c.next_run_text)}</td><td><button onclick="startCycle('${esc(c.id)}')">Start</button></td></tr>`).join('') : `<tr><td colspan="4">${emptyState('Nessun ciclo configurato', 'Crea un ciclo dalla pagina Cicli per iniziare a programmare irrigazioni.')}</td></tr>`}
           </tbody></table>
         </div>
         ${renderWeatherReasonCard()}
@@ -407,7 +429,7 @@ function renderDashboard() {
       <div class="card">
         <h3>Zone</h3>
         <table><thead><tr><th>Zona</th><th>Stato</th><th>Deficit</th><th>Calibrazione</th><th></th></tr></thead><tbody>
-          ${(overview.zones || []).map(z => `<tr><td><strong>${esc(z.name)}</strong><div class="muted">${esc(z.entity)}</div></td><td><span class="pill ${esc(z.state_class)}">${esc(z.state)}</span></td><td>${num(z.water_balance_mm).toFixed(1)} mm</td><td>${esc(z.calibration_text)}</td><td><button onclick="startZone('${esc(z.id)}')">5 min</button></td></tr>`).join('')}
+          ${(overview.zones || []).length ? (overview.zones || []).map(z => `<tr><td><strong>${esc(z.name)}</strong><div class="muted">${esc(z.entity)}</div></td><td><span class="pill ${esc(z.state_class)}">${esc(z.state)}</span></td><td>${num(z.water_balance_mm).toFixed(1)} mm</td><td>${esc(z.calibration_text)}</td><td><button onclick="startZone('${esc(z.id)}')">5 min</button></td></tr>`).join('') : `<tr><td colspan="5">${emptyState('Nessuna zona configurata', 'Aggiungi una zona e associa una valvola Home Assistant.')}</td></tr>`}
         </tbody></table>
       </div>
     </section>`;
@@ -473,7 +495,7 @@ function renderZones() {
   return `<section class="section">
     <div class="toolbar"><h2>Zone</h2><button onclick="addZone()">Nuova zona</button></div>
     ${entityOptionsList()}
-    <div class="list">${zones.map(([id, z]) => zoneForm(id, z)).join('')}</div>
+    <div class="list">${zones.length ? zones.map(([id, z]) => zoneForm(id, z)).join('') : emptyState('Nessuna zona', 'Crea una zona per associare una valvola e impostare resa, limiti e calibrazione.')}</div>
   </section>`;
 }
 function zoneForm(id, z) {
@@ -508,7 +530,7 @@ function renderCycles() {
   const cycles = Object.entries({ ...draftCycles, ...(config.cycles || {}) });
   return `<section class="section">
     <div class="toolbar"><h2>Cicli</h2><button onclick="addCycle()">Nuovo ciclo</button></div>
-    <div class="list">${cycles.map(([id, c]) => cycleForm(id, c)).join('')}</div>
+    <div class="list">${cycles.length ? cycles.map(([id, c]) => cycleForm(id, c)).join('') : emptyState('Nessun ciclo', 'Crea un ciclo per organizzare gruppi di zone, orari e simulazioni dry-run.')}</div>
   </section>`;
 }
 function cycleForm(id, c) {
@@ -564,7 +586,7 @@ function stepDurationText(step) {
 }
 function cycleEventRegister(id) {
   const events = (overview.recent_events || []).filter(event => event.cycle_id === id).slice(0, 8);
-  if (!events.length) return '<div class="muted" style="margin-top:12px">Nessun evento registrato per questo ciclo</div>';
+  if (!events.length) return `<div style="margin-top:12px">${emptyState('Nessun evento per questo ciclo', 'Avvia o simula il ciclo per popolare il registro dedicato.')}</div>`;
   return `<div style="margin-top:12px">
     <h3>Registro ciclo</h3>
     <table><thead><tr><th>Quando</th><th>Tipo</th><th>Zona</th><th>Messaggio</th></tr></thead><tbody>
@@ -637,6 +659,7 @@ function renderRaw() {
   </div></section>`;
 }
 function metric(label, value) { return `<div class="card metric"><span class="muted">${esc(label)}</span><strong>${esc(value)}</strong></div>`; }
+function emptyState(title, text) { return `<div class="empty"><strong>${esc(title)}</strong><span>${esc(text)}</span></div>`; }
 function validationCard(validation) {
   const errors = validation.errors || [];
   const warnings = validation.warnings || [];

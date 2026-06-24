@@ -20,7 +20,8 @@ var tests = new (string Name, Action Test)[]
     ("ui contains dashboard weather summary", AssertUiContainsDashboardWeatherSummary),
     ("ui contains cycle step editor", AssertUiContainsCycleStepEditor),
     ("ui contains master valve setting", AssertUiContainsMasterValveSetting),
-    ("ui contains dry run action", AssertUiContainsDryRunAction)
+    ("ui contains dry run action", AssertUiContainsDryRunAction),
+    ("ui contains polished shell", AssertUiContainsPolishedShell)
 };
 
 var failures = 0;
@@ -335,6 +336,28 @@ static void AssertUiContainsDryRunAction()
         || !html.Contains("/dry-run", StringComparison.Ordinal))
     {
         throw new InvalidOperationException("Expected dry-run action in UI.");
+    }
+}
+
+static void AssertUiContainsPolishedShell()
+{
+    var html = new UiRenderer().Render();
+    var expected = new[]
+    {
+        "nav-code",
+        "Ingress UI",
+        "emptyState",
+        "Nessuna zona configurata",
+        "Nessun ciclo configurato",
+        "box-shadow: var(--shadow)"
+    };
+
+    foreach (var value in expected)
+    {
+        if (!html.Contains(value, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected polished UI marker '{value}'.");
+        }
     }
 }
 
