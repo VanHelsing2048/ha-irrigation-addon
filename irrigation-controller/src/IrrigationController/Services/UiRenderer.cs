@@ -147,10 +147,11 @@ public sealed class UiRenderer
     .weather-icon { width: 64px; height: 64px; }
     .icon-badge {
       display: inline-grid; place-items: center; border-radius: 8px; background: var(--panel-2);
-      border: 1px solid var(--border); color: var(--text); font-weight: 700; letter-spacing: 0;
-      min-width: 28px; min-height: 28px; padding: 4px 6px; font-size: 12px; line-height: 1;
+      border: 1px solid var(--border); color: var(--accent); min-width: 32px; min-height: 32px; padding: 4px; line-height: 1;
     }
-    .icon-badge.big { width: 64px; height: 64px; font-size: 15px; }
+    .icon-badge svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-badge.big { width: 64px; height: 64px; }
+    .icon-badge.big svg { width: 42px; height: 42px; }
     .decision { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 5px; }
     .mini { display: flex; gap: 8px; flex-wrap: wrap; }
     .weather-summary { display: grid; grid-template-columns: minmax(220px, 0.8fr) repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
@@ -404,23 +405,42 @@ function eventPlan(event) {
 }
 function iconBadge(code, big = false) {
   const meta = {
-    SUN: ['SOL', 'Soleggiato'],
-    PARTLY: ['VAR', 'Variabile o parzialmente nuvoloso'],
-    CLOUD: ['CLD', 'Nuvoloso'],
-    RAIN: ['PIO', 'Pioggia prevista'],
-    STORM: ['TMP', 'Temporale'],
-    FOG: ['NEB', 'Nebbia'],
-    SNOW: ['NEV', 'Neve'],
-    DROP: ['IRR', 'Irrigazione prevista'],
-    SKIP: ['SKP', 'Ciclo saltato'],
-    OK: ['OK', 'Nessun intervento necessario'],
-    BAL: ['BIL', 'Bilancio idrico'],
-    PCT: ['%', 'Probabilita di pioggia'],
-    ET: ['ET', 'Evapotraspirazione stimata'],
-    INFO: ['INF', 'Informazione'],
-    NA: ['N/D', 'Dato non disponibile']
-  }[code] || [code || 'N/D', code || 'Dato non disponibile'];
-  return `<span class="icon-badge ${big ? 'big' : ''}" title="${esc(meta[1])}" aria-label="${esc(meta[1])}">${esc(meta[0])}</span>`;
+    SUN: ['sun', 'Soleggiato'],
+    PARTLY: ['partly', 'Variabile o parzialmente nuvoloso'],
+    CLOUD: ['cloud', 'Nuvoloso'],
+    RAIN: ['rain', 'Pioggia prevista'],
+    STORM: ['storm', 'Temporale'],
+    FOG: ['fog', 'Nebbia'],
+    SNOW: ['snow', 'Neve'],
+    DROP: ['drop', 'Irrigazione prevista'],
+    SKIP: ['skip', 'Ciclo saltato'],
+    OK: ['ok', 'Nessun intervento necessario'],
+    BAL: ['balance', 'Bilancio idrico'],
+    PCT: ['percent', 'Probabilita di pioggia'],
+    ET: ['et', 'Evapotraspirazione stimata'],
+    INFO: ['info', 'Informazione'],
+    NA: ['info', 'Dato non disponibile']
+  }[code] || ['info', code || 'Dato non disponibile'];
+  return `<span class="icon-badge ${big ? 'big' : ''}" title="${esc(meta[1])}" aria-label="${esc(meta[1])}">${iconSvg(meta[0])}</span>`;
+}
+function iconSvg(name) {
+  const icons = {
+    sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>',
+    partly: '<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"></circle><path d="M8 1v2M8 13v2M1 8h2M13 8h2M4 4l1.2 1.2M10.8 10.8 12 12"></path><path d="M9 18h9a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 2"></path></svg>',
+    cloud: '<svg viewBox="0 0 24 24"><path d="M5 18h13a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 2A3.5 3.5 0 0 0 5 18Z"></path></svg>',
+    rain: '<svg viewBox="0 0 24 24"><path d="M5 15h13a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 2A3.5 3.5 0 0 0 5 15Z"></path><path d="M8 19v2M12 18v2M16 19v2"></path></svg>',
+    storm: '<svg viewBox="0 0 24 24"><path d="M5 14h13a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 2A3.5 3.5 0 0 0 5 14Z"></path><path d="m13 14-3 5h4l-2 4"></path></svg>',
+    fog: '<svg viewBox="0 0 24 24"><path d="M5 13h13a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 2A3.5 3.5 0 0 0 5 13Z"></path><path d="M4 17h16M6 21h12"></path></svg>',
+    snow: '<svg viewBox="0 0 24 24"><path d="M12 3v18M5 7l14 10M19 7 5 17M7 3l5 4 5-4M7 21l5-4 5 4"></path></svg>',
+    drop: '<svg viewBox="0 0 24 24"><path d="M12 3s6 7 6 12a6 6 0 0 1-12 0c0-5 6-12 6-12Z"></path></svg>',
+    skip: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m8 8 8 8"></path></svg>',
+    ok: '<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg>',
+    balance: '<svg viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M7 7l-4 7h8L7 7ZM17 7l-4 7h8l-4-7Z"></path></svg>',
+    percent: '<svg viewBox="0 0 24 24"><path d="m19 5-14 14"></path><circle cx="7" cy="7" r="2"></circle><circle cx="17" cy="17" r="2"></circle></svg>',
+    et: '<svg viewBox="0 0 24 24"><path d="M12 3s5 6 5 10a5 5 0 0 1-10 0c0-4 5-10 5-10Z"></path><path d="M8 21h8"></path></svg>',
+    info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path></svg>'
+  };
+  return icons[name] || icons.info;
 }
 function renderDashboard() {
   const runner = overview.runner || {};

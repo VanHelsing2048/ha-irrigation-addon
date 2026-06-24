@@ -392,7 +392,9 @@ static void AssertUiContainsDashboardWeatherSummary()
         "Perche questa decisione",
         "renderWeatherSummaryPanel",
         "forecastCard",
-        "formatWeatherState"
+        "formatWeatherState",
+        "iconSvg",
+        "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"4\"></circle>"
     };
 
     foreach (var value in expected)
@@ -564,6 +566,11 @@ static void AssertUiContainsWeatherAndPlantOverview()
         {
             throw new InvalidOperationException($"Expected weather/plant overview marker '{value}'.");
         }
+    }
+
+    if (html.Contains("['N/D'", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException("Expected weather icon fallback to avoid N/D labels.");
     }
 }
 

@@ -24,12 +24,13 @@ public sealed class DecisionPlanService
         var config = await _configStore.GetAsync(cancellationToken);
         var state = await _stateStore.GetAsync(cancellationToken);
         var forecasts = await ReadForecastsAsync(config, cancellationToken);
+        var currentWeatherState = await _homeAssistant.GetStateAsync(config.Weather.Entity, cancellationToken) ?? "";
         var today = DateOnly.FromDateTime(DateTimeOffset.Now.DateTime);
 
         return new DecisionPlan
         {
-            Today = BuildDay("today", "Oggi", today, config, state, forecasts),
-            Tomorrow = BuildDay("tomorrow", "Domani", today.AddDays(1), config, state, forecasts)
+            Today = BuildDay("today", "Oggi", today, config, state, forecasts, currentWeatherState),
+            Tomorrow = BuildDay("tomorrow", "Domani", today.AddDays(1), config, state, forecasts, "")
         };
     }
 
@@ -39,14 +40,15 @@ public sealed class DecisionPlanService
         DateOnly date,
         IrrigationConfig config,
         IrrigationRuntimeState state,
-        List<ForecastItem> forecasts)
+        List<ForecastItem> forecasts,
+        string currentWeatherState)
     {
         var dayForecasts = forecasts.Where(item => DateOnly.FromDateTime(item.When.LocalDateTime) == date).ToList();
         var rain = dayForecasts.Sum(item => item.PrecipitationMm);
         var probability = dayForecasts.Count == 0 ? 0 : dayForecasts.Max(item => item.RainProbability);
         var et0 = EstimateEt0(dayForecasts);
         var effectiveRain = Math.Round(rain * config.Weather.RainEfficiency, 2);
-        var weather = DescribeWeather(dayForecasts, rain, probability);
+        var weather = DescribeWeather(dayForecasts, rain, probability, currentWeatherState);
         var shouldSkip = rain >= config.Weather.SkipIfExpectedRainMmAbove
             || probability >= config.Weather.SkipIfRainProbabilityAbove;
         var cycles = BuildCycles(date, config, state, et0, effectiveRain, shouldSkip);
@@ -210,11 +212,13 @@ public sealed class DecisionPlanService
         return items;
     }
 
-    private static (string Icon, string Label) DescribeWeather(List<ForecastItem> forecasts, double rain, int probability)
+    private static (string Icon, string Label) DescribeWeather(List<ForecastItem> forecasts, double rain, int probability, string currentWeatherState)
     {
         if (forecasts.Count == 0)
         {
-            return ("NA", "N/D");
+            return string.IsNullOrWhiteSpace(currentWeatherState)
+                ? ("INFO", "Previsione non disponibile")
+                : DescribeCondition(currentWeatherState);
         }
 
         var condition = forecasts
@@ -222,6 +226,11 @@ public sealed class DecisionPlanService
             .OrderByDescending(group => group.Count())
             .First().Key;
 
+        return DescribeCondition(condition, rain, probability);
+    }
+
+    private static (string Icon, string Label) DescribeCondition(string condition, double rain = 0, int probability = 0)
+    {
         if (condition.Contains("lightning", StringComparison.OrdinalIgnoreCase))
         {
             return ("STORM", "Temporale");
@@ -263,7 +272,7 @@ public sealed class DecisionPlanService
             return ("SNOW", "Neve");
         }
 
-        return ("NA", "Meteo");
+        return ("INFO", "Meteo non disponibile");
     }
 
     private static double EstimateEt0(List<ForecastItem> forecasts)

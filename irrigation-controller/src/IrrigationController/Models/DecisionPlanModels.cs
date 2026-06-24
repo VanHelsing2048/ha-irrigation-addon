@@ -11,7 +11,7 @@ public sealed class DecisionDay
     public string Key { get; set; } = "";
     public string Label { get; set; } = "";
     public string Icon { get; set; } = "NA";
-    public string WeatherLabel { get; set; } = "N/D";
+    public string WeatherLabel { get; set; } = "Meteo non disponibile";
     public string Decision { get; set; } = "In attesa";
     public string DecisionClass { get; set; } = "warn";
     public double ExpectedRainMm { get; set; }
