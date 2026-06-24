@@ -1,6 +1,6 @@
 # Home Assistant Irrigation Add-on
 
-Versione corrente: `0.1.9`
+Versione corrente: `0.1.10`
 
 Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 

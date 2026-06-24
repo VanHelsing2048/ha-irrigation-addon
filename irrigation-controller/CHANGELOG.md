@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.10] - 2026-06-24
+
+### Fixed
+
+- Corretto il salvataggio di zone e cicli creati come bozza: i pulsanti ora eseguono correttamente l'azione JavaScript.
+- Aggiunte notifiche esplicite `Zona salvata` e `Ciclo salvato`.
+- Le schede mostrano `bozza` prima del salvataggio e `salvata` / `salvato` dopo il salvataggio riuscito.
+
 ## [0.1.9] - 2026-06-24
 
 ### Fixed

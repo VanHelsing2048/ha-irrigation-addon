@@ -202,6 +202,7 @@ function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function js(value) { return JSON.stringify(String(value ?? '')); }
+function action(name, value) { return `${name}(${js(value)})`; }
 function num(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -236,7 +237,7 @@ async function reloadAll() {
   ]);
   render();
 }
-async function saveConfig(nextConfig = config) {
+async function saveConfig(nextConfig = config, successMessage = 'Configurazione salvata', renderAfterSave = true) {
   try {
     const result = await api('/api/config', {
       method: 'PUT',
@@ -245,11 +246,13 @@ async function saveConfig(nextConfig = config) {
     });
     config = nextConfig;
     overview = await api('/api/overview');
-    render();
-    toast(result.message || 'Configurazione salvata');
+    if (renderAfterSave) render();
+    toast(successMessage);
+    return true;
   } catch (error) {
     renderValidationError(error);
     toast('Configurazione non valida', true);
+    return false;
   }
 }
 function cloneConfig() { return JSON.parse(JSON.stringify(config)); }
@@ -409,8 +412,9 @@ function renderZones() {
 function zoneForm(id, z) {
   const ov = (overview.zones || []).find(x => x.id === id);
   const isDraft = Object.prototype.hasOwnProperty.call(draftZones, id);
+  const status = isDraft ? '<span class="pill warn">bozza</span>' : '<span class="pill ok">salvata</span>';
   return `<div class="card" id="zone-${esc(id)}">
-    <div class="toolbar"><h3>${esc(z.name || id)}${isDraft ? ' <span class="pill warn">bozza</span>' : ''}</h3><button class="danger" onclick="deleteZone(${js(id)})">Elimina</button></div>
+    <div class="toolbar"><h3>${esc(z.name || id)} ${status}</h3><button class="danger" onclick="${esc(action('deleteZone', id))}">Elimina</button></div>
     <div class="row">
       ${field(`zone-${id}-id`, 'ID', id, 'span-2')}
       ${field(`zone-${id}-name`, 'Nome', z.name, 'span-3')}
@@ -424,11 +428,11 @@ function zoneForm(id, z) {
       ${numberField(`zone-${id}-soilskip`, 'Skip umidita sopra', z.skip_if_soil_moisture_above ?? '', 'span-2', '0.1')}
     </div>
     <div class="actions" style="margin-top:12px; justify-content:flex-start">
-      <button onclick="saveZone(${js(id)})">Salva zona</button>
-      <button class="secondary" onclick="calibrateZone(${js(id)})">Calibra</button>
-      <button class="secondary" onclick="applyCalibration(${js(id)})">Applica calibrazione</button>
-      <button class="blue" onclick="startZone(${js(id)})">Avvia 5 min</button>
-      <button class="secondary" onclick="stopZone(${js(id)})">Stop</button>
+      <button onclick="${esc(action('saveZone', id))}">Salva zona</button>
+      <button class="secondary" onclick="${esc(action('calibrateZone', id))}">Calibra</button>
+      <button class="secondary" onclick="${esc(action('applyCalibration', id))}">Applica calibrazione</button>
+      <button class="blue" onclick="${esc(action('startZone', id))}">Avvia 5 min</button>
+      <button class="secondary" onclick="${esc(action('stopZone', id))}">Stop</button>
       <span class="muted">Ultima calibrazione: ${esc(ov?.calibration_text || '-')}</span>
     </div>
   </div>`;
@@ -444,8 +448,9 @@ function cycleForm(id, c) {
   const schedule = c.schedule || { days: [], times: [] };
   const steps = (c.steps || []).map(s => `${(s.zones || []).join(',')} | ${s.duration_minutes ?? ''}`).join('\n');
   const isDraft = Object.prototype.hasOwnProperty.call(draftCycles, id);
+  const status = isDraft ? '<span class="pill warn">bozza</span>' : '<span class="pill ok">salvato</span>';
   return `<div class="card">
-    <div class="toolbar"><h3>${esc(c.name || id)}${isDraft ? ' <span class="pill warn">bozza</span>' : ''}</h3><button class="danger" onclick="deleteCycle(${js(id)})">Elimina</button></div>
+    <div class="toolbar"><h3>${esc(c.name || id)} ${status}</h3><button class="danger" onclick="${esc(action('deleteCycle', id))}">Elimina</button></div>
     <div class="row">
       ${field(`cycle-${id}-id`, 'ID', id, 'span-2')}
       ${field(`cycle-${id}-name`, 'Nome', c.name, 'span-3')}
@@ -456,8 +461,8 @@ function cycleForm(id, c) {
       <label class="span-12"><span>Step: zone separate da virgola, poi | durata minuti. Esempio: prato,orto | 10</span><textarea id="cycle-${esc(id)}-steps">${esc(steps)}</textarea></label>
     </div>
     <div class="actions" style="margin-top:12px; justify-content:flex-start">
-      <button onclick="saveCycle(${js(id)})">Salva ciclo</button>
-      <button class="blue" onclick="startCycle(${js(id)})">Avvia</button>
+      <button onclick="${esc(action('saveCycle', id))}">Salva ciclo</button>
+      <button class="blue" onclick="${esc(action('startCycle', id))}">Avvia</button>
     </div>
   </div>`;
 }
@@ -592,10 +597,11 @@ async function saveZone(id) {
   delete next.zones[id];
   next.zones[newId] = z;
   renameZoneInCycles(next, id, newId);
-  await saveConfig(next);
-  delete draftZones[id];
-  delete draftZones[newId];
-  render();
+  if (await saveConfig(next, 'Zona salvata', false)) {
+    delete draftZones[id];
+    delete draftZones[newId];
+    render();
+  }
 }
 async function addZone() {
   const id = normalizeId(prompt('ID nuova zona, es. prato_nord'));
@@ -652,10 +658,11 @@ async function saveCycle(id) {
   };
   delete next.cycles[id];
   next.cycles[newId] = c;
-  await saveConfig(next);
-  delete draftCycles[id];
-  delete draftCycles[newId];
-  render();
+  if (await saveConfig(next, 'Ciclo salvato', false)) {
+    delete draftCycles[id];
+    delete draftCycles[newId];
+    render();
+  }
 }
 async function addCycle() {
   const id = normalizeId(prompt('ID nuovo ciclo, es. mattina_prato'));
@@ -667,7 +674,6 @@ async function addCycle() {
     return;
   }
   if ((config.cycles || {})[id] || draftCycles[id]) return toast('Esiste gia un ciclo con questo ID', true);
-  const next = cloneConfig();
   draftCycles[id] = { name: id, enabled: true, mode: 'Manual', schedule: null, steps: [{ zones: [firstZone], duration_minutes: 10 }] };
   setPage('cycles');
   render();

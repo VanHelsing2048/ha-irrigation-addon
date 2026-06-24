@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.10] - 2026-06-24
+
+### Fixed
+
+- Fix save buttons for draft zones and cycles by generating escaped JavaScript handlers.
+- Add explicit save notifications for zones and cycles.
+- Show saved status badges after zone and cycle drafts are persisted.
+
 ## [0.1.9] - 2026-06-24
 
 ### Fixed
