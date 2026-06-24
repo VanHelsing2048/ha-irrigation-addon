@@ -48,6 +48,7 @@ public sealed class IrrigationEvent
     public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
     public string Type { get; set; } = "";
     public string Message { get; set; } = "";
+    public string? CycleId { get; set; }
     public string? ZoneId { get; set; }
     public double? AmountMm { get; set; }
 }

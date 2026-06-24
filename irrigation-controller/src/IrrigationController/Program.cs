@@ -67,6 +67,7 @@ app.MapPut("/api/config", async (
     await diagnostics.RecordEventAsync(
         request.Headers["X-Irrigation-Action"].FirstOrDefault() ?? "config_saved",
         request.Headers["X-Irrigation-Message"].FirstOrDefault() ?? "Configuration saved.",
+        request.Headers["X-Irrigation-Cycle"].FirstOrDefault(),
         request.Headers["X-Irrigation-Zone"].FirstOrDefault(),
         cancellationToken);
 

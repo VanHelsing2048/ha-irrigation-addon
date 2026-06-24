@@ -11,7 +11,8 @@ var tests = new (string Name, Action Test)[]
     ("config validator accepts empty zone setup", ConfigValidatorAcceptsEmptyZoneSetup),
     ("config validator catches invalid hydraulic policy", ConfigValidatorCatchesInvalidHydraulicPolicy),
     ("ui uses escaped action handlers", UiUsesEscapedActionHandlers),
-    ("ui sends save audit headers", UiSendsSaveAuditHeaders)
+    ("ui sends save audit headers", UiSendsSaveAuditHeaders),
+    ("ui contains cycle event register", AssertUiContainsCycleRegister)
 };
 
 var failures = 0;
@@ -163,6 +164,7 @@ static void UiSendsSaveAuditHeaders()
     {
         "X-Irrigation-Action",
         "X-Irrigation-Message",
+        "X-Irrigation-Cycle",
         "Zona salvata",
         "Ciclo salvato",
         "Meteo salvato",
@@ -176,6 +178,17 @@ static void UiSendsSaveAuditHeaders()
         {
             throw new InvalidOperationException($"Expected UI to contain '{value}'.");
         }
+    }
+}
+
+static void AssertUiContainsCycleRegister()
+{
+    var html = new UiRenderer().Render();
+    if (!html.Contains("Registro ciclo", StringComparison.Ordinal)
+        || !html.Contains("cycleEventRegister", StringComparison.Ordinal)
+        || !html.Contains("cycle_id", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException("Expected UI to render per-cycle event register.");
     }
 }
 

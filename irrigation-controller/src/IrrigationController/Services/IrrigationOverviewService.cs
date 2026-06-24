@@ -37,7 +37,7 @@ public sealed class IrrigationOverviewService
             Validation = validation,
             LastWaterBalanceUpdateDate = state.LastWaterBalanceUpdateDate ?? "-",
             Diagnostics = state.Diagnostics,
-            RecentEvents = state.Events.Take(10).ToList(),
+            RecentEvents = state.Events.Take(80).ToList(),
             Cycles = BuildCycleOverview(config),
             Zones = await BuildZoneOverviewAsync(config, state, cancellationToken)
         };

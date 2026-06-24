@@ -237,7 +237,7 @@ async function reloadAll() {
   ]);
   render();
 }
-async function saveConfig(nextConfig = config, successMessage = 'Configurazione salvata', renderAfterSave = true, action = 'config_saved', zoneId = '') {
+async function saveConfig(nextConfig = config, successMessage = 'Configurazione salvata', renderAfterSave = true, action = 'config_saved', zoneId = '', cycleId = '') {
   try {
     const result = await api('/api/config', {
       method: 'PUT',
@@ -245,6 +245,7 @@ async function saveConfig(nextConfig = config, successMessage = 'Configurazione 
         'Content-Type': 'application/json',
         'X-Irrigation-Action': action,
         'X-Irrigation-Message': successMessage,
+        'X-Irrigation-Cycle': cycleId,
         'X-Irrigation-Zone': zoneId
       },
       body: JSON.stringify(nextConfig)
@@ -469,6 +470,17 @@ function cycleForm(id, c) {
       <button onclick="${esc(action('saveCycle', id))}">Salva ciclo</button>
       <button class="blue" onclick="${esc(action('startCycle', id))}">Avvia</button>
     </div>
+    ${cycleEventRegister(id)}
+  </div>`;
+}
+function cycleEventRegister(id) {
+  const events = (overview.recent_events || []).filter(event => event.cycle_id === id).slice(0, 8);
+  if (!events.length) return '<div class="muted" style="margin-top:12px">Nessun evento registrato per questo ciclo</div>';
+  return `<div style="margin-top:12px">
+    <h3>Registro ciclo</h3>
+    <table><thead><tr><th>Quando</th><th>Tipo</th><th>Zona</th><th>Messaggio</th></tr></thead><tbody>
+      ${events.map(e => `<tr><td>${esc(new Date(e.timestamp).toLocaleString())}</td><td>${esc(e.type)}</td><td>${esc(e.zone_id || '-')}</td><td>${esc(e.message)}</td></tr>`).join('')}
+    </tbody></table>
   </div>`;
 }
 function renderWeather() {
@@ -523,7 +535,7 @@ function renderDiagnostics() {
       <div class="card"><h3>Ultima decisione</h3><pre>${esc(JSON.stringify(d.last_decision || {}, null, 2))}</pre></div>
       <div class="card"><h3>Ultimo errore</h3><pre>${esc(JSON.stringify(d.last_error || {}, null, 2))}</pre></div>
     </div>
-    <div class="card"><h3>Eventi recenti</h3><table><thead><tr><th>Quando</th><th>Tipo</th><th>Zona</th><th>Messaggio</th></tr></thead><tbody>${events.map(e => `<tr><td>${esc(new Date(e.timestamp).toLocaleString())}</td><td>${esc(e.type)}</td><td>${esc(e.zone_id || '-')}</td><td>${esc(e.message)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="card"><h3>Eventi recenti</h3><table><thead><tr><th>Quando</th><th>Tipo</th><th>Ciclo</th><th>Zona</th><th>Messaggio</th></tr></thead><tbody>${events.map(e => `<tr><td>${esc(new Date(e.timestamp).toLocaleString())}</td><td>${esc(e.type)}</td><td>${esc(e.cycle_id || '-')}</td><td>${esc(e.zone_id || '-')}</td><td>${esc(e.message)}</td></tr>`).join('')}</tbody></table></div>
   </section>`;
 }
 function renderRaw() {
@@ -663,7 +675,7 @@ async function saveCycle(id) {
   };
   delete next.cycles[id];
   next.cycles[newId] = c;
-  if (await saveConfig(next, 'Ciclo salvato', false, 'cycle_saved')) {
+  if (await saveConfig(next, 'Ciclo salvato', false, 'cycle_saved', '', newId)) {
     delete draftCycles[id];
     delete draftCycles[newId];
     render();
@@ -692,7 +704,7 @@ async function deleteCycle(id) {
   if (!confirm('Eliminare il ciclo ' + id + '?')) return;
   const next = cloneConfig();
   delete next.cycles[id];
-  await saveConfig(next, 'Ciclo eliminato', true, 'cycle_deleted');
+  await saveConfig(next, 'Ciclo eliminato', true, 'cycle_deleted', '', id);
 }
 async function saveWeather() {
   const next = cloneConfig();

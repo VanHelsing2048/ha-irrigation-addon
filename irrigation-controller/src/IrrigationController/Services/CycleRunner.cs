@@ -170,6 +170,12 @@ public sealed class CycleRunner
         if (source == TriggerSource.Schedule && adjustment.ShouldSkip)
         {
             _logger.LogInformation("Cycle {CycleId} skipped due to weather forecast.", cycleId);
+            await RecordCycleEventAsync(
+                "cycle_skipped",
+                $"Ciclo saltato per meteo: pioggia={adjustment.ExpectedRainMm:0.0}mm, probabilita={adjustment.MaxRainProbability}%.",
+                cycleId,
+                null,
+                cancellationToken);
             await _diagnostics.RecordDecisionAsync(
                 "cycle_skipped",
                 $"Skipped due to forecast: rain={adjustment.ExpectedRainMm:0.0}mm, probability={adjustment.MaxRainProbability}%.",
@@ -193,6 +199,13 @@ public sealed class CycleRunner
             Status = "running"
         };
 
+        await RecordCycleEventAsync(
+            "cycle_started",
+            $"Ciclo avviato ({source}).",
+            cycleId,
+            null,
+            cancellationToken);
+
         foreach (var step in cycle.Steps)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -203,6 +216,13 @@ public sealed class CycleRunner
         {
             await MarkScheduledRunAsync(cycleId, cancellationToken);
         }
+
+        await RecordCycleEventAsync(
+            "cycle_completed",
+            "Ciclo completato.",
+            cycleId,
+            null,
+            cancellationToken);
     }
 
     private async Task RunStepAsync(
@@ -228,6 +248,12 @@ public sealed class CycleRunner
                 await _diagnostics.RecordDecisionAsync(
                     "zone_skipped",
                     "Calculated duration is zero.",
+                    Current.CycleId,
+                    zoneId,
+                    cancellationToken);
+                await RecordCycleEventAsync(
+                    "zone_skipped",
+                    $"Zona {zone.Name} saltata: durata calcolata zero.",
                     Current.CycleId,
                     zoneId,
                     cancellationToken);
@@ -273,6 +299,12 @@ public sealed class CycleRunner
         }
 
         await _safety.TurnOnZoneAsync(run.Zone, config.Safety, cancellationToken);
+        await RecordCycleEventAsync(
+            "zone_started",
+            $"Zona {run.Zone.Name} avviata per {FormatDuration(run.Duration)}.",
+            Current.CycleId,
+            run.ZoneId,
+            cancellationToken);
         try
         {
             await Task.Delay(run.Duration, cancellationToken);
@@ -281,8 +313,27 @@ public sealed class CycleRunner
         {
             await _safety.TurnOffZoneAsync(run.Zone, config.Safety, CancellationToken.None);
             await _waterBalance.ApplyIrrigationAsync(run.ZoneId, run.Zone, run.Duration, CancellationToken.None);
+            await RecordCycleEventAsync(
+                "zone_completed",
+                $"Zona {run.Zone.Name} completata dopo {FormatDuration(run.Duration)}.",
+                Current.CycleId,
+                run.ZoneId,
+                CancellationToken.None);
         }
     }
+
+    private Task RecordCycleEventAsync(
+        string type,
+        string message,
+        string? cycleId,
+        string? zoneId,
+        CancellationToken cancellationToken) =>
+        _diagnostics.RecordEventAsync(type, message, cycleId, zoneId, cancellationToken);
+
+    private static string FormatDuration(TimeSpan duration) =>
+        duration.TotalHours >= 1
+            ? duration.ToString(@"h\:mm\:ss")
+            : duration.ToString(@"m\:ss");
 
     private static async Task PauseBetweenZonesAsync(IrrigationConfig config, CancellationToken cancellationToken)
     {

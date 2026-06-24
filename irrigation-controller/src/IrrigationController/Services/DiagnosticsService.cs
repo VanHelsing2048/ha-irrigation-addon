@@ -57,6 +57,7 @@ public sealed class DiagnosticsService
     public async Task RecordEventAsync(
         string type,
         string message,
+        string? cycleId,
         string? zoneId,
         CancellationToken cancellationToken)
     {
@@ -65,6 +66,7 @@ public sealed class DiagnosticsService
         {
             Type = Normalize(type, "user_action"),
             Message = Normalize(message, "User action completed."),
+            CycleId = string.IsNullOrWhiteSpace(cycleId) ? null : cycleId.Trim(),
             ZoneId = string.IsNullOrWhiteSpace(zoneId) ? null : zoneId.Trim()
         });
 
