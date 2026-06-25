@@ -181,11 +181,26 @@ public sealed class UiRenderer
       display: inline-grid; place-items: center; border-radius: 8px; background: var(--panel-2);
       border: 1px solid var(--border); color: var(--accent); min-width: 32px; min-height: 32px; padding: 4px; line-height: 1;
     }
-    .icon-badge svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-badge svg { width: 22px; height: 22px; stroke: currentColor; fill: color-mix(in srgb, currentColor 18%, transparent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .icon-badge.big { width: 64px; height: 64px; }
     .icon-badge.big svg { width: 42px; height: 42px; }
+    .icon-sun { color: #d97706; background: #fff3c4; border-color: #f7d56d; }
+    .icon-partly { color: #ca8a04; background: #eef6ff; border-color: #bfd8ff; }
+    .icon-cloud, .icon-fog { color: #64748b; background: #eef2f7; border-color: #ccd6e2; }
+    .icon-rain, .icon-drop { color: #0b78d0; background: #e0f2fe; border-color: #9bd8fb; }
+    .icon-storm { color: #7c3aed; background: #f1e8ff; border-color: #d8b4fe; }
+    .icon-snow { color: #0891b2; background: #ecfeff; border-color: #a5f3fc; }
+    .icon-skip { color: #b42318; background: #fee4e2; border-color: #fda29b; }
+    .icon-ok { color: #15803d; background: #dcfce7; border-color: #86efac; }
+    .icon-balance, .icon-et { color: #0f766e; background: #ccfbf1; border-color: #7dd3c7; }
+    .icon-percent { color: #2563eb; background: #dbeafe; border-color: #93c5fd; }
+    .icon-info { color: #6b7280; background: #f3f4f6; border-color: #d1d5db; }
     .decision { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 5px; }
     .mini { display: flex; gap: 8px; flex-wrap: wrap; }
+    .icon-metrics { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .icon-metric { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 3px 8px 3px 3px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); font-weight: 700; }
+    .icon-metric .icon-badge { min-width: 24px; min-height: 24px; padding: 2px; border-radius: 6px; }
+    .icon-metric .icon-badge svg { width: 16px; height: 16px; }
     .weather-summary { display: grid; grid-template-columns: minmax(240px, 0.8fr) repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
     .weather-kpi { display: grid; gap: 6px; }
     .weather-kpi strong { font-size: 22px; }
@@ -206,6 +221,13 @@ public sealed class UiRenderer
     .record-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
     .record-title { display: flex; align-items: center; gap: 9px; min-width: 0; }
     .record-title h3 { overflow-wrap: anywhere; }
+    .event-register { margin-top: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); overflow: hidden; }
+    .event-register summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 42px; padding: 9px 12px; cursor: pointer; list-style: none; }
+    .event-register summary::-webkit-details-marker { display: none; }
+    .event-register summary::after { content: "Apri"; color: var(--muted); font-size: 12px; }
+    .event-register[open] summary::after { content: "Chiudi"; }
+    .event-register-body { background: var(--panel); border-top: 1px solid var(--border); overflow-x: auto; }
+    .event-register table { margin: 0; }
     .cycle-chip, .zone-chip, .event-chip { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .zone-chip { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
     .zone-explain { display: grid; gap: 7px; min-width: 220px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
@@ -450,10 +472,10 @@ function dayPlan(day) {
         <h2>${esc(day.label)}</h2>
         <div class="decision"><strong>${esc(day.decision)}</strong><span class="pill ${esc(day.decision_class)}">${esc(day.weather_label)}</span></div>
         <div class="forecast-meta">${iconBadge(day.has_forecast ? 'OK' : 'INFO')} ${esc(forecastText)}</div>
-        <div class="mini muted">
-          <span title="Pioggia prevista">${iconBadge('RAIN')} ${num(day.expected_rain_mm).toFixed(1)} mm</span>
-          <span title="Probabilita di pioggia">${iconBadge('PCT')} ${num(day.rain_probability)}%</span>
-          <span title="Evapotraspirazione stimata">${iconBadge('ET')} ${num(day.et0_mm).toFixed(1)} mm</span>
+        <div class="icon-metrics muted">
+          ${iconMetric('RAIN', `${num(day.expected_rain_mm).toFixed(1)} mm`, 'Pioggia prevista')}
+          ${iconMetric('PCT', `${num(day.rain_probability)}%`, 'Probabilita di pioggia')}
+          ${iconMetric('ET', `${num(day.et0_mm).toFixed(1)} mm`, 'Evapotraspirazione stimata')}
         </div>
       </div>
     </div>
@@ -476,16 +498,19 @@ function cyclePlan(cycle) {
 function zoneDecisionCard(zone) {
   return `<span class="zone-explain">
     <span class="zone-chip">${iconBadge(zone.icon)}<strong>${esc(zone.name)}</strong><span class="muted">${esc(zone.text)}</span></span>
-    <span class="mini muted">
-      <span title="Deficit idrico attuale">Def ${num(zone.current_deficit_mm).toFixed(1)} mm</span>
-      <span title="ET della zona stimata">ET ${num(zone.crop_et_mm).toFixed(1)} mm</span>
-      <span title="Pioggia utile">Rain ${num(zone.effective_rain_mm).toFixed(1)} mm</span>
-      <span title="Millimetri da reintegrare">Need ${num(zone.irrigation_deficit_mm).toFixed(1)} mm</span>
+    <span class="icon-metrics muted">
+      ${iconMetric('BAL', `${num(zone.current_deficit_mm).toFixed(1)} mm`, 'Deficit idrico attuale')}
+      ${iconMetric('ET', `${num(zone.crop_et_mm).toFixed(1)} mm`, 'ET della zona stimata')}
+      ${iconMetric('RAIN', `${num(zone.effective_rain_mm).toFixed(1)} mm`, 'Pioggia utile')}
+      ${iconMetric(zone.irrigation_deficit_mm > 0 ? 'DROP' : 'OK', `${num(zone.irrigation_deficit_mm).toFixed(1)} mm`, 'Millimetri da reintegrare')}
     </span>
   </span>`;
 }
 function eventPlan(event) {
   return `<div class="event-chip">${iconBadge(event.icon)}<strong>${esc(event.time)}</strong><span>${esc(event.text)}</span></div>`;
+}
+function iconMetric(code, value, title) {
+  return `<span class="icon-metric" title="${esc(title)}">${iconBadge(code)}${esc(value)}</span>`;
 }
 function iconBadge(code, big = false) {
   const meta = {
@@ -505,7 +530,7 @@ function iconBadge(code, big = false) {
     INFO: ['info', 'Informazione'],
     NA: ['info', 'Dato non disponibile']
   }[code] || ['info', code || 'Dato non disponibile'];
-  return `<span class="icon-badge ${big ? 'big' : ''}" title="${esc(meta[1])}" aria-label="${esc(meta[1])}">${iconSvg(meta[0])}</span>`;
+  return `<span class="icon-badge icon-${esc(meta[0])} ${big ? 'big' : ''}" title="${esc(meta[1])}" aria-label="${esc(meta[1])}">${iconSvg(meta[0])}</span>`;
 }
 function iconSvg(name) {
   const icons = {
@@ -677,9 +702,9 @@ function renderWeatherSummaryPanel() {
         <div class="panel-title">${iconBadge(weatherIconCode(weather.state))}<span class="muted">Meteo attuale</span></div>
         <strong>${esc(formatWeatherState(weather.state))}</strong>
         <span class="muted">${esc(weather.entity || '-')} · forecast ${esc(weather.forecast_type || '-')}</span>
-        <div class="mini">
-          <span title="Evapotraspirazione stimata">${iconBadge('ET')} ${last ? num(last.et0_mm).toFixed(1) : '-'} mm</span>
-          <span title="Pioggia utile stimata">${iconBadge('RAIN')} ${last ? num(last.effective_rain_mm).toFixed(1) : '-'} mm</span>
+        <div class="icon-metrics">
+          ${iconMetric('ET', `${last ? num(last.et0_mm).toFixed(1) : '-'} mm`, 'Evapotraspirazione stimata')}
+          ${iconMetric('RAIN', `${last ? num(last.effective_rain_mm).toFixed(1) : '-'} mm`, 'Pioggia utile stimata')}
         </div>
       </div>
       ${forecastCard(decisionPlan?.today, 'Oggi')}
@@ -694,10 +719,10 @@ function forecastCard(day, fallbackLabel) {
     <div class="forecast-line">${iconBadge(day.icon)}<h3>${esc(day.label || fallbackLabel)}</h3><span class="pill ${esc(day.decision_class)}">${esc(day.decision)}</span></div>
     <strong>${esc(day.weather_label || '-')}</strong>
     <div class="forecast-meta">${iconBadge(day.has_forecast ? 'OK' : 'INFO')} ${esc(forecastText)}</div>
-    <div class="mini">
-      <span title="Pioggia prevista">${iconBadge('RAIN')} ${num(day.expected_rain_mm).toFixed(1)} mm</span>
-      <span title="Probabilita di pioggia">${iconBadge('PCT')} ${num(day.rain_probability)}%</span>
-      <span title="Evapotraspirazione">${iconBadge('ET')} ${num(day.et0_mm).toFixed(1)} mm</span>
+    <div class="icon-metrics">
+      ${iconMetric('RAIN', `${num(day.expected_rain_mm).toFixed(1)} mm`, 'Pioggia prevista')}
+      ${iconMetric('PCT', `${num(day.rain_probability)}%`, 'Probabilita di pioggia')}
+      ${iconMetric('ET', `${num(day.et0_mm).toFixed(1)} mm`, 'Evapotraspirazione')}
     </div>
   </div>`;
 }
@@ -925,12 +950,12 @@ function stepDurationText(step) {
 function cycleEventRegister(id) {
   const events = (overview.recent_events || []).filter(event => event.cycle_id === id).slice(0, 8);
   if (!events.length) return `<div style="margin-top:12px">${emptyState('Nessun evento per questo ciclo', 'Avvia o simula il ciclo per popolare il registro dedicato.')}</div>`;
-  return `<div style="margin-top:12px">
-    <h3>Registro ciclo</h3>
-    <table><thead><tr><th>Quando</th><th>Tipo</th><th>Zona</th><th>Messaggio</th></tr></thead><tbody>
+  return `<details class="event-register">
+    <summary><span class="event-chip">${iconBadge('INFO')}<strong>Registro ciclo</strong><span class="pill">${events.length}</span></span></summary>
+    <div class="event-register-body"><table><thead><tr><th>Quando</th><th>Tipo</th><th>Zona</th><th>Messaggio</th></tr></thead><tbody>
       ${events.map(e => `<tr><td>${esc(new Date(e.timestamp).toLocaleString())}</td><td><span class="pill">${esc(eventLabel(e.type))}</span></td><td>${esc(e.zone_id || '-')}</td><td>${esc(e.message)}</td></tr>`).join('')}
-    </tbody></table>
-  </div>`;
+    </tbody></table></div>
+  </details>`;
 }
 function eventLabel(type) {
   const labels = {
