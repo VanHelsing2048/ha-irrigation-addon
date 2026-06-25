@@ -90,17 +90,7 @@ public sealed class WeatherAdjustmentService
     }
 
     private static IEnumerable<JsonElement> EnumerateForecastItems(JsonElement root, string entityId)
-    {
-        if (!root.TryGetProperty(entityId, out var entity) || !entity.TryGetProperty("forecast", out var forecast))
-        {
-            yield break;
-        }
-
-        foreach (var item in forecast.EnumerateArray())
-        {
-            yield return item;
-        }
-    }
+        => HomeAssistantForecastReader.EnumerateForecastItems(root, entityId);
 
     private static bool TryGetDateTime(JsonElement item, out DateTimeOffset value)
     {

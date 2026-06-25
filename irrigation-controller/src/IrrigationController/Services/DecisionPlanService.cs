@@ -209,8 +209,8 @@ public sealed class DecisionPlanService
     private async Task<List<ForecastItem>> ReadForecastsAsync(string weatherEntity, string forecastType, CancellationToken cancellationToken)
     {
         using var document = await _homeAssistant.GetForecastsAsync(weatherEntity, forecastType, cancellationToken);
-        if (document is null || !document.RootElement.TryGetProperty(weatherEntity, out var entity)
-            || !entity.TryGetProperty("forecast", out var forecast))
+        if (document is null
+            || !HomeAssistantForecastReader.TryGetForecastArray(document.RootElement, weatherEntity, out var forecast))
         {
             return [];
         }

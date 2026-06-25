@@ -1,5 +1,6 @@
 using IrrigationController.Models;
 using IrrigationController.Services;
+using System.Text.Json;
 
 var tests = new (string Name, Action Test)[]
 {
@@ -17,6 +18,7 @@ var tests = new (string Name, Action Test)[]
     ("schedule calculator finds next run", ScheduleCalculatorFindsNextRun),
     ("duration calculator projects daily ET for dry-run", DurationCalculatorProjectsDailyEtForDryRun),
     ("duration calculator avoids double daily ET", DurationCalculatorAvoidsDoubleDailyEt),
+    ("forecast parser reads service response", ForecastParserReadsServiceResponse),
     ("decision plan requests daily forecasts", DecisionPlanRequestsDailyForecasts),
     ("ui uses escaped action handlers", UiUsesEscapedActionHandlers),
     ("ui sends save audit headers", UiSendsSaveAuditHeaders),
@@ -279,6 +281,50 @@ static void ScheduleCalculatorHandlesIntervalDates()
     if (ScheduleCalculator.IsScheduledDate(schedule, new DateOnly(2026, 6, 23)))
     {
         throw new InvalidOperationException("Expected date before start date to be skipped.");
+    }
+}
+
+static void ForecastParserReadsServiceResponse()
+{
+    using var wrapped = JsonDocument.Parse("""
+    {
+      "changed_states": [],
+      "service_response": {
+        "weather.forecast_home": {
+          "forecast": [
+            { "datetime": "2026-06-26T10:00:00+00:00", "condition": "sunny", "precipitation": 0.0 }
+          ]
+        }
+      }
+    }
+    """);
+
+    var wrappedItems = HomeAssistantForecastReader
+        .EnumerateForecastItems(wrapped.RootElement, "weather.forecast_home")
+        .ToList();
+
+    if (wrappedItems.Count != 1 || wrappedItems[0].GetProperty("condition").GetString() != "sunny")
+    {
+        throw new InvalidOperationException("Expected service_response forecast to be read.");
+    }
+
+    using var direct = JsonDocument.Parse("""
+    {
+      "weather.forecast_home": {
+        "forecast": [
+          { "datetime": "2026-06-26T11:00:00+00:00", "condition": "partlycloudy", "precipitation": 0.0 }
+        ]
+      }
+    }
+    """);
+
+    var directItems = HomeAssistantForecastReader
+        .EnumerateForecastItems(direct.RootElement, "weather.forecast_home")
+        .ToList();
+
+    if (directItems.Count != 1 || directItems[0].GetProperty("condition").GetString() != "partlycloudy")
+    {
+        throw new InvalidOperationException("Expected direct forecast to remain supported.");
     }
 }
 
