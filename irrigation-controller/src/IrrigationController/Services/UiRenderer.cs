@@ -207,6 +207,10 @@ public sealed class UiRenderer
     .forecast-card { display: grid; gap: 8px; }
     .forecast-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .forecast-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 12px; }
+    .current-weather-card { display: grid; gap: 10px; }
+    .current-weather-main { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .current-weather-main strong { font-size: 20px; }
+    .decision-note { margin: 0; line-height: 1.4; }
     .cycle-preview { display: grid; gap: 8px; margin-top: 12px; }
     .cycle-preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .cycle-preview-day { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
@@ -606,7 +610,6 @@ function renderDashboard() {
   const validation = overview.validation || { errors: [], warnings: [] };
   return `
     ${dashboardHero(runner)}
-    ${renderWeatherSummaryPanel()}
     ${renderPlanPanel()}
     <section class="section">
       ${validationCard(validation)}
@@ -743,46 +746,24 @@ function dashboardHero(runner) {
     ${renderWeatherReasonCard()}
   </section>`;
 }
-function renderWeatherSummaryPanel() {
-  const weather = overview.weather || {};
-  const last = overview.diagnostics?.last_weather;
-  return `<section class="section">
-    <div class="weather-summary">
-      <div class="card weather-kpi">
-        <div class="panel-title">${iconBadge(weatherIconCode(weather.state))}<span class="muted">Meteo attuale</span></div>
-        <strong>${esc(formatWeatherState(weather.state))}</strong>
-        <span class="muted">${esc(weather.entity || '-')} · forecast ${esc(weather.forecast_type || '-')}</span>
-        <div class="icon-metrics">
-          ${iconMetric('ET', `${last ? num(last.et0_mm).toFixed(1) : '-'} mm`, 'Evapotraspirazione stimata')}
-          ${iconMetric('RAIN', `${last ? num(last.effective_rain_mm).toFixed(1) : '-'} mm`, 'Pioggia utile stimata')}
-        </div>
-      </div>
-      ${forecastCard(decisionPlan?.today, 'Oggi')}
-      ${forecastCard(decisionPlan?.tomorrow, 'Domani')}
-    </div>
-  </section>`;
-}
-function forecastCard(day, fallbackLabel) {
-  if (!day) return `<div class="card forecast-card"><h3>${esc(fallbackLabel)}</h3><p class="muted">Previsione non disponibile</p></div>`;
-  const forecastText = day.has_forecast ? `${day.forecast_count} previsioni HA` : 'Fallback: forecast HA non disponibile';
-  return `<div class="card forecast-card">
-    <div class="forecast-line">${iconBadge(day.icon)}<h3>${esc(day.label || fallbackLabel)}</h3><span class="pill ${esc(day.decision_class)}">${esc(day.decision)}</span></div>
-    <strong>${esc(day.weather_label || '-')}</strong>
-    <div class="forecast-meta">${iconBadge(day.has_forecast ? 'OK' : 'INFO')} ${esc(forecastText)}</div>
-    <div class="icon-metrics">
-      ${iconMetric('RAIN', `${num(day.expected_rain_mm).toFixed(1)} mm`, 'Pioggia prevista')}
-      ${iconMetric('PCT', `${num(day.rain_probability)}%`, 'Probabilita di pioggia')}
-      ${iconMetric('ET', `${num(day.et0_mm).toFixed(1)} mm`, 'Evapotraspirazione')}
-    </div>
-  </div>`;
-}
 function renderWeatherReasonCard() {
   const decision = overview.diagnostics?.last_decision;
   const last = overview.diagnostics?.last_weather;
-  return `<div class="card">
-    <div class="panel-title">${iconBadge('BAL')}<h3>Perche questa decisione</h3></div>
-    <p>${esc(decision?.message || 'Nessuna decisione registrata')}</p>
-    <p class="muted">${last ? `ET0 ${num(last.et0_mm).toFixed(1)} mm, pioggia prevista ${num(last.expected_rain_mm).toFixed(1)} mm, pioggia utile ${num(last.effective_rain_mm).toFixed(1)} mm, probabilita ${num(last.max_rain_probability)}%` : 'Nessun calcolo meteo registrato'}</p>
+  const weather = overview.weather || {};
+  return `<div class="card current-weather-card">
+    <div class="panel-title">${iconBadge(weatherIconCode(weather.state))}<h3>Meteo e decisione</h3></div>
+    <div class="current-weather-main">
+      <strong>${esc(formatWeatherState(weather.state))}</strong>
+      <span class="pill">${esc(weather.entity || '-')}</span>
+      <span class="pill">${esc(weather.forecast_type || '-')}</span>
+    </div>
+    <p class="decision-note">${esc(decision?.message || 'Nessuna decisione registrata')}</p>
+    <div class="icon-metrics">
+      ${iconMetric('ET', `${last ? num(last.et0_mm).toFixed(1) : '-'} mm`, 'Evapotraspirazione stimata')}
+      ${iconMetric('RAIN', `${last ? num(last.expected_rain_mm).toFixed(1) : '-'} mm`, 'Pioggia prevista')}
+      ${iconMetric('PCT', `${last ? num(last.max_rain_probability) : '-'}%`, 'Probabilita massima pioggia')}
+    </div>
+    <p class="muted">${last ? `Fonte forecast: ${esc(last.forecast_type || weather.forecast_type || '-')}, record ${num(last.forecast_records, 0)}` : 'Calcolo meteo non ancora registrato'}</p>
   </div>`;
 }
 function formatWeatherState(state) {

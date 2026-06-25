@@ -455,13 +455,14 @@ static void AssertUiContainsDashboardWeatherSummary()
     var html = new UiRenderer().Render();
     var expected = new[]
     {
-        "Meteo attuale",
-        "Perche questa decisione",
-        "renderWeatherSummaryPanel",
-        "forecastCard",
+        "Meteo e decisione",
+        "current-weather-card",
+        "Fonte forecast",
+        "renderPlanPanel",
+        "dayPlan",
         "formatWeatherState",
-        "Fallback: forecast HA non disponibile",
-        "previsioni HA",
+        "Nessuna previsione ricevuta da Home Assistant",
+        "previsioni ricevute",
         "zoneDecisionCard",
         "current_deficit_mm",
         "irrigation_deficit_mm",
