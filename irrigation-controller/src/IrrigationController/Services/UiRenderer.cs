@@ -256,6 +256,56 @@ public sealed class UiRenderer
       .topbar { align-items: flex-start; flex-direction: column; }
       .actions { justify-content: flex-start; }
     }
+    @media (max-width: 700px) {
+      body { font-size: 14px; }
+      .app { display: block; padding-bottom: 86px; }
+      .sidebar {
+        position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 10;
+        height: auto; padding: 8px; border-top: 1px solid var(--border); border-bottom: 0;
+        display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; box-shadow: 0 -10px 24px rgba(15, 35, 32, .12);
+      }
+      .brand { display: none; }
+      .nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+      .nav::-webkit-scrollbar { display: none; }
+      .nav button {
+        flex: 0 0 72px; min-height: 54px; padding: 6px 4px; justify-content: center;
+        align-items: center; flex-direction: column; text-align: center; font-size: 11px;
+      }
+      .nav-code { width: 28px; height: 24px; }
+      .sidebar-footer { margin: 0; padding: 0; border: 0; align-self: stretch; }
+      .mode-toggle { min-width: 92px; min-height: 54px; justify-content: center; font-size: 12px; }
+      .main { padding: 12px; }
+      .topbar {
+        position: sticky; top: 0; z-index: 6; background: color-mix(in srgb, var(--bg) 94%, transparent);
+        backdrop-filter: blur(8px); margin: -12px -12px 12px; padding: 10px 12px; border-bottom: 1px solid var(--border);
+      }
+      .actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+      .actions button { min-width: 0; }
+      h1 { font-size: 21px; }
+      h2 { font-size: 17px; }
+      .status-value { font-size: 22px; }
+      .card { padding: 12px; }
+      .dashboard-hero, .weather-summary, .plan, .summary, .checklist, .quick-metrics { gap: 10px; }
+      .plan-head { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; }
+      .weather-icon, .icon-badge.big { width: 52px; height: 52px; }
+      .icon-badge.big svg { width: 34px; height: 34px; }
+      .record-head { align-items: stretch; }
+      .record-head > button { width: 100%; }
+      .toolbar { align-items: stretch; }
+      .toolbar > button { width: 100%; }
+      .icon-metrics { gap: 6px; }
+      .icon-metric { flex: 1 1 calc(50% - 6px); justify-content: flex-start; }
+      table, thead, tbody, tr, th, td { display: block; width: 100%; }
+      thead { display: none; }
+      tbody tr {
+        display: grid; gap: 6px; padding: 10px; margin-bottom: 8px;
+        border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2);
+      }
+      td { border: 0; padding: 2px 0; }
+      td:last-child button { width: 100%; }
+      .event-register-body { max-height: 320px; }
+      .toast { left: 12px; right: 12px; bottom: 94px; max-width: none; }
+    }
   </style>
 </head>
 <body>

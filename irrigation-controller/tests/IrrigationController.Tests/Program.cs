@@ -551,6 +551,8 @@ static void AssertUiContainsPolishedShell()
         "icon-metric",
         "icon-sun",
         "event-register",
+        "@media (max-width: 700px)",
+        "position: fixed; left: 0; right: 0; bottom: 0",
         "<details class=\"event-register\"",
         "advancedToggle",
         "irrigation.advancedMode",
