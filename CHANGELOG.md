@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0] - 2026-06-25
+
+### Changed
+
+- Restyle the Ingress web UI with a cleaner app shell, persistent sidebar, clearer dashboard hierarchy and improved spacing.
+- Move Advanced mode into the sidebar footer while preserving the saved browser preference and existing behavior.
+- Improve dashboard weather/current decision cards with stronger icon usage and clearer operational grouping.
+- Improve zone and cycle cards with structured headers, status badges and less visually noisy forms.
+
+### Verified
+
+- Build succeeded with zero warnings.
+- Local regression harness passed all 28 checks, including save audit headers, entity pickers, dry-run, cycle event register, setup, calibration and dashboard weather markers.
+
 ## [0.2.8] - 2026-06-25
 
 ### Added
