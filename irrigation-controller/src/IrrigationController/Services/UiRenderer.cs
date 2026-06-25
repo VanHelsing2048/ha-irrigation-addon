@@ -119,6 +119,8 @@ public sealed class UiRenderer
     .checklist { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     .check-item { display: grid; gap: 6px; }
     .preset-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .calibration-panel { display: grid; gap: 10px; margin-top: 12px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+    .calibration-result { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
     .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -263,6 +265,7 @@ let draftZones = {};
 let draftCycles = {};
 let lastValidation = null;
 let advancedMode = localStorage.getItem('irrigation.advancedMode') === 'true';
+let calibrationDrafts = {};
 let currentPage = location.hash.replace('#','') || 'dashboard';
 
 function esc(value) {
@@ -525,12 +528,14 @@ function renderSetup() {
   const cycles = Object.entries(config.cycles || {});
   const hasWeather = !!(config.weather?.entity);
   const hasMaster = !!(config.hydraulic?.master_valve_entity);
+  const calibrated = (overview.zones || []).filter(zone => zone.calibrated_precipitation_rate_mm_h).length;
   const hasDryRun = (overview.recent_events || []).some(event => String(event.type || '').startsWith('dry_run'));
   return `<section class="section">
     <div class="card notice"><strong>Configurazione guidata</strong><p class="muted">Segui questi passi per ottenere una configurazione funzionante senza passare dalle sezioni avanzate.</p></div>
     <div class="grid checklist">
       ${setupCheck('Meteo', hasWeather, hasWeather ? config.weather.entity : 'Da scegliere')}
       ${setupCheck('Zone', zones.length > 0, `${zones.length} configurate`)}
+      ${setupCheck('Calibrazione', zones.length > 0 && calibrated === zones.length, zones.length ? `${calibrated}/${zones.length} calibrate` : 'Crea una zona')}
       ${setupCheck('Cicli', cycles.length > 0, `${cycles.length} configurati`)}
       ${setupCheck('Dry-run', hasDryRun, hasDryRun ? 'Eseguito' : 'Da eseguire')}
       ${setupCheck('Master', hasMaster, hasMaster ? config.hydraulic.master_valve_entity : 'Opzionale')}
@@ -539,6 +544,7 @@ function renderSetup() {
       ${setupWeatherStep()}
       ${setupPlantStep()}
       ${setupZoneStep()}
+      ${setupCalibrationStep(zones)}
       ${setupCycleStep(zones)}
       ${setupDryRunStep(cycles)}
     </div>
@@ -587,7 +593,7 @@ function setupZoneStep() {
     <div class="actions" style="justify-content:flex-start"><button onclick="createSetupZone()">Crea zona</button><button class="secondary" onclick="setPage('zones')">Apri Zone</button></div>`);
 }
 function setupCycleStep(zones) {
-  return setupStep(4, 'Crea il primo ciclo', 'Genera un ciclo con le zone esistenti. In automatico la durata sara calcolata da ET e meteo.', `
+  return setupStep(5, 'Crea il primo ciclo', 'Genera un ciclo con le zone esistenti. In automatico la durata sara calcolata da ET e meteo.', `
     <div class="row">
       ${field('setup-cycle-id', 'ID ciclo', 'mattina', 'span-3')}
       ${field('setup-cycle-name', 'Nome ciclo', 'Mattina', 'span-3')}
@@ -597,8 +603,19 @@ function setupCycleStep(zones) {
     <div class="actions" style="justify-content:flex-start"><button onclick="createSetupCycle()">Crea ciclo</button><button class="secondary" onclick="setPage('cycles')">Apri Cicli</button></div>
     <span class="muted">Zone disponibili: ${esc(zones.length ? zones.join(', ') : 'nessuna')}</span>`);
 }
+function setupCalibrationStep(zones) {
+  return setupStep(4, 'Calibra una zona', 'Misura quanti mm/h eroga davvero una zona: e il dato piu importante per l automatico.', `
+    <div class="row">
+      <label class="span-4"><span>Zona</span>${zoneSelect(zones[0] || '')}</label>
+      <div class="span-8 actions" style="justify-content:flex-start">
+        <button onclick="openSetupCalibration()">Apri calibrazione guidata</button>
+        <button class="secondary" onclick="setPage('zones')">Apri Zone</button>
+      </div>
+    </div>
+    <span class="muted">Suggerimento: usa almeno 3 contenitori e un test da 10 minuti.</span>`);
+}
 function setupDryRunStep(cycles) {
-  return setupStep(5, 'Simula prima di irrigare', 'Esegui un dry-run per vedere cosa farebbe il controller senza comandare valvole reali.', `
+  return setupStep(6, 'Simula prima di irrigare', 'Esegui un dry-run per vedere cosa farebbe il controller senza comandare valvole reali.', `
     <div class="actions" style="justify-content:flex-start">
       ${cycles.length ? cycles.map(([id, cycle]) => `<button class="secondary" onclick="${esc(action('dryRunCycle', id))}">Simula ${esc(cycle.name || id)}</button>`).join('') : '<button disabled>Nessun ciclo disponibile</button>'}
     </div>`);
@@ -703,8 +720,9 @@ function zoneForm(id, z) {
   const ov = (overview.zones || []).find(x => x.id === id);
   const isDraft = Object.prototype.hasOwnProperty.call(draftZones, id);
   const status = isDraft ? '<span class="pill warn">bozza</span>' : '<span class="pill ok">salvata</span>';
+  const calibrationStatus = ov?.calibrated_precipitation_rate_mm_h ? '<span class="pill ok">calibrata</span>' : '<span class="pill warn">da calibrare</span>';
   return `<div class="card" id="zone-${esc(id)}">
-    <div class="toolbar"><h3>${esc(z.name || id)} ${status}</h3><button class="danger" onclick="${esc(action('deleteZone', id))}">Elimina</button></div>
+    <div class="toolbar"><h3>${esc(z.name || id)} ${status} ${calibrationStatus}</h3><button class="danger" onclick="${esc(action('deleteZone', id))}">Elimina</button></div>
     <div class="row">
       ${field(`zone-${id}-id`, 'ID', id, 'span-2')}
       ${field(`zone-${id}-name`, 'Nome', z.name, 'span-3')}
@@ -719,12 +737,35 @@ function zoneForm(id, z) {
     </div>
     <div class="actions" style="margin-top:12px; justify-content:flex-start">
       <button onclick="${esc(action('saveZone', id))}">Salva zona</button>
-      <button class="secondary" onclick="${esc(action('calibrateZone', id))}">Calibra</button>
+      <button class="secondary" onclick="${esc(action('openCalibration', id))}">Calibra</button>
       <button class="secondary" onclick="${esc(action('applyCalibration', id))}">Applica calibrazione</button>
       <button class="blue" onclick="${esc(action('startZone', id))}">Avvia 5 min</button>
       <button class="secondary" onclick="${esc(action('stopZone', id))}">Stop</button>
       <span class="muted">Ultima calibrazione: ${esc(ov?.calibration_text || '-')}</span>
     </div>
+    ${calibrationPanel(id, z, ov)}
+  </div>`;
+}
+function calibrationPanel(id, z, ov) {
+  if (!calibrationDrafts[id]) return '';
+  const result = calibrationDrafts[id].result;
+  return `<div class="calibration-panel">
+    <div class="toolbar"><h3>Calibrazione guidata</h3><button class="ghost" onclick="${esc(action('closeCalibration', id))}">Chiudi</button></div>
+    <p class="muted">Metti 3-5 contenitori nella zona, avvia il test, poi inserisci i millimetri raccolti separati da virgola.</p>
+    <div class="row">
+      ${numberField(`cal-${id}-minutes`, 'Minuti test', calibrationDrafts[id].minutes || 10, 'span-2')}
+      ${field(`cal-${id}-values`, 'Misure mm', calibrationDrafts[id].values || '', 'span-6')}
+      <div class="span-4 actions" style="justify-content:flex-start">
+        <button class="blue" onclick="${esc(action('startCalibrationGuide', id))}">Avvia test</button>
+        <button onclick="${esc(action('completeCalibrationGuide', id))}">Calcola</button>
+      </div>
+    </div>
+    ${result ? `<div class="calibration-result">
+      <strong>Risultato: ${num(result.precipitation_rate_mm_h).toFixed(2)} mm/h</strong>
+      <span class="muted">Media ${num(result.average_mm).toFixed(2)} mm, uniformita ${num(result.distribution_uniformity_percent).toFixed(1)}%</span>
+      <span>${esc(result.recommendation || '')}</span>
+      <div class="actions" style="justify-content:flex-start"><button onclick="${esc(action('applyCalibration', id))}">Applica alla zona</button></div>
+    </div>` : `<span class="muted">Valore attuale: ${num(z.precipitation_rate_mm_h).toFixed(2)} mm/h. Ultima calibrazione: ${esc(ov?.calibration_text || '-')}</span>`}
   </div>`;
 }
 function renderCycles() {
@@ -1117,6 +1158,49 @@ async function startZone(id) { try { toast((await api('/api/zones/' + id + '/sta
 async function stopZone(id) { try { await api('/api/zones/' + id + '/stop', { method: 'POST' }); toast('Zona fermata'); } catch(e) { toast(e.message || 'Errore stop zona', true); } }
 async function globalStop() { try { await api('/api/stop', { method: 'POST' }); toast('Stop richiesto'); } catch(e) { toast(e.message || 'Errore stop', true); } }
 async function applyCalibration(id) { try { toast((await api('/api/calibration/zones/' + id + '/apply', { method: 'POST' })).message); await reloadAll(); } catch(e) { toast(e.message || 'Nessuna calibrazione da applicare', true); } }
+function openCalibration(id) {
+  calibrationDrafts[id] ||= { minutes: 10, values: '', result: null };
+  setPage('zones');
+  render();
+  setTimeout(() => document.getElementById(`zone-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+function closeCalibration(id) {
+  delete calibrationDrafts[id];
+  render();
+}
+function openSetupCalibration() {
+  const zoneId = document.querySelector('#content .cycle-step-zone')?.value || Object.keys(config.zones || {})[0] || '';
+  if (!zoneId) return toast('Crea almeno una zona prima di calibrare', true);
+  openCalibration(zoneId);
+}
+async function startCalibrationGuide(id) {
+  const minutes = num(val(`cal-${id}-minutes`), 10);
+  calibrationDrafts[id] ||= {};
+  calibrationDrafts[id].minutes = minutes;
+  calibrationDrafts[id].values = val(`cal-${id}-values`);
+  try {
+    toast((await api('/api/calibration/zones/' + id + '/start?minutes=' + encodeURIComponent(minutes), { method: 'POST' })).message || 'Test calibrazione avviato');
+  } catch (e) {
+    toast(e.message || 'Errore avvio calibrazione', true);
+  }
+}
+async function completeCalibrationGuide(id) {
+  const minutes = num(val(`cal-${id}-minutes`), 10);
+  const valuesText = val(`cal-${id}-values`);
+  const measurements = valuesText.split(',').map(x => Number(x.trim())).filter(x => Number.isFinite(x) && x > 0);
+  if (!measurements.length) return toast('Inserisci misure mm valide separate da virgola', true);
+  calibrationDrafts[id] = { minutes, values: valuesText, result: null };
+  try {
+    const result = await api('/api/calibration/zones/' + id + '/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ minutes, measurements_mm: measurements }) });
+    calibrationDrafts[id].result = result;
+    toast(result.recommendation || 'Calibrazione calcolata');
+    await reloadAll();
+    calibrationDrafts[id] = { minutes, values: valuesText, result };
+    render();
+  } catch (e) {
+    toast(e.message || 'Misure non valide', true);
+  }
+}
 async function saveSetupWeather() {
   const next = cloneConfig();
   next.weather ||= {};
@@ -1173,18 +1257,7 @@ async function createSetupCycle() {
   await saveConfig(next, 'Ciclo creato dal setup', true, 'cycle_saved', '', id);
 }
 async function calibrateZone(id) {
-  const minutes = prompt('Minuti test calibrazione', '10');
-  if (!minutes) return;
-  try { await api('/api/calibration/zones/' + id + '/start?minutes=' + encodeURIComponent(minutes), { method: 'POST' }); }
-  catch (e) { toast(e.message || 'Errore avvio calibrazione', true); return; }
-  const values = prompt('Misure mm separate da virgola, es. 1.8,2.1,1.6');
-  if (!values) return;
-  const measurements = values.split(',').map(x => Number(x.trim())).filter(x => !Number.isNaN(x));
-  try {
-    const result = await api('/api/calibration/zones/' + id + '/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ minutes: Number(minutes), measurements_mm: measurements }) });
-    toast(result.recommendation || 'Calibrazione salvata');
-    await reloadAll();
-  } catch (e) { toast(e.message || 'Misure non valide', true); }
+  openCalibration(id);
 }
 async function saveZone(id) {
   const next = cloneConfig();
