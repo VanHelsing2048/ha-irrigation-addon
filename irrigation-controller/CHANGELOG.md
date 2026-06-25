@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.2] - 2026-06-25
+
+### Corretto
+
+- Lettura delle risposte Home Assistant `weather.get_forecasts` dal wrapper `service_response` usato dalle versioni recenti di Home Assistant.
+- Parser forecast condiviso tra piano dashboard e calcolo ET/pioggia, evitando fallback quando previsioni reali sono disponibili.
+
+### Modificato
+
+- Layout mobile migliorato con navigazione compatta in basso, header pagina sticky, tabelle impilate e target touch piu comodi.
+
+### Verificato
+
+- Verificato contro la risposta reale Home Assistant di `weather.forecast_home`: 48 record hourly e 6 record daily.
+- Build completata senza warning.
+- Harness locale: 29 controlli superati, incluso il nuovo test parser forecast `service_response`.
+
 ## [0.3.1] - 2026-06-25
 
 ### Modificato

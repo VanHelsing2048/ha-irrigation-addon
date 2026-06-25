@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.2] - 2026-06-25
+
+### Fixed
+
+- Read Home Assistant `weather.get_forecasts` responses from the `service_response` wrapper used by recent Home Assistant versions.
+- Reuse the same forecast parser for dashboard decision plans and ET/rain adjustment, avoiding fallback calculations when real forecasts are available.
+
+### Changed
+
+- Improve mobile layout with a compact bottom navigation, sticky page header, stacked tables and safer touch targets.
+
+### Verified
+
+- Tested against the real Home Assistant `weather.forecast_home` response shape: 48 hourly records and 6 daily records.
+- Build succeeded with zero warnings.
+- Local regression harness passed all 29 checks, including the new `service_response` forecast parser test.
+
 ## [0.3.1] - 2026-06-25
 
 ### Changed

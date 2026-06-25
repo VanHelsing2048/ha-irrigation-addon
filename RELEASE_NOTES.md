@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.3.1
+# ha-irrigation-addon 0.3.2
 
-Release rifinitura UI dell'add-on Home Assistant `Irrigation Controller`.
+Release forecast e mobile dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,12 +14,12 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Registro eventi dentro ogni ciclo richiudibile di default, cosi non appesantisce la configurazione.
-- Metriche ET, pioggia, probabilita, deficit e acqua richiesta rese piu compatte con icone e tooltip.
-- Icone con colori distinti per sole, nuvole, pioggia, temporale, ET, OK, skip e informazioni.
-- Meno testo ripetitivo nei pannelli previsione e piano.
-- Nessuna modifica al contratto API, ai salvataggi, al dry-run, al setup guidato o alla calibrazione.
-- Test locali: build senza warning e 28 controlli anti-regressione superati.
+- Correzione parser `weather.get_forecasts`: ora legge il wrapper `service_response` restituito da Home Assistant.
+- La dashboard oggi/domani e il calcolo ET/pioggia usano finalmente i forecast reali quando disponibili.
+- Layout mobile migliorato con navigazione compatta in basso, header sticky, tabelle impilate e pulsanti piu comodi.
+- Nessuna modifica ai salvataggi, al dry-run, al setup guidato o alla calibrazione.
+- Verificato contro `weather.forecast_home`: 48 record hourly e 6 daily ricevuti.
+- Test locali: build senza warning e 29 controlli anti-regressione superati.
 
 ## Pacchetto
 
