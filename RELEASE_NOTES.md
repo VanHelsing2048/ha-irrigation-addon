@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.2.6
+# ha-irrigation-addon 0.2.7
 
-Release modalita base/avanzata dell'add-on Home Assistant `Irrigation Controller`.
+Release Setup guidato dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,10 +14,10 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Toggle Avanzate persistente, salvato nel browser.
-- In modalita base vengono nascoste pagine Diagnostica e JSON.
-- In Impianto, la modalita base mostra solo schema e valvola master; parallelismo, sicurezze interne e MQTT Discovery restano in Avanzate.
-- Il salvataggio in modalita base preserva le impostazioni avanzate nascoste.
+- Nuova pagina Setup visibile anche in modalita base.
+- Checklist iniziale per meteo, zone, cicli, dry-run e valvola master.
+- Passi guidati per salvare meteo, master valve, creare una zona, creare il primo ciclo e simulare.
+- Preset zona per prato, orto, siepe, goccia e vaso.
 - Test locali estesi a 28 controlli anti-regressione.
 
 ## Pacchetto

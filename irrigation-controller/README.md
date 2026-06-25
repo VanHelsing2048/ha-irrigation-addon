@@ -1,6 +1,6 @@
 # Irrigation Controller
 
-Versione add-on: `0.2.6`
+Versione add-on: `0.2.7`
 
 Add-on Home Assistant in C# per gestire irrigazione manuale e automatica.
 
@@ -24,6 +24,7 @@ L'interfaccia Ingress espone:
 - dettagli di calcolo per zona: deficit, ET, pioggia utile, mm da reintegrare e minuti;
 - dashboard operativa con stato controller, ciclo/zona attivi e motivazione meteo in evidenza;
 - toggle Avanzate persistente per nascondere pagine diagnostiche, JSON e impostazioni tecniche;
+- pagina Setup con checklist guidata, meteo, master valve, creazione zona con preset, primo ciclo e dry-run;
 - configurazione impianto, schema master valve -> zone, sicurezze e MQTT Discovery;
 - anteprima decisionale oggi/domani dentro ogni ciclo;
 - registro eventi per singolo ciclo e diagnostica generale;

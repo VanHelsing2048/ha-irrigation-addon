@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.7] - 2026-06-25
+
+### Added
+
+- Add a non-advanced Setup page with first-configuration checklist.
+- Add guided setup steps for weather entity, optional master valve, zone creation, first cycle creation and dry-run.
+- Add zone presets for prato, orto, siepe, goccia and vaso.
+
 ## [0.2.6] - 2026-06-25
 
 ### Added

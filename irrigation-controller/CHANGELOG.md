@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.7] - 2026-06-25
+
+### Aggiunto
+
+- Pagina Setup visibile in modalita base con checklist di prima configurazione.
+- Passi guidati per meteo, valvola master opzionale, creazione zona, primo ciclo e dry-run.
+- Preset zona per prato, orto, siepe, goccia e vaso.
+
 ## [0.2.6] - 2026-06-25
 
 ### Aggiunto
