@@ -24,39 +24,41 @@ public sealed class UiRenderer
     :root {
       color-scheme: light dark;
       font-family: "Segoe UI", system-ui, sans-serif;
-      background: #eef3ee;
-      color: #20231f;
-      --bg: #eef3ee;
+      background: #f4f7f8;
+      color: #1d2524;
+      --bg: #f4f7f8;
       --panel: #ffffff;
-      --panel-2: #f6f8f3;
-      --panel-3: #e6eee4;
-      --border: #cfdbcf;
-      --text: #20231f;
-      --muted: #606b5a;
-      --accent: #216e48;
-      --accent-2: #0c6478;
-      --danger: #b33b32;
-      --warn: #a86d00;
-      --ok: #247747;
-      --shadow: 0 10px 30px rgba(34, 49, 34, .08);
+      --panel-2: #f8fbfa;
+      --panel-3: #eaf1ef;
+      --border: #d8e2df;
+      --text: #1d2524;
+      --muted: #65736f;
+      --accent: #0f766e;
+      --accent-soft: #dff4ef;
+      --accent-2: #2563eb;
+      --danger: #b42318;
+      --warn: #b76e00;
+      --ok: #15803d;
+      --shadow: 0 8px 22px rgba(15, 35, 32, .06);
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        background: #171a16;
-        color: #eef2e9;
-        --bg: #171a16;
-        --panel: #20241e;
-        --panel-2: #272d24;
-        --panel-3: #30382d;
-        --border: #3b4638;
-        --text: #eef2e9;
-        --muted: #aeb8a7;
-        --accent: #4fa873;
-        --accent-2: #4aa5c0;
-        --danger: #cf6259;
-        --warn: #d49a3a;
-        --ok: #58b77b;
-        --shadow: 0 12px 34px rgba(0, 0, 0, .28);
+        background: #161a19;
+        color: #eef4f2;
+        --bg: #161a19;
+        --panel: #1f2523;
+        --panel-2: #252d2a;
+        --panel-3: #2d3834;
+        --border: #3a4743;
+        --text: #eef4f2;
+        --muted: #b0beb9;
+        --accent: #5ee0c8;
+        --accent-soft: #173b35;
+        --accent-2: #7aa7ff;
+        --danger: #f07167;
+        --warn: #f3b454;
+        --ok: #72d78f;
+        --shadow: 0 12px 30px rgba(0, 0, 0, .24);
       }
     }
     * { box-sizing: border-box; }
@@ -74,7 +76,7 @@ public sealed class UiRenderer
       outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
       outline-offset: 2px;
     }
-    button.secondary { background: #5c6856; }
+    button.secondary { background: #53615d; }
     button.blue { background: var(--accent-2); }
     button.danger { background: var(--danger); }
     button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
@@ -90,34 +92,45 @@ public sealed class UiRenderer
     h1 { font-size: 26px; }
     h2 { font-size: 18px; }
     h3 { font-size: 15px; }
-    .app { min-height: 100vh; display: grid; grid-template-columns: 252px minmax(0, 1fr); }
-    .sidebar { padding: 18px; border-right: 1px solid var(--border); background: var(--panel); position: sticky; top: 0; height: 100vh; }
-    .brand { display: grid; gap: 6px; margin-bottom: 22px; padding: 12px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 266px minmax(0, 1fr); }
+    .sidebar {
+      padding: 18px; border-right: 1px solid var(--border); background: var(--panel);
+      position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 16px;
+    }
+    .brand { display: grid; gap: 7px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
     .brand small { color: var(--muted); }
+    .brand-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand-mark { display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-weight: 900; }
+    .brand h1 { font-size: 22px; }
     .nav { display: grid; gap: 6px; }
-    .nav button { justify-content: flex-start; text-align: left; background: transparent; color: var(--text); border: 1px solid transparent; min-height: 40px; }
+    .nav button { justify-content: flex-start; text-align: left; background: transparent; color: var(--text); border: 1px solid transparent; min-height: 42px; }
     .nav button.active { background: var(--panel-2); border-color: var(--border); box-shadow: inset 3px 0 0 var(--accent); }
-    .nav-code { display: inline-grid; place-items: center; width: 32px; height: 26px; border-radius: 7px; background: var(--panel-3); font-size: 11px; font-weight: 800; color: var(--accent); }
-    .main { min-width: 0; padding: 22px; }
-    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .nav-code { display: inline-grid; place-items: center; width: 32px; height: 28px; border-radius: 7px; background: var(--panel-3); font-size: 11px; font-weight: 800; color: var(--accent); }
+    .sidebar-footer { margin-top: auto; display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .mode-toggle { width: 100%; justify-content: flex-start; }
+    .main { min-width: 0; padding: 26px; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+    }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .grid { display: grid; gap: 12px; }
     .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .dashboard-hero { display: grid; grid-template-columns: minmax(260px, .9fr) minmax(0, 1.1fr); gap: 12px; align-items: stretch; margin-bottom: 12px; }
-    .status-panel { display: grid; gap: 12px; background: linear-gradient(135deg, var(--panel), var(--panel-2)); }
+    .dashboard-hero { display: grid; grid-template-columns: minmax(280px, .85fr) minmax(0, 1.15fr); gap: 14px; align-items: stretch; margin-bottom: 14px; }
+    .status-panel { display: grid; gap: 14px; background: linear-gradient(135deg, var(--panel), var(--panel-2)); border-left: 4px solid var(--accent); }
     .status-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
     .status-title { display: grid; gap: 5px; }
     .status-value { font-size: 26px; font-weight: 800; }
     .quick-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-    .quick-metric { display: grid; gap: 3px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+    .quick-metric { display: grid; gap: 3px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
     .quick-metric span { color: var(--muted); font-size: 12px; }
     .quick-metric strong { font-size: 16px; overflow-wrap: anywhere; }
     .setup-steps { display: grid; gap: 12px; }
     .setup-step { display: grid; gap: 10px; }
     .setup-step-head { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; }
     .setup-index { display: inline-grid; place-items: center; min-width: 30px; height: 30px; border-radius: 8px; background: var(--panel-3); color: var(--accent); font-weight: 800; }
-    .checklist { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-    .check-item { display: grid; gap: 6px; }
+    .checklist { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .check-item { display: grid; gap: 6px; min-height: 112px; }
     .preset-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
     .calibration-panel { display: grid; gap: 10px; margin-top: 12px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
     .calibration-result { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
@@ -125,12 +138,13 @@ public sealed class UiRenderer
     .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px; min-width: 0; box-shadow: var(--shadow); }
+    .panel-title { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
     .metric { display: grid; gap: 4px; }
     .metric strong { display: block; font-size: 20px; margin-top: 3px; overflow-wrap: anywhere; }
     .metric span:first-child { text-transform: uppercase; letter-spacing: .02em; font-size: 11px; }
     .muted { color: var(--muted); }
     .section { display: grid; gap: 12px; margin-top: 18px; }
-    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
     .row { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 10px; align-items: end; }
     .span-2 { grid-column: span 2; }
     .span-3 { grid-column: span 3; }
@@ -172,7 +186,7 @@ public sealed class UiRenderer
     .icon-badge.big svg { width: 42px; height: 42px; }
     .decision { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 5px; }
     .mini { display: flex; gap: 8px; flex-wrap: wrap; }
-    .weather-summary { display: grid; grid-template-columns: minmax(220px, 0.8fr) repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
+    .weather-summary { display: grid; grid-template-columns: minmax(240px, 0.8fr) repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
     .weather-kpi { display: grid; gap: 6px; }
     .weather-kpi strong { font-size: 22px; }
     .forecast-card { display: grid; gap: 8px; }
@@ -188,6 +202,10 @@ public sealed class UiRenderer
     .flow-node { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
     .flow-zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
     .step-row, .time-row { display: grid; grid-template-columns: minmax(180px, 1fr) 130px auto; gap: 8px; align-items: end; }
+    .record-card { display: grid; gap: 12px; }
+    .record-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .record-title { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .record-title h3 { overflow-wrap: anywhere; }
     .cycle-chip, .zone-chip, .event-chip { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .zone-chip { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
     .zone-explain { display: grid; gap: 7px; min-width: 220px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
@@ -206,6 +224,7 @@ public sealed class UiRenderer
     @media (max-width: 900px) {
       .app { grid-template-columns: 1fr; }
       .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+      .sidebar-footer { margin-top: 0; }
       .nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .main { padding: 14px; }
       .metrics, .summary, .two, .three, .plan, .weather-summary, .dashboard-hero, .quick-metrics, .checklist, .preset-row { grid-template-columns: 1fr; }
@@ -218,14 +237,22 @@ public sealed class UiRenderer
   </style>
 </head>
 <body>
-  <div class="app">
+  <div class="app app-shell">
     <aside class="sidebar">
       <div class="brand">
-        <h1>Irrigazione</h1>
-        <small>Controller Home Assistant - v{{APP_VERSION}}</small>
+        <div class="brand-row">
+          <span class="brand-mark">IR</span>
+          <div>
+            <h1>Irrigazione</h1>
+            <small>Controller Home Assistant - v{{APP_VERSION}}</small>
+          </div>
+        </div>
         <span class="pill ok">Ingress UI</span>
       </div>
       <nav class="nav" id="nav"></nav>
+      <div class="sidebar-footer">
+        <button class="ghost mode-toggle" id="advancedToggle" onclick="toggleAdvancedMode()" title="Mostra o nasconde configurazioni tecniche e pagine diagnostiche">Avanzate: off</button>
+      </div>
     </aside>
     <main class="main">
       <div class="topbar">
@@ -234,7 +261,6 @@ public sealed class UiRenderer
           <div class="muted" id="pageSubtitle"></div>
         </div>
         <div class="actions">
-          <button class="ghost" id="advancedToggle" onclick="toggleAdvancedMode()" title="Mostra o nasconde configurazioni tecniche e pagine diagnostiche">Avanzate: off</button>
           <button class="ghost" onclick="reloadAll()">Aggiorna</button>
           <button class="danger" onclick="globalStop()">Stop</button>
         </div>
@@ -505,18 +531,18 @@ function renderDashboard() {
   const validation = overview.validation || { errors: [], warnings: [] };
   return `
     ${dashboardHero(runner)}
-    ${renderPlanPanel()}
     ${renderWeatherSummaryPanel()}
+    ${renderPlanPanel()}
     <section class="section">
       ${validationCard(validation)}
       <div class="card">
-        <h3>Cicli</h3>
+        <div class="panel-title">${iconBadge('BAL')}<h3>Cicli</h3></div>
         <table><thead><tr><th>Nome</th><th>Modo</th><th>Prossima</th><th></th></tr></thead><tbody>
           ${(overview.cycles || []).length ? (overview.cycles || []).map(c => `<tr><td><strong>${esc(c.name)}</strong><div class="muted">${esc(c.id)}</div></td><td>${esc(c.mode)}</td><td>${esc(c.next_run_text)}</td><td><button onclick="startCycle('${esc(c.id)}')">Start</button></td></tr>`).join('') : `<tr><td colspan="4">${emptyState('Nessun ciclo configurato', 'Crea un ciclo dalla pagina Cicli per iniziare a programmare irrigazioni.')}</td></tr>`}
         </tbody></table>
       </div>
       <div class="card">
-        <h3>Zone</h3>
+        <div class="panel-title">${iconBadge('DROP')}<h3>Zone</h3></div>
         <table><thead><tr><th>Zona</th><th>Stato</th><th>Deficit</th><th>Calibrazione</th><th></th></tr></thead><tbody>
           ${(overview.zones || []).length ? (overview.zones || []).map(z => `<tr><td><strong>${esc(z.name)}</strong><div class="muted">${esc(z.entity)}</div></td><td><span class="pill ${esc(z.state_class)}">${esc(z.state)}</span></td><td>${num(z.water_balance_mm).toFixed(1)} mm</td><td>${esc(z.calibration_text)}</td><td><button onclick="startZone('${esc(z.id)}')">5 min</button></td></tr>`).join('') : `<tr><td colspan="5">${emptyState('Nessuna zona configurata', 'Aggiungi una zona e associa una valvola Home Assistant.')}</td></tr>`}
         </tbody></table>
@@ -531,7 +557,7 @@ function renderSetup() {
   const calibrated = (overview.zones || []).filter(zone => zone.calibrated_precipitation_rate_mm_h).length;
   const hasDryRun = (overview.recent_events || []).some(event => String(event.type || '').startsWith('dry_run'));
   return `<section class="section">
-    <div class="card notice"><strong>Configurazione guidata</strong><p class="muted">Segui questi passi per ottenere una configurazione funzionante senza passare dalle sezioni avanzate.</p></div>
+    <div class="card notice"><div class="panel-title">${iconBadge('OK')}<strong>Configurazione guidata</strong></div><p class="muted">Segui questi passi per ottenere una configurazione funzionante senza passare dalle sezioni avanzate.</p></div>
     <div class="grid checklist">
       ${setupCheck('Meteo', hasWeather, hasWeather ? config.weather.entity : 'Da scegliere')}
       ${setupCheck('Zone', zones.length > 0, `${zones.length} configurate`)}
@@ -555,7 +581,7 @@ function setupCheck(label, ok, detail) {
 }
 function setupStep(index, title, text, body) {
   return `<div class="card setup-step">
-    <div class="setup-step-head"><div><span class="setup-index">${index}</span> <strong>${esc(title)}</strong><p class="muted">${esc(text)}</p></div></div>
+    <div class="setup-step-head"><div class="brand-row"><span class="setup-index">${index}</span><div><strong>${esc(title)}</strong><p class="muted">${esc(text)}</p></div></div></div>
     ${body}
   </div>`;
 }
@@ -628,7 +654,7 @@ function dashboardHero(runner) {
       <div class="status-head">
         <div class="status-title">
           <span class="muted">Stato controller</span>
-          <span class="status-value">${esc(active)}</span>
+          <span class="status-value">${iconBadge(runner.is_running ? 'DROP' : 'OK')} ${esc(active)}</span>
           <span class="muted">${esc(runner.status || 'idle')}</span>
         </div>
         <span class="pill ${statusClass}">${esc(runner.is_running ? 'RUN' : 'IDLE')}</span>
@@ -648,7 +674,7 @@ function renderWeatherSummaryPanel() {
   return `<section class="section">
     <div class="weather-summary">
       <div class="card weather-kpi">
-        <span class="muted">Meteo attuale</span>
+        <div class="panel-title">${iconBadge(weatherIconCode(weather.state))}<span class="muted">Meteo attuale</span></div>
         <strong>${esc(formatWeatherState(weather.state))}</strong>
         <span class="muted">${esc(weather.entity || '-')} · forecast ${esc(weather.forecast_type || '-')}</span>
         <div class="mini">
@@ -679,7 +705,7 @@ function renderWeatherReasonCard() {
   const decision = overview.diagnostics?.last_decision;
   const last = overview.diagnostics?.last_weather;
   return `<div class="card">
-    <h3>Perche questa decisione</h3>
+    <div class="panel-title">${iconBadge('BAL')}<h3>Perche questa decisione</h3></div>
     <p>${esc(decision?.message || 'Nessuna decisione registrata')}</p>
     <p class="muted">${last ? `ET0 ${num(last.et0_mm).toFixed(1)} mm, pioggia prevista ${num(last.expected_rain_mm).toFixed(1)} mm, pioggia utile ${num(last.effective_rain_mm).toFixed(1)} mm, probabilita ${num(last.max_rain_probability)}%` : 'Nessun calcolo meteo registrato'}</p>
   </div>`;
@@ -699,6 +725,17 @@ function formatWeatherState(state) {
     unavailable: 'Non disponibile'
   };
   return states[String(state || '').toLowerCase()] || state || '-';
+}
+function weatherIconCode(state) {
+  const value = String(state || '').toLowerCase();
+  if (['clear', 'sunny'].includes(value)) return 'SUN';
+  if (['partlycloudy'].includes(value)) return 'PARTLY';
+  if (['cloudy'].includes(value)) return 'CLOUD';
+  if (['rainy', 'pouring'].includes(value)) return 'RAIN';
+  if (['lightning', 'lightning-rainy'].includes(value)) return 'STORM';
+  if (['snowy', 'snowy-rainy'].includes(value)) return 'SNOW';
+  if (['fog'].includes(value)) return 'FOG';
+  return 'INFO';
 }
 function renderZones() {
   const zones = Object.entries({ ...draftZones, ...(config.zones || {}) });
@@ -721,8 +758,11 @@ function zoneForm(id, z) {
   const isDraft = Object.prototype.hasOwnProperty.call(draftZones, id);
   const status = isDraft ? '<span class="pill warn">bozza</span>' : '<span class="pill ok">salvata</span>';
   const calibrationStatus = ov?.calibrated_precipitation_rate_mm_h ? '<span class="pill ok">calibrata</span>' : '<span class="pill warn">da calibrare</span>';
-  return `<div class="card" id="zone-${esc(id)}">
-    <div class="toolbar"><h3>${esc(z.name || id)} ${status} ${calibrationStatus}</h3><button class="danger" onclick="${esc(action('deleteZone', id))}">Elimina</button></div>
+  return `<div class="card record-card" id="zone-${esc(id)}">
+    <div class="record-head">
+      <div class="record-title">${iconBadge('DROP')}<h3>${esc(z.name || id)} ${status} ${calibrationStatus}</h3></div>
+      <button class="danger" onclick="${esc(action('deleteZone', id))}">Elimina</button>
+    </div>
     <div class="row">
       ${field(`zone-${id}-id`, 'ID', id, 'span-2')}
       ${field(`zone-${id}-name`, 'Nome', z.name, 'span-3')}
@@ -789,8 +829,11 @@ function cycleForm(id, c) {
   const scheduleMode = schedule.start_date || schedule.every_days ? 'interval' : 'weekly';
   const isDraft = Object.prototype.hasOwnProperty.call(draftCycles, id);
   const status = isDraft ? '<span class="pill warn">bozza</span>' : '<span class="pill ok">salvato</span>';
-  return `<div class="card">
-    <div class="toolbar"><h3>${esc(c.name || id)} ${status}</h3><button class="danger" onclick="${esc(action('deleteCycle', id))}">Elimina</button></div>
+  return `<div class="card record-card">
+    <div class="record-head">
+      <div class="record-title">${iconBadge(c.mode === 'Automatic' ? 'ET' : 'OK')}<h3>${esc(c.name || id)} ${status}</h3></div>
+      <button class="danger" onclick="${esc(action('deleteCycle', id))}">Elimina</button>
+    </div>
     <div class="row">
       ${field(`cycle-${id}-id`, 'ID', id, 'span-2')}
       ${field(`cycle-${id}-name`, 'Nome', c.name, 'span-3')}
