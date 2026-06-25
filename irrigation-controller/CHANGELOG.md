@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.3] - 2026-06-25
+
+### Modificato
+
+- Rimossi i duplicati delle card forecast dalla dashboard.
+- Meteo attuale e motivo decisionale ora stanno in una card operativa compatta.
+- Il piano oggi/domani diventa l'unica area previsionale della dashboard.
+
+### Verificato
+
+- Build completata senza warning.
+- Harness locale: 29 controlli superati.
+
 ## [0.3.2] - 2026-06-25
 
 ### Corretto

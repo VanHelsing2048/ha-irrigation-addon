@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.3] - 2026-06-25
+
+### Changed
+
+- Remove duplicated forecast cards from the dashboard.
+- Keep current weather and decision reason as a compact operational card.
+- Use the today/tomorrow plan as the single dashboard forecast area.
+
+### Verified
+
+- Build succeeded with zero warnings.
+- Local regression harness passed all 29 checks.
+
 ## [0.3.2] - 2026-06-25
 
 ### Fixed

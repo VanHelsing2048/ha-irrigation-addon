@@ -1,5 +1,5 @@
 name: "Irrigation Controller"
-version: "0.3.2"
+version: "0.3.3"
 slug: irrigation_controller
 description: "Controller irrigazione con cicli manuali e automatici basati su ET"
 arch:
