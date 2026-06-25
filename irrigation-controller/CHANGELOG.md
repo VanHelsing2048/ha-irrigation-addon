@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0] - 2026-06-25
+
+### Modificato
+
+- Restyling della UI Ingress con shell piu pulita, sidebar persistente, gerarchia dashboard piu chiara e spaziature migliorate.
+- Toggle Avanzate spostato nel footer della sidebar preservando preferenza salvata e comportamento esistente.
+- Dashboard meteo e motivazione decisionale rese piu leggibili con icone piu coerenti e raggruppamento operativo.
+- Schede zone e cicli rese piu ordinate con header strutturati, badge stato e form meno rumorosi.
+
+### Verificato
+
+- Build completata senza warning.
+- Harness locale: 28 controlli superati, inclusi audit salvataggi, entity picker, dry-run, registro eventi ciclo, setup, calibrazione e marker meteo dashboard.
+
 ## [0.2.8] - 2026-06-25
 
 ### Aggiunto
