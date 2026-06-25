@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.4] - 2026-06-25
+
+### Added
+
+- Add `/api/weather/forecast-check` to inspect Home Assistant forecast availability in real time.
+- Add a Weather page panel that checks hourly/daily forecasts, tomorrow records, rain and probability.
+
+### Verified
+
+- Build succeeded with zero warnings.
+- Local regression harness passed all 29 checks.
+
 ## [0.3.3] - 2026-06-25
 
 ### Changed

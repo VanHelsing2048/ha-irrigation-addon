@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.4] - 2026-06-25
+
+### Aggiunto
+
+- Endpoint `/api/weather/forecast-check` per controllare in tempo reale la disponibilita forecast Home Assistant.
+- Pannello nella pagina Meteo per verificare hourly/daily, record di domani, pioggia e probabilita.
+
+### Verificato
+
+- Build completata senza warning.
+- Harness locale: 29 controlli superati.
+
 ## [0.3.3] - 2026-06-25
 
 ### Modificato

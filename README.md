@@ -1,6 +1,6 @@
 # Home Assistant Irrigation Add-on
 
-Versione corrente: `0.3.3`
+Versione corrente: `0.3.4`
 
 Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 
@@ -43,6 +43,7 @@ Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 - La UI usa una shell piu curata con sidebar persistente, navigazione codificata, dashboard operativa, icone meteo e form piu leggibili.
 - Le metriche operative usano icone colorate e tooltip per ridurre il testo ripetitivo.
 - Il forecast Home Assistant viene letto anche dal formato `service_response` usato da `weather.get_forecasts`.
+- La pagina Meteo include una verifica forecast in tempo reale per hourly, daily e disponibilita di domani.
 - La UI mobile usa navigazione compatta in basso e tabelle impilate per schermi stretti.
 - Le impostazioni generali dell'add-on sono disponibili nella scheda Config di Home Assistant e vengono lette da `/data/options.json`.
 
