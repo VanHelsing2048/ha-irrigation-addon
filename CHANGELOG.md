@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.8] - 2026-06-25
+
+### Added
+
+- Add guided zone calibration panel with test start, measurement entry, calculated result and apply action.
+- Add Setup step for zone calibration.
+- Add calibrated / needs calibration badges on zone cards and setup checklist.
+
 ## [0.2.7] - 2026-06-25
 
 ### Added

@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.2.7
+# ha-irrigation-addon 0.2.8
 
-Release Setup guidato dell'add-on Home Assistant `Irrigation Controller`.
+Release calibrazione guidata dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,10 +14,11 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Nuova pagina Setup visibile anche in modalita base.
-- Checklist iniziale per meteo, zone, cicli, dry-run e valvola master.
-- Passi guidati per salvare meteo, master valve, creare una zona, creare il primo ciclo e simulare.
-- Preset zona per prato, orto, siepe, goccia e vaso.
+- Calibrazione zona trasformata da prompt a pannello guidato.
+- Avvio test, inserimento misure in mm, calcolo resa mm/h e uniformita.
+- Pulsante per applicare il risultato alla zona.
+- Step calibrazione aggiunto al Setup.
+- Badge chiari per zone calibrate o ancora da calibrare.
 - Test locali estesi a 28 controlli anti-regressione.
 
 ## Pacchetto

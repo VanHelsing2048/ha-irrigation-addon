@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.8] - 2026-06-25
+
+### Aggiunto
+
+- Pannello di calibrazione guidata zona con avvio test, inserimento misure, risultato calcolato e applicazione.
+- Step Setup dedicato alla calibrazione zona.
+- Badge zona calibrata / da calibrare nelle schede zona e nella checklist Setup.
+
 ## [0.2.7] - 2026-06-25
 
 ### Aggiunto
