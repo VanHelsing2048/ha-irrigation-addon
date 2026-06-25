@@ -1,6 +1,6 @@
 # Home Assistant Irrigation Add-on
 
-Versione corrente: `0.3.0`
+Versione corrente: `0.3.1`
 
 Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 
@@ -23,7 +23,7 @@ Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 - La Dashboard mostra meteo attuale, previsioni oggi/domani, ET, pioggia prevista e motivo della decisione.
 - Le pagine di configurazione mostrano gli errori di salvataggio direttamente in pagina, senza popup invasivi.
 - Ogni ciclo mostra una anteprima decisionale oggi/domani con cosa farebbe la logica ET/meteo.
-- Ogni ciclo ha un registro eventi dedicato, oltre alla diagnostica generale.
+- Ogni ciclo ha un registro eventi dedicato e richiudibile, oltre alla diagnostica generale.
 - I cicli si configurano con step strutturati: zona, durata `hh:mm:ss`, aggiunta e rimozione righe.
 - Gli orari di partenza dei cicli si configurano con input orario guidato e pulsanti aggiungi/rimuovi.
 - La programmazione automatica supporta giorni settimana oppure cadenza ogni N giorni da una data iniziale.
@@ -40,6 +40,7 @@ Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 - La calibrazione zona e guidata: avvio test, inserimento misure, calcolo resa/uniformita e applicazione alla zona.
 - La pagina Impianto visualizza lo schema master valve -> zone con stato delle sicurezze principali.
 - La UI usa una shell piu curata con sidebar persistente, navigazione codificata, dashboard operativa, icone meteo e form piu leggibili.
+- Le metriche operative usano icone colorate e tooltip per ridurre il testo ripetitivo.
 - Le impostazioni generali dell'add-on sono disponibili nella scheda Config di Home Assistant e vengono lette da `/data/options.json`.
 
 ## Sviluppo locale

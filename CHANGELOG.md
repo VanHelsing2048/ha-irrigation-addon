@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.1] - 2026-06-25
+
+### Changed
+
+- Make each cycle event register collapsible by default so cycle cards stay compact.
+- Replace several text-heavy ET/rain/deficit labels with compact icon metrics and tooltips.
+- Add distinct colored icon treatments for sun, rain, ET, deficit, skip, OK and information states.
+
+### Verified
+
+- Build succeeded with zero warnings.
+- Local regression harness passed all 28 checks, including new markers for collapsible cycle logs and colored icon metrics.
+
 ## [0.3.0] - 2026-06-25
 
 ### Changed

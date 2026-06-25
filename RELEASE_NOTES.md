@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.3.0
+# ha-irrigation-addon 0.3.1
 
-Release restyling UI dell'add-on Home Assistant `Irrigation Controller`.
+Release rifinitura UI dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,10 +14,10 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Shell Ingress rivista con sidebar persistente, brand piu chiaro e toggle Avanzate spostato nella navigazione.
-- Dashboard piu ordinata: stato controller, meteo attuale, motivazione decisionale, previsioni e piano hanno una gerarchia piu leggibile.
-- Icone meteo/decisione piu coerenti, con fallback comprensibili quando Home Assistant non fornisce forecast completi.
-- Zone e cicli hanno intestazioni strutturate, badge di stato e form meno rumorosi.
+- Registro eventi dentro ogni ciclo richiudibile di default, cosi non appesantisce la configurazione.
+- Metriche ET, pioggia, probabilita, deficit e acqua richiesta rese piu compatte con icone e tooltip.
+- Icone con colori distinti per sole, nuvole, pioggia, temporale, ET, OK, skip e informazioni.
+- Meno testo ripetitivo nei pannelli previsione e piano.
 - Nessuna modifica al contratto API, ai salvataggi, al dry-run, al setup guidato o alla calibrazione.
 - Test locali: build senza warning e 28 controlli anti-regressione superati.
 

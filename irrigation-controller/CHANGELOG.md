@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.1] - 2026-06-25
+
+### Modificato
+
+- Registro eventi di ogni ciclo richiudibile di default, cosi le schede ciclo restano compatte.
+- Sostituite diverse etichette testuali ET/pioggia/deficit con metriche compatte a icona e tooltip.
+- Aggiunti trattamenti colore distinti per icone sole, pioggia, ET, deficit, skip, OK e informazione.
+
+### Verificato
+
+- Build completata senza warning.
+- Harness locale: 28 controlli superati, inclusi nuovi marker per log ciclo richiudibili e metriche a icona colorata.
+
 ## [0.3.0] - 2026-06-25
 
 ### Modificato
