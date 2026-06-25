@@ -112,6 +112,13 @@ public sealed class UiRenderer
     .quick-metric { display: grid; gap: 3px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
     .quick-metric span { color: var(--muted); font-size: 12px; }
     .quick-metric strong { font-size: 16px; overflow-wrap: anywhere; }
+    .setup-steps { display: grid; gap: 12px; }
+    .setup-step { display: grid; gap: 10px; }
+    .setup-step-head { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; }
+    .setup-index { display: inline-grid; place-items: center; min-width: 30px; height: 30px; border-radius: 8px; background: var(--panel-3); color: var(--accent); font-weight: 800; }
+    .checklist { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .check-item { display: grid; gap: 6px; }
+    .preset-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
     .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -199,7 +206,7 @@ public sealed class UiRenderer
       .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
       .nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .main { padding: 14px; }
-      .metrics, .summary, .two, .three, .plan, .weather-summary, .dashboard-hero, .quick-metrics { grid-template-columns: 1fr; }
+      .metrics, .summary, .two, .three, .plan, .weather-summary, .dashboard-hero, .quick-metrics, .checklist, .preset-row { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
       .step-row, .time-row, .cycle-preview-grid, .setting-board, .plant-flow { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
@@ -237,6 +244,7 @@ public sealed class UiRenderer
 <script>
 const pages = [
   ['dashboard', 'Dashboard', 'Stato, prossime partenze e diagnostica', false],
+  ['setup', 'Setup', 'Configurazione guidata e checklist iniziale', false],
   ['zones', 'Zone', 'Valvole, resa, calibrazione e limiti', false],
   ['cycles', 'Cicli', 'Sequenze manuali e automatiche', false],
   ['weather', 'Meteo', 'Pioggia, ET e soglie di blocco', false],
@@ -350,6 +358,7 @@ function render() {
   }
   content.innerHTML = ({
     dashboard: renderDashboard,
+    setup: renderSetup,
     zones: renderZones,
     cycles: renderCycles,
     weather: renderWeather,
@@ -378,7 +387,7 @@ function renderAdvancedToggle() {
   button.classList.toggle('blue', advancedMode);
 }
 function navCode(id) {
-  return ({ dashboard: 'DB', zones: 'ZN', cycles: 'CY', weather: 'MT', plant: 'IM', diagnostics: 'LG', raw: 'JS' })[id] || 'UI';
+  return ({ dashboard: 'DB', setup: 'ST', zones: 'ZN', cycles: 'CY', weather: 'MT', plant: 'IM', diagnostics: 'LG', raw: 'JS' })[id] || 'UI';
 }
 function normalizeId(raw) {
   return String(raw ?? '').trim().toLowerCase()
@@ -510,6 +519,89 @@ function renderDashboard() {
         </tbody></table>
       </div>
     </section>`;
+}
+function renderSetup() {
+  const zones = Object.keys(config.zones || {});
+  const cycles = Object.entries(config.cycles || {});
+  const hasWeather = !!(config.weather?.entity);
+  const hasMaster = !!(config.hydraulic?.master_valve_entity);
+  const hasDryRun = (overview.recent_events || []).some(event => String(event.type || '').startsWith('dry_run'));
+  return `<section class="section">
+    <div class="card notice"><strong>Configurazione guidata</strong><p class="muted">Segui questi passi per ottenere una configurazione funzionante senza passare dalle sezioni avanzate.</p></div>
+    <div class="grid checklist">
+      ${setupCheck('Meteo', hasWeather, hasWeather ? config.weather.entity : 'Da scegliere')}
+      ${setupCheck('Zone', zones.length > 0, `${zones.length} configurate`)}
+      ${setupCheck('Cicli', cycles.length > 0, `${cycles.length} configurati`)}
+      ${setupCheck('Dry-run', hasDryRun, hasDryRun ? 'Eseguito' : 'Da eseguire')}
+      ${setupCheck('Master', hasMaster, hasMaster ? config.hydraulic.master_valve_entity : 'Opzionale')}
+    </div>
+    <div class="setup-steps">
+      ${setupWeatherStep()}
+      ${setupPlantStep()}
+      ${setupZoneStep()}
+      ${setupCycleStep(zones)}
+      ${setupDryRunStep(cycles)}
+    </div>
+  </section>`;
+}
+function setupCheck(label, ok, detail) {
+  return `<div class="card check-item"><span class="pill ${ok ? 'ok' : 'warn'}">${ok ? 'OK' : 'TODO'}</span><strong>${esc(label)}</strong><span class="muted">${esc(detail)}</span></div>`;
+}
+function setupStep(index, title, text, body) {
+  return `<div class="card setup-step">
+    <div class="setup-step-head"><div><span class="setup-index">${index}</span> <strong>${esc(title)}</strong><p class="muted">${esc(text)}</p></div></div>
+    ${body}
+  </div>`;
+}
+function setupWeatherStep() {
+  const w = config.weather || {};
+  return setupStep(1, 'Scegli il meteo', 'Seleziona una entita weather.* di Home Assistant.', `
+    <div class="row">
+      ${weatherEntityOptionsList()}
+      ${weatherEntityField('setup-weather-entity', 'Entita meteo', w.entity, 'span-6')}
+      <label class="span-3"><span>Forecast</span><select id="setup-weather-type"><option value="hourly" ${(w.forecast_type || 'hourly') === 'hourly' ? 'selected' : ''}>hourly</option><option value="daily" ${w.forecast_type === 'daily' ? 'selected' : ''}>daily</option></select></label>
+    </div>
+    <div class="actions" style="justify-content:flex-start"><button onclick="saveSetupWeather()">Salva meteo</button></div>`);
+}
+function setupPlantStep() {
+  const h = config.hydraulic || {};
+  return setupStep(2, 'Valvola master', 'Se presente, scegli la valvola a monte di tutte le zone. Puoi lasciarla vuota.', `
+    <div class="row">
+      ${entityOptionsList()}
+      ${entityField('setup-master', 'Valvola master opzionale', h.master_valve_entity || '', 'span-6')}
+    </div>
+    <div class="actions" style="justify-content:flex-start"><button onclick="saveSetupMaster()">Salva master</button></div>`);
+}
+function setupZoneStep() {
+  return setupStep(3, 'Crea una zona', 'Scegli valvola e preset: potrai rifinire resa e limiti dopo la calibrazione.', `
+    <div class="row">
+      ${entityOptionsList()}
+      ${field('setup-zone-id', 'ID zona', '', 'span-3')}
+      ${field('setup-zone-name', 'Nome zona', '', 'span-3')}
+      ${entityField('setup-zone-entity', 'Entita valvola/switch', irrigationEntities[0]?.entity_id || '', 'span-4')}
+      <label class="span-2"><span>Preset</span><select id="setup-zone-preset">${Object.entries(zonePresets()).map(([id, preset]) => `<option value="${esc(id)}">${esc(preset.label)}</option>`).join('')}</select></label>
+    </div>
+    <div class="preset-row muted">
+      <span>Prato: irrigazione uniforme</span><span>Orto: fabbisogno piu alto</span><span>Siepe: cicli medi</span><span>Goccia: tempi piu lunghi</span>
+    </div>
+    <div class="actions" style="justify-content:flex-start"><button onclick="createSetupZone()">Crea zona</button><button class="secondary" onclick="setPage('zones')">Apri Zone</button></div>`);
+}
+function setupCycleStep(zones) {
+  return setupStep(4, 'Crea il primo ciclo', 'Genera un ciclo con le zone esistenti. In automatico la durata sara calcolata da ET e meteo.', `
+    <div class="row">
+      ${field('setup-cycle-id', 'ID ciclo', 'mattina', 'span-3')}
+      ${field('setup-cycle-name', 'Nome ciclo', 'Mattina', 'span-3')}
+      <label class="span-2"><span>Modo</span><select id="setup-cycle-mode"><option>Automatic</option><option>Manual</option></select></label>
+      <label class="span-2"><span>Ora</span><input id="setup-cycle-time" type="time" value="06:00"></label>
+    </div>
+    <div class="actions" style="justify-content:flex-start"><button onclick="createSetupCycle()">Crea ciclo</button><button class="secondary" onclick="setPage('cycles')">Apri Cicli</button></div>
+    <span class="muted">Zone disponibili: ${esc(zones.length ? zones.join(', ') : 'nessuna')}</span>`);
+}
+function setupDryRunStep(cycles) {
+  return setupStep(5, 'Simula prima di irrigare', 'Esegui un dry-run per vedere cosa farebbe il controller senza comandare valvole reali.', `
+    <div class="actions" style="justify-content:flex-start">
+      ${cycles.length ? cycles.map(([id, cycle]) => `<button class="secondary" onclick="${esc(action('dryRunCycle', id))}">Simula ${esc(cycle.name || id)}</button>`).join('') : '<button disabled>Nessun ciclo disponibile</button>'}
+    </div>`);
 }
 function dashboardHero(runner) {
   const active = runner.is_running ? 'In esecuzione' : 'In attesa';
@@ -962,6 +1054,15 @@ function daysControl(id, values) {
   return `<div class="days">${dayNames.map((d, i) => `<label><input type="checkbox" data-days="${esc(id)}" value="${d}" ${values.includes(d) ? 'checked' : ''}>${dayLabels[i]}</label>`).join('')}</div>`;
 }
 function getDays(id) { return [...document.querySelectorAll(`[data-days="${id}"]:checked`)].map(x => x.value); }
+function zonePresets() {
+  return {
+    prato: { label: 'Prato', precipitation_rate_mm_h: 12, crop_coefficient: 0.85, min_minutes: 5, max_minutes: 30, target_deficit_mm: 1 },
+    orto: { label: 'Orto', precipitation_rate_mm_h: 10, crop_coefficient: 1.05, min_minutes: 6, max_minutes: 35, target_deficit_mm: 0.5 },
+    siepe: { label: 'Siepe', precipitation_rate_mm_h: 8, crop_coefficient: 0.75, min_minutes: 5, max_minutes: 30, target_deficit_mm: 1 },
+    goccia: { label: 'Goccia', precipitation_rate_mm_h: 5, crop_coefficient: 0.65, min_minutes: 10, max_minutes: 60, target_deficit_mm: 1.5 },
+    vaso: { label: 'Vaso', precipitation_rate_mm_h: 15, crop_coefficient: 0.7, min_minutes: 2, max_minutes: 12, target_deficit_mm: 0.5 }
+  };
+}
 function formatDurationInput(seconds) {
   const total = Math.max(0, Number(seconds) || 0);
   const h = Math.floor(total / 3600);
@@ -1016,6 +1117,61 @@ async function startZone(id) { try { toast((await api('/api/zones/' + id + '/sta
 async function stopZone(id) { try { await api('/api/zones/' + id + '/stop', { method: 'POST' }); toast('Zona fermata'); } catch(e) { toast(e.message || 'Errore stop zona', true); } }
 async function globalStop() { try { await api('/api/stop', { method: 'POST' }); toast('Stop richiesto'); } catch(e) { toast(e.message || 'Errore stop', true); } }
 async function applyCalibration(id) { try { toast((await api('/api/calibration/zones/' + id + '/apply', { method: 'POST' })).message); await reloadAll(); } catch(e) { toast(e.message || 'Nessuna calibrazione da applicare', true); } }
+async function saveSetupWeather() {
+  const next = cloneConfig();
+  next.weather ||= {};
+  next.weather.entity = val('setup-weather-entity');
+  next.weather.forecast_type = val('setup-weather-type') || 'hourly';
+  if (!next.weather.entity) return toast('Scegli una entita meteo', true);
+  await saveConfig(next, 'Meteo salvato', true, 'weather_saved');
+}
+async function saveSetupMaster() {
+  const next = cloneConfig();
+  next.hydraulic ||= {};
+  next.hydraulic.master_valve_entity = val('setup-master') || null;
+  await saveConfig(next, 'Master salvata', true, 'plant_saved');
+}
+async function createSetupZone() {
+  const id = normalizeId(val('setup-zone-id') || val('setup-zone-name'));
+  if (!id) return toast('Inserisci ID o nome zona', true);
+  const next = cloneConfig();
+  next.zones ||= {};
+  if (next.zones[id]) return toast('Esiste gia una zona con questo ID', true);
+  const preset = zonePresets()[val('setup-zone-preset')] || zonePresets().prato;
+  const entity = val('setup-zone-entity');
+  if (!entity) return toast('Scegli una entita valvola/switch', true);
+  next.zones[id] = {
+    name: val('setup-zone-name') || id,
+    entity,
+    precipitation_rate_mm_h: preset.precipitation_rate_mm_h,
+    crop_coefficient: preset.crop_coefficient,
+    min_minutes: preset.min_minutes,
+    max_minutes: preset.max_minutes,
+    target_deficit_mm: preset.target_deficit_mm,
+    soil_moisture_entity: null,
+    skip_if_soil_moisture_above: null
+  };
+  await saveConfig(next, 'Zona creata dal setup', true, 'zone_saved', id);
+}
+async function createSetupCycle() {
+  const next = cloneConfig();
+  next.cycles ||= {};
+  const zones = Object.keys(next.zones || {});
+  if (!zones.length) return toast('Crea almeno una zona prima del ciclo', true);
+  const id = normalizeId(val('setup-cycle-id') || val('setup-cycle-name'));
+  if (!id) return toast('Inserisci ID o nome ciclo', true);
+  if (next.cycles[id]) return toast('Esiste gia un ciclo con questo ID', true);
+  const mode = val('setup-cycle-mode') || 'Automatic';
+  const time = val('setup-cycle-time') || '06:00';
+  next.cycles[id] = {
+    name: val('setup-cycle-name') || id,
+    enabled: true,
+    mode,
+    schedule: mode === 'Automatic' ? { days: [], times: [time], start_date: null, every_days: null } : null,
+    steps: zones.map(zoneId => ({ zones: [zoneId], duration_seconds: 600, duration_minutes: 10 }))
+  };
+  await saveConfig(next, 'Ciclo creato dal setup', true, 'cycle_saved', '', id);
+}
 async function calibrateZone(id) {
   const minutes = prompt('Minuti test calibrazione', '10');
   if (!minutes) return;
