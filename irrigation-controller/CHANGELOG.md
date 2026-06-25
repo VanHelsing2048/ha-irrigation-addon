@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.6] - 2026-06-25
+
+### Aggiunto
+
+- Toggle Avanzate persistente salvato nel browser.
+- Pagine Diagnostica e JSON nascoste quando Avanzate e disattivo.
+- Impostazioni tecniche Impianto nascoste in modalita base: parallelismo, sicurezze interne e MQTT Discovery.
+
+### Corretto
+
+- Le impostazioni avanzate nascoste vengono preservate quando si salva Impianto in modalita base.
+
 ## [0.2.5] - 2026-06-25
 
 ### Aggiunto

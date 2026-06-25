@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.2.5
+# ha-irrigation-addon 0.2.6
 
-Release UI/diagnostica dell'add-on Home Assistant `Irrigation Controller`.
+Release modalita base/avanzata dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,10 +14,10 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Pagina Meteo con diagnostica dei dati ricevuti da Home Assistant: record, tipo forecast, primo/ultimo timestamp ed esito.
-- Piano decisionale piu trasparente: ogni zona mostra deficit, ET, pioggia utile, mm da reintegrare e minuti.
-- Dashboard piu operativa con stato controller, ciclo/zona attivi, bilancio e motivazione meteo in alto.
-- Restyling compatto delle card operative e dei riepiloghi.
+- Toggle Avanzate persistente, salvato nel browser.
+- In modalita base vengono nascoste pagine Diagnostica e JSON.
+- In Impianto, la modalita base mostra solo schema e valvola master; parallelismo, sicurezze interne e MQTT Discovery restano in Avanzate.
+- Il salvataggio in modalita base preserva le impostazioni avanzate nascoste.
 - Test locali estesi a 28 controlli anti-regressione.
 
 ## Pacchetto

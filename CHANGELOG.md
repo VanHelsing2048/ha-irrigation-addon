@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.6] - 2026-06-25
+
+### Added
+
+- Add a persistent Advanced mode toggle saved in browser local storage.
+- Hide Diagnostics and JSON pages while Advanced mode is disabled.
+- Hide advanced plant settings such as parallelism, safety internals and MQTT Discovery in basic mode.
+
+### Fixed
+
+- Preserve hidden advanced plant settings when saving the plant page in basic mode.
+
 ## [0.2.5] - 2026-06-25
 
 ### Added
