@@ -225,6 +225,7 @@ public sealed class UiRenderer
           <div class="muted" id="pageSubtitle"></div>
         </div>
         <div class="actions">
+          <button class="ghost" id="advancedToggle" onclick="toggleAdvancedMode()" title="Mostra o nasconde configurazioni tecniche e pagine diagnostiche">Avanzate: off</button>
           <button class="ghost" onclick="reloadAll()">Aggiorna</button>
           <button class="danger" onclick="globalStop()">Stop</button>
         </div>
@@ -235,13 +236,13 @@ public sealed class UiRenderer
   <div class="toast" id="toast"></div>
 <script>
 const pages = [
-  ['dashboard', 'Dashboard', 'Stato, prossime partenze e diagnostica'],
-  ['zones', 'Zone', 'Valvole, resa, calibrazione e limiti'],
-  ['cycles', 'Cicli', 'Sequenze manuali e automatiche'],
-  ['weather', 'Meteo', 'Pioggia, ET e soglie di blocco'],
-  ['plant', 'Impianto', 'Idraulica e sicurezze'],
-  ['diagnostics', 'Diagnostica', 'Eventi, decisioni e ultimo meteo'],
-  ['raw', 'JSON', 'Editor avanzato']
+  ['dashboard', 'Dashboard', 'Stato, prossime partenze e diagnostica', false],
+  ['zones', 'Zone', 'Valvole, resa, calibrazione e limiti', false],
+  ['cycles', 'Cicli', 'Sequenze manuali e automatiche', false],
+  ['weather', 'Meteo', 'Pioggia, ET e soglie di blocco', false],
+  ['plant', 'Impianto', 'Idraulica e sicurezze', false],
+  ['diagnostics', 'Diagnostica', 'Eventi, decisioni e ultimo meteo', true],
+  ['raw', 'JSON', 'Editor avanzato', true]
 ];
 const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const dayLabels = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
@@ -253,6 +254,7 @@ let weatherEntities = [];
 let draftZones = {};
 let draftCycles = {};
 let lastValidation = null;
+let advancedMode = localStorage.getItem('irrigation.advancedMode') === 'true';
 let currentPage = location.hash.replace('#','') || 'dashboard';
 
 function esc(value) {
@@ -324,19 +326,23 @@ async function saveConfig(nextConfig = config, successMessage = 'Configurazione 
 }
 function cloneConfig() { return JSON.parse(JSON.stringify(config)); }
 function setPage(page) {
+  if (!advancedMode && isAdvancedPage(page)) page = 'dashboard';
   currentPage = page;
   location.hash = page;
   render();
 }
 window.addEventListener('hashchange', () => {
   currentPage = location.hash.replace('#','') || 'dashboard';
+  if (!advancedMode && isAdvancedPage(currentPage)) currentPage = 'dashboard';
   render();
 });
 function render() {
   renderNav();
-  const page = pages.find(x => x[0] === currentPage) || pages[0];
+  if (!advancedMode && isAdvancedPage(currentPage)) currentPage = 'dashboard';
+  const page = visiblePages().find(x => x[0] === currentPage) || pages[0];
   document.getElementById('pageTitle').textContent = page[1];
   document.getElementById('pageSubtitle').textContent = page[2];
+  renderAdvancedToggle();
   const content = document.getElementById('content');
   if (!config || !overview) {
     content.innerHTML = '<div class="card">Caricamento...</div>';
@@ -353,9 +359,23 @@ function render() {
   }[currentPage] || renderDashboard)();
 }
 function renderNav() {
-  document.getElementById('nav').innerHTML = pages.map(([id, label]) =>
+  document.getElementById('nav').innerHTML = visiblePages().map(([id, label]) =>
     `<button class="${id === currentPage ? 'active' : ''}" onclick="setPage('${id}')"><span class="nav-code">${esc(navCode(id))}</span>${esc(label)}</button>`
   ).join('');
+}
+function visiblePages() { return pages.filter(page => advancedMode || !page[3]); }
+function isAdvancedPage(page) { return pages.some(item => item[0] === page && item[3]); }
+function toggleAdvancedMode() {
+  advancedMode = !advancedMode;
+  localStorage.setItem('irrigation.advancedMode', String(advancedMode));
+  if (!advancedMode && isAdvancedPage(currentPage)) currentPage = 'dashboard';
+  render();
+}
+function renderAdvancedToggle() {
+  const button = document.getElementById('advancedToggle');
+  if (!button) return;
+  button.textContent = advancedMode ? 'Avanzate: on' : 'Avanzate: off';
+  button.classList.toggle('blue', advancedMode);
 }
 function navCode(id) {
   return ({ dashboard: 'DB', zones: 'ZN', cycles: 'CY', weather: 'MT', plant: 'IM', diagnostics: 'LG', raw: 'JS' })[id] || 'UI';
@@ -780,16 +800,19 @@ function renderPlant() {
   return `<section class="section">
     <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">Idraulica, sicurezze e MQTT Discovery possono essere gestite dalla scheda Config dell'add-on. Il collegamento laterale usa Ingress con panel_title/panel_icon.</p></div>
     ${validationPanel('hydraulic')}
-    ${validationPanel('safety')}
-    ${validationPanel('mqtt_discovery')}
+    ${advancedMode ? validationPanel('safety') : ''}
+    ${advancedMode ? validationPanel('mqtt_discovery') : ''}
     ${plantFlow(h, s)}
     <div class="card"><h3>Idraulica</h3><div class="row">
       ${entityOptionsList()}
       ${entityField('hyd-master', 'Valvola master', h.master_valve_entity || '', 'span-4')}
+      ${advancedMode ? `
       <label class="span-3"><span>Zone parallele</span><select id="hyd-parallel"><option value="false" ${!h.allow_parallel_zones ? 'selected' : ''}>No</option><option value="true" ${h.allow_parallel_zones ? 'selected' : ''}>Si</option></select></label>
       ${numberField('hyd-max', 'Max zone insieme', h.max_parallel_zones, 'span-3')}
       ${numberField('hyd-pause', 'Pausa tra zone sec.', h.pause_between_zones_seconds, 'span-3')}
+      ` : ''}
     </div></div>
+    ${advancedMode ? `
     <div class="card"><h3>Sicurezze</h3><div class="row">
       ${selectBool('safe-startup', "Spegni all'avvio", s.turn_off_all_zones_on_startup, 'span-3')}
       ${selectBool('safe-error', 'Spegni su errore', s.stop_all_known_zones_on_error, 'span-3')}
@@ -805,6 +828,7 @@ function renderPlant() {
       ${field('mqtt-topic', 'Base topic', m.base_topic, 'span-3')}
       ${numberField('mqtt-interval', 'Intervallo sec.', m.publish_interval_seconds, 'span-3')}
     </div></div>
+    ` : `<div class="card notice"><strong>Modalita base</strong><p class="muted">Sicurezze, parallelismo e MQTT Discovery sono nascosti. Attiva Avanzate per modificarli.</p></div>`}
     <div class="actions" style="justify-content:flex-start"><button onclick="savePlant()">Salva impianto</button></div>
   </section>`;
 }
@@ -1143,18 +1167,27 @@ async function saveWeather() {
 }
 async function savePlant() {
   const next = cloneConfig();
-  next.hydraulic = { allow_parallel_zones: val('hyd-parallel') === 'true', max_parallel_zones: num(val('hyd-max'), 1), pause_between_zones_seconds: num(val('hyd-pause'), 0), master_valve_entity: val('hyd-master') || null };
-  next.safety = {
-    ...(next.safety || {}),
-    turn_off_all_zones_on_startup: val('safe-startup') === 'true',
-    stop_all_known_zones_on_error: val('safe-error') === 'true',
-    verify_zone_state_after_switch: val('safe-verify') === 'true',
-    manual_runs_ignore_weather: val('safe-manualweather') === 'true',
-    switch_retry_count: num(val('safe-retry'), 2),
-    switch_retry_delay_ms: num(val('safe-delay'), 750),
-    max_zone_minutes: num(val('safe-maxminutes'), 60)
+  const currentHydraulic = next.hydraulic || {};
+  next.hydraulic = {
+    ...currentHydraulic,
+    allow_parallel_zones: advancedMode ? val('hyd-parallel') === 'true' : currentHydraulic.allow_parallel_zones,
+    max_parallel_zones: advancedMode ? num(val('hyd-max'), 1) : currentHydraulic.max_parallel_zones,
+    pause_between_zones_seconds: advancedMode ? num(val('hyd-pause'), 0) : currentHydraulic.pause_between_zones_seconds,
+    master_valve_entity: val('hyd-master') || null
   };
-  next.mqtt_discovery = { enabled: val('mqtt-enabled') === 'true', discovery_prefix: val('mqtt-prefix'), base_topic: val('mqtt-topic'), publish_interval_seconds: num(val('mqtt-interval'), 30) };
+  if (advancedMode) {
+    next.safety = {
+      ...(next.safety || {}),
+      turn_off_all_zones_on_startup: val('safe-startup') === 'true',
+      stop_all_known_zones_on_error: val('safe-error') === 'true',
+      verify_zone_state_after_switch: val('safe-verify') === 'true',
+      manual_runs_ignore_weather: val('safe-manualweather') === 'true',
+      switch_retry_count: num(val('safe-retry'), 2),
+      switch_retry_delay_ms: num(val('safe-delay'), 750),
+      max_zone_minutes: num(val('safe-maxminutes'), 60)
+    };
+    next.mqtt_discovery = { enabled: val('mqtt-enabled') === 'true', discovery_prefix: val('mqtt-prefix'), base_topic: val('mqtt-topic'), publish_interval_seconds: num(val('mqtt-interval'), 30) };
+  }
   await saveConfig(next, 'Impianto salvato', true, 'plant_saved');
 }
 async function saveRaw() {
