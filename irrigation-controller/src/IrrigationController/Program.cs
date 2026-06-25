@@ -20,6 +20,7 @@ builder.Services.AddSingleton<IrrigationConfigValidator>();
 builder.Services.AddSingleton<IrrigationStateStore>();
 builder.Services.AddHttpClient<HomeAssistantClient>();
 builder.Services.AddSingleton<WeatherAdjustmentService>();
+builder.Services.AddSingleton<WeatherForecastDiagnosticsService>();
 builder.Services.AddSingleton<WaterBalanceService>();
 builder.Services.AddSingleton<IrrigationSafetyService>();
 builder.Services.AddSingleton<CalibrationService>();
@@ -128,6 +129,15 @@ app.MapGet("/api/diagnostics", async (IrrigationStateStore stateStore, Cancellat
 {
     var state = await stateStore.GetAsync(cancellationToken);
     return Results.Ok(state.Diagnostics);
+});
+
+app.MapGet("/api/weather/forecast-check", async (
+    IrrigationConfigStore store,
+    WeatherForecastDiagnosticsService weatherDiagnostics,
+    CancellationToken cancellationToken) =>
+{
+    var config = await store.GetAsync(cancellationToken);
+    return Results.Ok(await weatherDiagnostics.CheckAsync(config, cancellationToken));
 });
 
 app.MapPost("/api/cycles/{cycleId}/start", async (

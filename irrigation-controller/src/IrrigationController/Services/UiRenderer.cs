@@ -217,6 +217,12 @@ public sealed class UiRenderer
     .setting-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
     .setting-tile { display: grid; gap: 5px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
     .setting-tile span:first-child { color: var(--muted); font-size: 12px; }
+    .forecast-check { display: grid; gap: 10px; }
+    .forecast-check-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .forecast-check-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .forecast-type-card { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .forecast-type-card.ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
+    .forecast-type-card.warn { border-color: color-mix(in srgb, var(--warn) 55%, var(--border)); }
     .plant-flow { display: grid; grid-template-columns: minmax(180px, .55fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
     .flow-node { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
     .flow-zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
@@ -255,7 +261,7 @@ public sealed class UiRenderer
       .main { padding: 14px; }
       .metrics, .summary, .two, .three, .plan, .weather-summary, .dashboard-hero, .quick-metrics, .checklist, .preset-row { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
-      .step-row, .time-row, .cycle-preview-grid, .setting-board, .plant-flow { grid-template-columns: 1fr; }
+      .step-row, .time-row, .cycle-preview-grid, .setting-board, .forecast-check-grid, .plant-flow { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
       .topbar { align-items: flex-start; flex-direction: column; }
       .actions { justify-content: flex-start; }
@@ -363,6 +369,7 @@ let overview = null;
 let decisionPlan = null;
 let irrigationEntities = [];
 let weatherEntities = [];
+let weatherForecastCheck = null;
 let draftZones = {};
 let draftCycles = {};
 let lastValidation = null;
@@ -1014,6 +1021,7 @@ function renderWeather() {
   <div class="card notice"><strong>Configurazione Home Assistant</strong><p class="muted">In uso reale queste opzioni generali sono pensate per la scheda Config dell'add-on. Questa vista resta utile per sviluppo e modifiche avanzate.</p></div>
   ${validationPanel('weather')}
   ${weatherSettingsOverview(w)}
+  ${weatherForecastCheckPanel()}
   <div class="card"><div class="row">
     ${weatherEntityOptionsList()}
     ${weatherEntityField('weather-entity', 'Entita meteo', w.entity, 'span-4')}
@@ -1096,6 +1104,47 @@ function weatherDiagnosticsPanel(last) {
       <div class="setting-tile span-6"><span>Prima previsione</span><strong>${esc(first)}</strong></div>
       <div class="setting-tile span-6"><span>Ultima previsione</span><strong>${esc(lastAt)}</strong></div>
     </div>
+  </div>`;
+}
+function weatherForecastCheckPanel() {
+  const result = weatherForecastCheck;
+  return `<div class="card forecast-check">
+    <div class="forecast-check-head">
+      <div>
+        <h3>Verifica forecast Home Assistant</h3>
+        <span class="muted">Legge ora hourly, daily e disponibilita di domani.</span>
+      </div>
+      <button class="blue" onclick="checkWeatherForecast()">Verifica forecast</button>
+    </div>
+    ${result ? weatherForecastCheckResult(result) : '<div class="empty"><strong>Nessuna verifica eseguita</strong><span>Usa il pulsante per interrogare Home Assistant in tempo reale.</span></div>'}
+  </div>`;
+}
+function weatherForecastCheckResult(result) {
+  const checkedAt = result.checked_at ? new Date(result.checked_at).toLocaleString() : '-';
+  return `<div class="forecast-check">
+    <div class="mini">
+      <span class="pill">${esc(result.entity || '-')}</span>
+      <span class="pill">${esc(formatWeatherState(result.state))}</span>
+      <span class="muted">${esc(checkedAt)}</span>
+    </div>
+    <div class="forecast-check-grid">${(result.types || []).map(weatherForecastTypeCard).join('')}</div>
+  </div>`;
+}
+function weatherForecastTypeCard(item) {
+  const first = item.first_forecast_at ? new Date(item.first_forecast_at).toLocaleString() : '-';
+  const last = item.last_forecast_at ? new Date(item.last_forecast_at).toLocaleString() : '-';
+  const cls = item.available && item.tomorrow_available ? 'ok' : 'warn';
+  return `<div class="forecast-type-card ${cls}">
+    <div class="toolbar"><strong>${esc(item.type || '-')}</strong><span class="pill ${cls}">${item.available ? 'ricevuto' : 'assente'}</span></div>
+    <div class="icon-metrics">
+      ${iconMetric('INFO', `${num(item.record_count, 0)}`, 'Record forecast ricevuti')}
+      ${iconMetric(item.tomorrow_available ? 'OK' : 'SKIP', `${num(item.tomorrow_records, 0)}`, 'Record disponibili per domani')}
+      ${iconMetric('RAIN', `${num(item.tomorrow_rain_mm).toFixed(1)} mm`, 'Pioggia prevista domani')}
+      ${iconMetric('PCT', `${num(item.tomorrow_max_rain_probability)}%`, 'Probabilita massima domani')}
+    </div>
+    <span><strong>Domani:</strong> ${esc(formatWeatherState(item.tomorrow_condition || ''))}</span>
+    <span class="muted">Da ${esc(first)} a ${esc(last)}</span>
+    <span class="muted">${esc(item.message || '')}</span>
   </div>`;
 }
 function plantFlow(h, s) {
@@ -1492,6 +1541,15 @@ async function saveWeather() {
     external_et0_sensor_entity: val('weather-et0') || null
   };
   await saveConfig(next, 'Meteo salvato', true, 'weather_saved');
+}
+async function checkWeatherForecast() {
+  try {
+    weatherForecastCheck = await api('/api/weather/forecast-check');
+    toast('Forecast verificato');
+    render();
+  } catch (e) {
+    toast(e.message || 'Errore verifica forecast', true);
+  }
 }
 async function savePlant() {
   const next = cloneConfig();

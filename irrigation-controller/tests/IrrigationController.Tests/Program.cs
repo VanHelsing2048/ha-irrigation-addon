@@ -438,7 +438,8 @@ static void AssertUiContainsWeatherEntityPicker()
         "api('/api/entities/weather')",
         "let weatherEntities = []",
         "weather-entities",
-        "weatherEntityField('weather-entity'"
+        "weatherEntityField('weather-entity'",
+        "/api/weather/forecast-check"
     };
 
     foreach (var value in expected)
@@ -653,6 +654,11 @@ static void AssertUiContainsWeatherAndPlantOverview()
         "weatherSettingsOverview",
         "Dati ricevuti da Home Assistant",
         "weatherDiagnosticsPanel",
+        "Verifica forecast Home Assistant",
+        "checkWeatherForecast",
+        "weatherForecastCheckPanel",
+        "tomorrow_available",
+        "tomorrow_rain_mm",
         "forecast_records",
         "first_forecast_at",
         "Ultima ET0",
