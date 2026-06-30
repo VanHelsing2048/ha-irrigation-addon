@@ -1,6 +1,6 @@
 # Home Assistant Irrigation Add-on
 
-Versione corrente: `0.3.4`
+Versione corrente: `0.3.5`
 
 Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 
@@ -30,6 +30,7 @@ Repository add-on per Home Assistant con controller irrigazione scritto in C#.
 - La programmazione automatica supporta giorni settimana oppure cadenza ogni N giorni da una data iniziale.
 - L'impianto puo usare una valvola master a monte delle zone.
 - I cicli possono essere simulati in dry-run senza comandare valvole reali.
+- La pagina Simulazione mostra dry-run visuale con timeline, riepilogo, meteo usato e dettagli zona.
 - La pagina Meteo riepiloga entita, soglie, finestra pioggia, ultima ET0 e pioggia utile.
 - La Dashboard usa icone meteo SVG e fallback leggibili quando Home Assistant non restituisce forecast.
 - Le schede meteo oggi/domani combinano forecast `daily` e tipo configurato per evitare una dashboard muta quando l'orario restituisce solo oggi.

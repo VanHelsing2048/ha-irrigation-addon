@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.5] - 2026-06-30
+
+### Added
+
+- Add a dedicated Simulation page for visual dry-runs.
+- Add `/api/simulation/{cycleId}` returning structured timeline, summary, weather and zone details without commanding valves.
+- Add visual cards for total duration, planned/skipped zones, estimated water, weather use and per-zone reasons.
+
+### Verified
+
+- Build succeeded with zero warnings.
+- Local regression harness passed all 29 checks.
+
 ## [0.3.4] - 2026-06-25
 
 ### Added

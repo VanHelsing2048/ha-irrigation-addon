@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.5] - 2026-06-30
+
+### Aggiunto
+
+- Pagina Simulazione dedicata ai dry-run visuali.
+- Endpoint `/api/simulation/{cycleId}` con timeline, riepilogo, meteo e dettagli zona senza comandare valvole.
+- Card visuali per durata totale, zone previste/saltate, acqua stimata, uso meteo e motivi per zona.
+
+### Verificato
+
+- Build completata senza warning.
+- Harness locale: 29 controlli superati.
+
 ## [0.3.4] - 2026-06-25
 
 ### Aggiunto

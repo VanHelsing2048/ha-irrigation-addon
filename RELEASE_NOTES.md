@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.3.4
+# ha-irrigation-addon 0.3.5
 
-Release diagnostica meteo dell'add-on Home Assistant `Irrigation Controller`.
+Release simulazione dry-run dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,11 +14,11 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Nuovo pannello "Verifica forecast Home Assistant" nella pagina Meteo.
-- Controllo in tempo reale di forecast hourly e daily.
-- Mostra record totali, record disponibili per domani, pioggia prevista e probabilita.
-- Nuovo endpoint API `/api/weather/forecast-check`.
-- Nessuna modifica ai salvataggi, al dry-run, al setup guidato, alla calibrazione o al parser forecast operativo.
+- Nuova pagina Simulazione per avviare dry-run visuali.
+- Timeline grafica con master valve, zone, pause e step saltati.
+- Riepilogo con durata totale, zone previste/saltate, acqua stimata e uso meteo.
+- Dettaglio per zona con deficit, ET, pioggia utile, acqua stimata e motivo.
+- Nuovo endpoint `/api/simulation/{cycleId}` che non comanda valvole reali.
 - Test locali: build senza warning e 29 controlli anti-regressione superati.
 
 ## Pacchetto
