@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.6] - 2026-06-30
+
+### Added
+
+- Add per-zone dry-run formulas explaining how irrigation minutes are calculated.
+- Show automatic cycle math with deficit, ET, effective rain, target deficit, precipitation rate and min/max clamps.
+- Show manual cycle math with configured step duration and safety cap.
+
+### Fixed
+
+- Align simulation explanation with the real duration logic when the daily water balance has already been updated.
+
+### Verified
+
+- Build succeeded with zero warnings.
+- Local regression harness passed all 29 checks.
+
 ## [0.3.5] - 2026-06-30
 
 ### Added

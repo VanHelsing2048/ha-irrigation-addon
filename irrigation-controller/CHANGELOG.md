@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.6] - 2026-06-30
+
+### Aggiunto
+
+- Formula per zona nel dry-run, per spiegare come vengono calcolati i minuti di irrigazione.
+- Formula automatica con deficit, ET, pioggia utile, deficit target, portata zona e limiti min/max.
+- Formula manuale con durata impostata nello step e limite massimo di sicurezza.
+
+### Corretto
+
+- La spiegazione della simulazione ora segue la stessa logica del calcolo reale quando il bilancio acqua giornaliero e gia aggiornato.
+
+### Verificato
+
+- Build completata senza warning.
+- Harness locale: 29 controlli superati.
+
 ## [0.3.5] - 2026-06-30
 
 ### Aggiunto

@@ -1,6 +1,6 @@
-# ha-irrigation-addon 0.3.5
+# ha-irrigation-addon 0.3.6
 
-Release simulazione dry-run dell'add-on Home Assistant `Irrigation Controller`.
+Release spiegazione formule dry-run dell'add-on Home Assistant `Irrigation Controller`.
 
 ## Installazione
 
@@ -14,11 +14,10 @@ Poi installa l'add-on `Irrigation Controller`.
 
 ## Contenuto
 
-- Nuova pagina Simulazione per avviare dry-run visuali.
-- Timeline grafica con master valve, zone, pause e step saltati.
-- Riepilogo con durata totale, zone previste/saltate, acqua stimata e uso meteo.
-- Dettaglio per zona con deficit, ET, pioggia utile, acqua stimata e motivo.
-- Nuovo endpoint `/api/simulation/{cycleId}` che non comanda valvole reali.
+- Nella pagina Simulazione ogni zona mostra una formula testuale del tempo calcolato.
+- I cicli automatici spiegano deficit attuale, ET zona, pioggia utile, target, portata e limiti min/max.
+- I cicli manuali spiegano durata impostata nello step e limite massimo di sicurezza.
+- La formula segue la logica reale anche quando il bilancio acqua odierno e gia stato aggiornato.
 - Test locali: build senza warning e 29 controlli anti-regressione superati.
 
 ## Pacchetto
