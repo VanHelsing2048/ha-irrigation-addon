@@ -231,6 +231,7 @@ public sealed class UiRenderer
     .timeline-item strong, .simulation-zone strong { overflow-wrap: anywhere; }
     .simulation-zone-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
     .simulation-zone { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
+    .formula-box { padding: 10px; border-radius: 8px; border: 1px dashed rgba(59,130,246,.45); background: rgba(59,130,246,.08); color: var(--text); line-height: 1.45; overflow-wrap: anywhere; }
     .plant-flow { display: grid; grid-template-columns: minmax(180px, .55fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
     .flow-node { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
     .flow-zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
@@ -958,6 +959,7 @@ function simulationZoneCard(zone) {
   return `<div class="simulation-zone">
     <div class="toolbar"><span class="zone-chip">${iconBadge(zone.icon || 'INFO')}<strong>${esc(zone.name || zone.zone_id)}</strong></span><span class="pill ${zone.duration_seconds > 0 ? 'ok' : 'warn'}">${esc(zone.duration_text || '0:00')}</span></div>
     <span class="muted">${esc(zone.reason || '')}</span>
+    <div class="formula-box">${esc(zone.formula_text || 'Formula non disponibile per questa zona.')}</div>
     <div class="icon-metrics">
       ${iconMetric('BAL', `${num(zone.current_deficit_mm).toFixed(1)} mm`, 'Deficit attuale')}
       ${iconMetric('ET', `${num(zone.crop_et_mm).toFixed(1)} mm`, 'ET zona')}

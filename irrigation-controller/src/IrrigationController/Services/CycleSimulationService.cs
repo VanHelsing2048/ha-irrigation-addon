@@ -97,9 +97,17 @@ public sealed class CycleSimulationService
                 var duration = await ResolveDurationAsync(config, state, cycle, step, zoneId, zone, adjustment, today, cancellationToken);
                 var seconds = Math.Max(0, (int)Math.Round(duration.TotalSeconds));
                 state.WaterBalance.TryGetValue(zoneId, out var currentDeficit);
-                var cropEt = cycle.Mode == CycleMode.Automatic ? adjustment.Et0Mm * zone.CropCoefficient : 0;
+                var cropEt = cycle.Mode == CycleMode.Automatic && state.LastWaterBalanceUpdateDate != today.ToString("yyyy-MM-dd")
+                    ? adjustment.Et0Mm * zone.CropCoefficient
+                    : 0;
+                var effectiveRain = cycle.Mode == CycleMode.Automatic && state.LastWaterBalanceUpdateDate != today.ToString("yyyy-MM-dd")
+                    ? adjustment.EffectiveRainMm
+                    : 0;
+                var projectedDeficit = cycle.Mode == CycleMode.Automatic
+                    ? Math.Max(0, currentDeficit + cropEt - effectiveRain)
+                    : currentDeficit;
                 var irrigationDeficit = cycle.Mode == CycleMode.Automatic
-                    ? Math.Max(0, currentDeficit + cropEt - adjustment.EffectiveRainMm - zone.TargetDeficitMm)
+                    ? Math.Max(0, projectedDeficit - zone.TargetDeficitMm)
                     : 0;
                 var waterMm = seconds <= 0 ? 0 : duration.TotalHours * Math.Max(0.1, zone.PrecipitationRateMmH);
                 var status = seconds <= 0 ? "skipped" : "planned";
@@ -107,6 +115,7 @@ public sealed class CycleSimulationService
                 var reason = seconds <= 0
                     ? "Durata calcolata zero: la zona risulta gia coperta."
                     : $"Irrigazione prevista per {FormatDuration(duration)}.";
+                var formula = BuildFormulaText(config, state, cycle, step, zone, today, currentDeficit, cropEt, effectiveRain, projectedDeficit, irrigationDeficit, duration);
 
                 result.Zones.Add(new SimulationZone
                 {
@@ -121,9 +130,11 @@ public sealed class CycleSimulationService
                     WaterMm = Math.Round(waterMm, 1),
                     CurrentDeficitMm = Math.Round(currentDeficit, 1),
                     CropEtMm = Math.Round(cropEt, 1),
-                    EffectiveRainMm = Math.Round(adjustment.EffectiveRainMm, 1),
+                    EffectiveRainMm = Math.Round(effectiveRain, 1),
+                    ProjectedDeficitMm = Math.Round(projectedDeficit, 1),
                     IrrigationDeficitMm = Math.Round(irrigationDeficit, 1),
-                    Reason = reason
+                    Reason = reason,
+                    FormulaText = formula
                 });
 
                 if (seconds <= 0)
@@ -198,6 +209,56 @@ public sealed class CycleSimulationService
         duration.TotalHours >= 1
             ? duration.ToString(@"h\:mm\:ss")
             : duration.ToString(@"m\:ss");
+
+    private static string BuildFormulaText(
+        IrrigationConfig config,
+        IrrigationRuntimeState state,
+        CycleConfig cycle,
+        CycleStepConfig step,
+        ZoneConfig zone,
+        DateOnly today,
+        double currentDeficit,
+        double cropEt,
+        double effectiveRain,
+        double projectedDeficit,
+        double irrigationDeficit,
+        TimeSpan duration)
+    {
+        var maxMinutes = Math.Min(zone.MaxMinutes, config.Safety.MaxZoneMinutes);
+        if (cycle.Mode == CycleMode.Manual)
+        {
+            var configuredSeconds = step.DurationSeconds is > 0
+                ? step.DurationSeconds.Value
+                : (step.DurationMinutes ?? zone.MinMinutes) * 60;
+            var cappedSeconds = Math.Min(configuredSeconds, config.Safety.MaxZoneMinutes * 60);
+            var capText = configuredSeconds == cappedSeconds
+                ? "nessun limite applicato"
+                : $"limitato a {config.Safety.MaxZoneMinutes} min max sicurezza";
+            return $"Manuale: tempo step {FormatSeconds(configuredSeconds)} -> {FormatSeconds(cappedSeconds)} ({capText}).";
+        }
+
+        var balanceAlreadyUpdated = state.LastWaterBalanceUpdateDate == today.ToString("yyyy-MM-dd");
+        var updateText = balanceAlreadyUpdated
+            ? "bilancio odierno gia aggiornato: ET e pioggia non risommati"
+            : $"ET zona {cropEt:0.0} mm - pioggia utile {effectiveRain:0.0} mm";
+        var rawMinutes = irrigationDeficit <= 0
+            ? 0
+            : irrigationDeficit / Math.Max(0.1, zone.PrecipitationRateMmH) * 60;
+        var clampedMinutes = duration.TotalMinutes;
+        var clampText = rawMinutes <= 0
+            ? "zona coperta"
+            : $"clamp tra min {zone.MinMinutes} e max {maxMinutes} min";
+
+        return $"Automatico: ({currentDeficit:0.0} mm deficit + {cropEt:0.0} mm ET - {effectiveRain:0.0} mm pioggia) = {projectedDeficit:0.0} mm; " +
+               $"{projectedDeficit:0.0} - target {zone.TargetDeficitMm:0.0} = {irrigationDeficit:0.0} mm da reintegrare; " +
+               $"{irrigationDeficit:0.0} / {Math.Max(0.1, zone.PrecipitationRateMmH):0.0} mm/h * 60 = {rawMinutes:0.#} min -> {FormatDuration(duration)} ({clampText}; {updateText}).";
+    }
+
+    private static string FormatSeconds(int seconds)
+    {
+        var duration = TimeSpan.FromSeconds(Math.Max(0, seconds));
+        return FormatDuration(duration);
+    }
 }
 
 public sealed class CycleSimulationResult
@@ -285,6 +346,8 @@ public sealed class SimulationZone
     public double CurrentDeficitMm { get; set; }
     public double CropEtMm { get; set; }
     public double EffectiveRainMm { get; set; }
+    public double ProjectedDeficitMm { get; set; }
     public double IrrigationDeficitMm { get; set; }
     public string Reason { get; set; } = "";
+    public string FormulaText { get; set; } = "";
 }

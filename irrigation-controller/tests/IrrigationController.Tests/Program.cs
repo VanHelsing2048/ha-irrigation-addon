@@ -526,7 +526,9 @@ static void AssertUiContainsDryRunAction()
         || !html.Contains("runSimulation", StringComparison.Ordinal)
         || !html.Contains("/api/simulation/", StringComparison.Ordinal)
         || !html.Contains("Timeline", StringComparison.Ordinal)
-        || !html.Contains("simulation-zone-grid", StringComparison.Ordinal))
+        || !html.Contains("simulation-zone-grid", StringComparison.Ordinal)
+        || !html.Contains("formula-box", StringComparison.Ordinal)
+        || !html.Contains("formula_text", StringComparison.Ordinal))
     {
         throw new InvalidOperationException("Expected dry-run action in UI.");
     }
