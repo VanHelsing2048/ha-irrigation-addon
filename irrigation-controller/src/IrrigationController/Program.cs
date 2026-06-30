@@ -28,6 +28,7 @@ builder.Services.AddSingleton<DiagnosticsService>();
 builder.Services.AddSingleton<CycleRunner>();
 builder.Services.AddSingleton<IrrigationOverviewService>();
 builder.Services.AddSingleton<DecisionPlanService>();
+builder.Services.AddSingleton<CycleSimulationService>();
 builder.Services.AddSingleton<UiRenderer>();
 builder.Services.AddHostedService<StartupSafetyService>();
 builder.Services.AddHostedService<MqttDiscoveryPublisher>();
@@ -155,6 +156,15 @@ app.MapPost("/api/cycles/{cycleId}/dry-run", async (
     CancellationToken cancellationToken) =>
 {
     var result = await runner.DryRunCycleAsync(cycleId, cancellationToken);
+    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+});
+
+app.MapPost("/api/simulation/{cycleId}", async (
+    string cycleId,
+    CycleSimulationService simulation,
+    CancellationToken cancellationToken) =>
+{
+    var result = await simulation.SimulateAsync(cycleId, cancellationToken);
     return result.Success ? Results.Ok(result) : Results.BadRequest(result);
 });
 

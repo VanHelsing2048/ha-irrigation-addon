@@ -522,7 +522,11 @@ static void AssertUiContainsDryRunAction()
     var html = new UiRenderer().Render();
     if (!html.Contains("Simula", StringComparison.Ordinal)
         || !html.Contains("dryRunCycle", StringComparison.Ordinal)
-        || !html.Contains("/dry-run", StringComparison.Ordinal))
+        || !html.Contains("/dry-run", StringComparison.Ordinal)
+        || !html.Contains("runSimulation", StringComparison.Ordinal)
+        || !html.Contains("/api/simulation/", StringComparison.Ordinal)
+        || !html.Contains("Timeline", StringComparison.Ordinal)
+        || !html.Contains("simulation-zone-grid", StringComparison.Ordinal))
     {
         throw new InvalidOperationException("Expected dry-run action in UI.");
     }
@@ -536,6 +540,8 @@ static void AssertUiContainsPolishedShell()
         "nav-code",
         "Ingress UI",
         "dashboardHero",
+        "renderSimulation",
+        "Simulazione dry-run",
         "renderSetup",
         "Configurazione guidata",
         "setupCheck",

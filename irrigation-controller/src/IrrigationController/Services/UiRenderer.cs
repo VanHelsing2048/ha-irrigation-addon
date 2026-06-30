@@ -223,6 +223,14 @@ public sealed class UiRenderer
     .forecast-type-card { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
     .forecast-type-card.ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
     .forecast-type-card.warn { border-color: color-mix(in srgb, var(--warn) 55%, var(--border)); }
+    .simulation-shell { display: grid; gap: 14px; }
+    .simulation-controls { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: 10px; align-items: end; }
+    .simulation-summary { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .timeline { display: grid; gap: 8px; }
+    .timeline-item { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
+    .timeline-item strong, .simulation-zone strong { overflow-wrap: anywhere; }
+    .simulation-zone-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+    .simulation-zone { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
     .plant-flow { display: grid; grid-template-columns: minmax(180px, .55fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
     .flow-node { display: grid; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
     .flow-zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
@@ -261,7 +269,7 @@ public sealed class UiRenderer
       .main { padding: 14px; }
       .metrics, .summary, .two, .three, .plan, .weather-summary, .dashboard-hero, .quick-metrics, .checklist, .preset-row { grid-template-columns: 1fr; }
       .row { grid-template-columns: 1fr; }
-      .step-row, .time-row, .cycle-preview-grid, .setting-board, .forecast-check-grid, .plant-flow { grid-template-columns: 1fr; }
+      .step-row, .time-row, .cycle-preview-grid, .setting-board, .forecast-check-grid, .simulation-controls, .simulation-summary, .plant-flow { grid-template-columns: 1fr; }
       .row > * { grid-column: span 1 !important; }
       .topbar { align-items: flex-start; flex-direction: column; }
       .actions { justify-content: flex-start; }
@@ -357,6 +365,7 @@ const pages = [
   ['setup', 'Setup', 'Configurazione guidata e checklist iniziale', false],
   ['zones', 'Zone', 'Valvole, resa, calibrazione e limiti', false],
   ['cycles', 'Cicli', 'Sequenze manuali e automatiche', false],
+  ['simulation', 'Simulazione', 'Dry-run visuale senza comandare valvole', false],
   ['weather', 'Meteo', 'Pioggia, ET e soglie di blocco', false],
   ['plant', 'Impianto', 'Idraulica e sicurezze', false],
   ['diagnostics', 'Diagnostica', 'Eventi, decisioni e ultimo meteo', true],
@@ -370,6 +379,8 @@ let decisionPlan = null;
 let irrigationEntities = [];
 let weatherEntities = [];
 let weatherForecastCheck = null;
+let simulationResult = null;
+let selectedSimulationCycle = '';
 let draftZones = {};
 let draftCycles = {};
 let lastValidation = null;
@@ -473,6 +484,7 @@ function render() {
     setup: renderSetup,
     zones: renderZones,
     cycles: renderCycles,
+    simulation: renderSimulation,
     weather: renderWeather,
     plant: renderPlant,
     diagnostics: renderDiagnostics,
@@ -499,7 +511,7 @@ function renderAdvancedToggle() {
   button.classList.toggle('blue', advancedMode);
 }
 function navCode(id) {
-  return ({ dashboard: 'DB', setup: 'ST', zones: 'ZN', cycles: 'CY', weather: 'MT', plant: 'IM', diagnostics: 'LG', raw: 'JS' })[id] || 'UI';
+  return ({ dashboard: 'DB', setup: 'ST', zones: 'ZN', cycles: 'CY', simulation: 'SIM', weather: 'MT', plant: 'IM', diagnostics: 'LG', raw: 'JS' })[id] || 'UI';
 }
 function normalizeId(raw) {
   return String(raw ?? '').trim().toLowerCase()
@@ -886,6 +898,80 @@ function renderCycles() {
     ${validationPanel('cycles')}
     <div class="list">${cycles.length ? cycles.map(([id, c]) => cycleForm(id, c)).join('') : emptyState('Nessun ciclo', 'Crea un ciclo per organizzare gruppi di zone, orari e simulazioni dry-run.')}</div>
   </section>`;
+}
+function renderSimulation() {
+  const cycles = Object.entries(config.cycles || {});
+  const selected = selectedSimulationCycle || cycles[0]?.[0] || '';
+  selectedSimulationCycle = selected;
+  return `<section class="section simulation-shell">
+    <div class="card">
+      <div class="toolbar"><h2>Simulazione dry-run</h2><span class="pill">nessuna valvola reale</span></div>
+      <div class="simulation-controls" style="margin-top:12px">
+        <label><span>Ciclo da simulare</span><select id="simulation-cycle" onchange="selectedSimulationCycle=this.value">${cycles.map(([id, cycle]) => `<option value="${esc(id)}" ${id === selected ? 'selected' : ''}>${esc(cycle.name || id)} (${esc(cycle.mode || '-')})</option>`).join('')}</select></label>
+        <button class="blue" onclick="runSimulation()" ${cycles.length ? '' : 'disabled'}>Simula ciclo</button>
+      </div>
+    </div>
+    ${simulationResult ? simulationDashboard(simulationResult) : emptyState('Nessuna simulazione eseguita', 'Scegli un ciclo e avvia il dry-run visuale per vedere timeline, meteo e zone previste.')}
+  </section>`;
+}
+function simulationDashboard(result) {
+  if (!result.success) return `<div class="card notice danger"><strong>Simulazione non riuscita</strong><p>${esc(result.message || 'Errore simulazione')}</p></div>`;
+  return `
+    <div class="grid simulation-summary">
+      ${metric('Durata totale', result.summary?.total_duration_text || '0:00')}
+      ${metric('Zone previste', result.summary?.planned_zones ?? 0)}
+      ${metric('Zone saltate', result.summary?.skipped_zones ?? 0)}
+      ${metric('Acqua stimata', `${num(result.summary?.total_water_mm).toFixed(1)} mm`)}
+      ${metric('Meteo', result.uses_weather ? 'usato' : 'ignorato')}
+    </div>
+    <div class="card">
+      <div class="toolbar"><h3>Timeline</h3><span class="pill">${esc(result.cycle_name || result.cycle_id)}</span></div>
+      <div class="timeline" style="margin-top:10px">${(result.timeline || []).map(simulationTimelineItem).join('')}</div>
+    </div>
+    <div class="card">
+      <div class="toolbar"><h3>Meteo usato</h3><span class="pill ${result.weather?.forecast_available ? 'ok' : 'warn'}">${result.weather?.forecast_available ? 'forecast reale' : 'fallback'}</span></div>
+      <div class="icon-metrics" style="margin-top:10px">
+        ${iconMetric('ET', `${num(result.weather?.et0_mm).toFixed(1)} mm`, 'ET0 stimata')}
+        ${iconMetric('RAIN', `${num(result.weather?.expected_rain_mm).toFixed(1)} mm`, 'Pioggia prevista')}
+        ${iconMetric('PCT', `${num(result.weather?.max_rain_probability)}%`, 'Probabilita massima')}
+        ${iconMetric(result.weather?.should_skip ? 'SKIP' : 'OK', result.weather?.should_skip ? 'skip' : 'ok', 'Decisione meteo')}
+      </div>
+      <p class="muted">${esc(result.weather?.message || 'Meteo non usato per questo ciclo.')}</p>
+    </div>
+    <div class="card">
+      <div class="toolbar"><h3>Zone</h3><span class="pill">${(result.zones || []).length}</span></div>
+      <div class="simulation-zone-grid" style="margin-top:10px">${(result.zones || []).map(simulationZoneCard).join('') || emptyState('Nessuna zona pianificata', 'La simulazione non ha prodotto zone irrigabili.')}</div>
+    </div>
+    <details class="event-register">
+      <summary><span class="event-chip">${iconBadge('INFO')}<strong>JSON simulazione</strong></span></summary>
+      <div class="event-register-body"><pre>${esc(JSON.stringify(result, null, 2))}</pre></div>
+    </details>`;
+}
+function simulationTimelineItem(item) {
+  return `<div class="timeline-item">
+    ${iconBadge(item.icon || 'INFO')}
+    <div><strong>${esc(item.title || '-')}</strong><div class="muted">${esc(item.text || '')}</div></div>
+    <span class="pill">${item.duration_seconds ? esc(formatSeconds(item.duration_seconds)) : esc(item.type || '')}</span>
+  </div>`;
+}
+function simulationZoneCard(zone) {
+  return `<div class="simulation-zone">
+    <div class="toolbar"><span class="zone-chip">${iconBadge(zone.icon || 'INFO')}<strong>${esc(zone.name || zone.zone_id)}</strong></span><span class="pill ${zone.duration_seconds > 0 ? 'ok' : 'warn'}">${esc(zone.duration_text || '0:00')}</span></div>
+    <span class="muted">${esc(zone.reason || '')}</span>
+    <div class="icon-metrics">
+      ${iconMetric('BAL', `${num(zone.current_deficit_mm).toFixed(1)} mm`, 'Deficit attuale')}
+      ${iconMetric('ET', `${num(zone.crop_et_mm).toFixed(1)} mm`, 'ET zona')}
+      ${iconMetric('RAIN', `${num(zone.effective_rain_mm).toFixed(1)} mm`, 'Pioggia utile')}
+      ${iconMetric('DROP', `${num(zone.water_mm).toFixed(1)} mm`, 'Acqua stimata')}
+    </div>
+  </div>`;
+}
+function formatSeconds(seconds) {
+  const total = Math.max(0, Number(seconds) || 0);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = Math.floor(total % 60);
+  return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`;
 }
 function cycleForm(id, c) {
   const schedule = c.schedule || { days: [], times: [] };
@@ -1302,6 +1388,20 @@ function collectCycleSteps(id) {
 }
 async function startCycle(id) { try { toast((await api('/api/cycles/' + id + '/start', { method: 'POST' })).message); } catch(e) { toast(e.message || 'Errore avvio ciclo', true); } }
 async function dryRunCycle(id) { try { toast((await api('/api/cycles/' + id + '/dry-run', { method: 'POST' })).message); await reloadAll(); } catch(e) { toast(e.message || 'Errore simulazione ciclo', true); } }
+async function runSimulation() {
+  const id = val('simulation-cycle') || selectedSimulationCycle;
+  if (!id) return toast('Scegli un ciclo da simulare', true);
+  selectedSimulationCycle = id;
+  try {
+    simulationResult = await api('/api/simulation/' + encodeURIComponent(id), { method: 'POST' });
+    toast('Simulazione completata');
+    render();
+  } catch (e) {
+    simulationResult = e;
+    toast(e.message || 'Errore simulazione', true);
+    render();
+  }
+}
 async function startZone(id) { try { toast((await api('/api/zones/' + id + '/start?minutes=5', { method: 'POST' })).message); } catch(e) { toast(e.message || 'Errore avvio zona', true); } }
 async function stopZone(id) { try { await api('/api/zones/' + id + '/stop', { method: 'POST' }); toast('Zona fermata'); } catch(e) { toast(e.message || 'Errore stop zona', true); } }
 async function globalStop() { try { await api('/api/stop', { method: 'POST' }); toast('Stop richiesto'); } catch(e) { toast(e.message || 'Errore stop', true); } }
